@@ -30,7 +30,12 @@ public static function getRecordTitle($record): string
     protected static ?string $model = Citizen::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?int $navigationSort = 1;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
     protected static ?string $recordTitleAttribute = 'full_name';
     protected static ?string $modelLabel = 'مواطن';
 

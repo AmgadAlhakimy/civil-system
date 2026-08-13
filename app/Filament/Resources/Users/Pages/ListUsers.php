@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\Items\Pages;
+namespace App\Filament\Resources\Users\Pages;
 
-use App\Filament\Resources\Items\ItemResource;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListItems extends ListRecords
+class ListUsers extends ListRecords
 {
-    protected static string $resource = ItemResource::class;
+    protected static string $resource = UserResource::class;
 
     protected function getHeaderActions(): array
     {

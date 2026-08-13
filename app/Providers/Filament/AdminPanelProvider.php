@@ -28,39 +28,60 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+
             ->brandName('السجل المدني')
-//            ->brandLogo(asset('images/logo.png'))
-//            ->favicon(asset('images/favicon.png'))
+
+            // إذا كان لديك شعار:
+            // ->brandLogo(asset('images/logo.png'))
+            // ->favicon(asset('images/favicon.png'))
+
             ->viteTheme('resources/css/filament/admin/theme.css')
+
             ->colors([
                 'primary' => Color::Amber,
                 'gray' => Color::Slate,
                 'success' => Color::Green,
                 'danger' => Color::Red,
                 'warning' => Color::Orange,
-                'info' => Color::Blue,
+                'info' => Color::Sky,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('240px')
+
             ->globalSearch()
+
+            /*
+             * ترتيب مجموعات القائمة الجانبية
+             */
+            ->navigationGroups([
+                'النظام',
+                'السجل المدني',
+            ])
+
             ->discoverResources(
                 in: app_path('Filament/Resources'),
                 for: 'App\\Filament\\Resources'
             )
+
             ->discoverPages(
                 in: app_path('Filament/Pages'),
                 for: 'App\\Filament\\Pages'
             )
+
             ->pages([
                 Dashboard::class,
             ])
+
             ->discoverWidgets(
                 in: app_path('Filament/Widgets'),
                 for: 'App\\Filament\\Widgets'
             )
+
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -72,6 +93,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+
             ->authMiddleware([
                 Authenticate::class,
             ]);
