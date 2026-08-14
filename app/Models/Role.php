@@ -12,4 +12,10 @@ class Role extends SpatieRole
     protected $keyType = 'string';
 
     public $incrementing = false;
+
+    protected $fillable = [
+        'name',
+        'name_ar',
+        'guard_name',
+    ];
 }

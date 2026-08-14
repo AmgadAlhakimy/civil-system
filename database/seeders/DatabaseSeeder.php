@@ -33,12 +33,13 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        $admin->assignRole('مدير النظام');
+        $admin->assignRole('admin');
 
         // بيانات النظام التجريبية
         $this->call([
             CitizenSeeder::class,
             PassportSeeder::class,
+            IdentityCardSeeder::class,
         ]);
     }
 }

@@ -2,3 +2,35 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+
+/* =========================
+   Sidebar
+   ========================= */
+.fi-sidebar {
+    background-color: #e2e8f0;
+    border-right: 3px solid #475569;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.10);
+}
+
+
+/* =========================
+   Dashboard / Main Content
+   ========================= */
+.fi-main {
+    background-color: #f8fafc;
+}
+
+
+/* =========================
+   Navigation Items
+   ========================= */
+.fi-sidebar-item {
+    border-radius: 8px;
+}
+
+
+/* العنصر النشط */
+.fi-sidebar-item-active {
+    background-color: #cbd5e1;
+}
