@@ -40,6 +40,10 @@ class DatabaseSeeder extends Seeder
             CitizenSeeder::class,
             PassportSeeder::class,
             IdentityCardSeeder::class,
+            FamilyMemberSeeder::class,
+            FamilyCardSeeder::class,
+            BirthCertificateSeeder::class,
+
         ]);
     }
 }
