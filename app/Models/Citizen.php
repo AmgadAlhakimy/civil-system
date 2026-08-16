@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Citizen extends Model
 {
-    use HasFactory, SoftDeletes, HasUuids;
+    use HasFactory, SoftDeletes, HasUuids, LogsActivity;
 
     protected $fillable = [
         'national_id',
@@ -42,17 +44,19 @@ class Citizen extends Model
         'verified_at' => 'datetime',
     ];
 
-    /**
-     * الموظف الذي قام بالتحقق من بيانات المواطن
-     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
 
-    /**
-     * شهادات الوفاة الخاصة بالمواطن
-     */
     public function deathCertificates(): HasMany
     {
         return $this->hasMany(DeathCertificate::class, 'deceased_id');
