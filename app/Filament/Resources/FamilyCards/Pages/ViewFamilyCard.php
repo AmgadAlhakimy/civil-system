@@ -12,17 +12,26 @@ class ViewFamilyCard extends ViewRecord
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function getTitle(): string
+    {
+        return 'بيانات البطاقة العائلية: ' . $this->record->card_number;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+
             Action::make('approve')
                 ->label('اعتماد البطاقة')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد البطاقة العائلية')
-                ->modalDescription('هل أنت متأكد من اعتماد هذه البطاقة؟ بعد الاعتماد ستصبح البطاقة سارية.')
-                ->modalSubmitActionLabel('اعتماد')
+                ->modalDescription(
+                    'هل أنت متأكد من اعتماد هذه البطاقة؟ بعد الاعتماد ستصبح البطاقة سارية.'
+                )
+                ->modalSubmitActionLabel('نعم، اعتماد')
+                ->modalCancelActionLabel('إلغاء')
                 ->visible(fn (): bool => $this->record->status === 'pending')
                 ->action(function (): void {
                     $this->record->update([
@@ -44,7 +53,10 @@ class ViewFamilyCard extends ViewRecord
                     ]);
                 }),
 
-            EditAction::make(),
+            EditAction::make()
+                ->label('تعديل')
+                ->icon('heroicon-o-pencil-square'),
+
         ];
     }
 }

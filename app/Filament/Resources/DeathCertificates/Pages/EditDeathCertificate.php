@@ -1,35 +1,21 @@
 <?php
 
-namespace App\Filament\Resources\IdentityCards\Pages;
+namespace App\Filament\Resources\DeathCertificates\Pages;
 
-use App\Filament\Resources\IdentityCards\IdentityCardResource;
+use App\Filament\Resources\DeathCertificates\DeathCertificateResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditIdentityCard extends EditRecord
+class EditDeathCertificate extends EditRecord
 {
-    protected static string $resource = IdentityCardResource::class;
+    protected static string $resource = DeathCertificateResource::class;
 
     public function getTitle(): string
     {
-        return 'تعديل البطاقة الشخصية';
-    }
-
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        unset(
-            $data['issued_by'],
-            $data['issue_date'],
-            $data['approved_by'],
-            $data['approved_at'],
-            $data['print_count'],
-            $data['status']
-        );
-
-        return $data;
+        return 'تعديل شهادة الوفاة';
     }
 
     protected function getHeaderActions(): array

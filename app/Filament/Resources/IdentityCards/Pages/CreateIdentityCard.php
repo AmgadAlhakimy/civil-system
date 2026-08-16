@@ -9,7 +9,10 @@ class CreateIdentityCard extends CreateRecord
 {
     protected static string $resource = IdentityCardResource::class;
 
-    protected static ?string $title = 'إصدار بطاقة شخصية';
+    public function getTitle(): string
+    {
+        return 'إصدار بطاقة شخصية';
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -18,5 +21,10 @@ class CreateIdentityCard extends CreateRecord
         $data['print_count'] = 0;
 
         return $data;
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'تم إصدار البطاقة الشخصية بنجاح';
     }
 }

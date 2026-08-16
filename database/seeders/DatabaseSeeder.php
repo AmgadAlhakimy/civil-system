@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
             FamilyMemberSeeder::class,
             FamilyCardSeeder::class,
             BirthCertificateSeeder::class,
+            DeathCertificateSeeder::class,
+            AppointmentSeeder::class,
 
         ]);
     }

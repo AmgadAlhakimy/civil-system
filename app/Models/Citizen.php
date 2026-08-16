@@ -7,13 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Citizen extends Model
 {
     use HasFactory, SoftDeletes, HasUuids;
 
-    // الحقول المسموح بتعبئتها (Mass Assignment)
-    // لاحظ أننا لم نضف full_name لأنه يتم توليده تلقائياً في قاعدة البيانات
     protected $fillable = [
         'national_id',
         'first_name',
@@ -37,7 +36,6 @@ class Citizen extends Model
         'verified_by',
     ];
 
-    // تحديد أنواع بعض الحقول (Casting) لتسهيل التعامل معها برمجياً
     protected $casts = [
         'birth_date' => 'date',
         'is_active' => 'boolean',
@@ -45,10 +43,18 @@ class Citizen extends Model
     ];
 
     /**
-     * علاقة الموظف/المستخدم الذي قام بالتحقق من بيانات هذا المواطن
+     * الموظف الذي قام بالتحقق من بيانات المواطن
      */
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /**
+     * شهادات الوفاة الخاصة بالمواطن
+     */
+    public function deathCertificates(): HasMany
+    {
+        return $this->hasMany(DeathCertificate::class, 'deceased_id');
     }
 }

@@ -10,10 +10,17 @@ class ListBirthCertificates extends ListRecords
 {
     protected static string $resource = BirthCertificateResource::class;
 
+    public function getTitle(): string
+    {
+        return 'شهادات الميلاد';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label('إصدار شهادة ميلاد')
+                ->icon('heroicon-o-document-plus'),
         ];
     }
 }

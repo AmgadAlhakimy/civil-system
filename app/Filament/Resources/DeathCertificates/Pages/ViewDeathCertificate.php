@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Filament\Resources\BirthCertificates\Pages;
+namespace App\Filament\Resources\DeathCertificates\Pages;
 
-use App\Filament\Resources\BirthCertificates\BirthCertificateResource;
+use App\Filament\Resources\DeathCertificates\DeathCertificateResource;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewBirthCertificate extends ViewRecord
+class ViewDeathCertificate extends ViewRecord
 {
-    protected static string $resource = BirthCertificateResource::class;
+    protected static string $resource = DeathCertificateResource::class;
 
     public function getTitle(): string
     {
-        return 'بيانات شهادة الميلاد: ' . $this->record->certificate_number;
+        return 'بيانات شهادة الوفاة: ' . $this->record->certificate_number;
     }
 
     protected function getHeaderActions(): array
@@ -25,16 +25,16 @@ class ViewBirthCertificate extends ViewRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('اعتماد شهادة الميلاد')
+                ->modalHeading('اعتماد شهادة الوفاة')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد شهادة الميلاد؟ بعد الاعتماد ستصبح الشهادة سارية.'
+                    'هل أنت متأكد من اعتماد شهادة الوفاة؟ بعد الاعتماد ستصبح الشهادة معتمدة.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(fn ($record): bool => $record->status === 'pending')
                 ->action(function ($record): void {
                     $record->update([
-                        'status' => 'active',
+                        'status' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),
                     ]);

@@ -13,13 +13,26 @@ class EditFamilyCard extends EditRecord
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function getTitle(): string
+    {
+        return 'تعديل البطاقة العائلية';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            ViewAction::make(),
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
+            ViewAction::make()
+                ->label('عرض')
+                ->icon('heroicon-o-eye'),
+
+            DeleteAction::make()
+                ->label('حذف'),
+
+            ForceDeleteAction::make()
+                ->label('حذف نهائي'),
+
+            RestoreAction::make()
+                ->label('استعادة'),
         ];
     }
 }

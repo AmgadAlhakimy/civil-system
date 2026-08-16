@@ -13,13 +13,26 @@ class EditBirthCertificate extends EditRecord
 {
     protected static string $resource = BirthCertificateResource::class;
 
+    public function getTitle(): string
+    {
+        return 'تعديل شهادة الميلاد';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            ViewAction::make(),
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
+            ViewAction::make()
+                ->label('عرض')
+                ->icon('heroicon-o-eye'),
+
+            DeleteAction::make()
+                ->label('حذف'),
+
+            ForceDeleteAction::make()
+                ->label('حذف نهائي'),
+
+            RestoreAction::make()
+                ->label('استعادة'),
         ];
     }
 }
