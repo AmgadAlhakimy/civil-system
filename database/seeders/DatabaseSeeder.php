@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             BirthCertificateSeeder::class,
             DeathCertificateSeeder::class,
             AppointmentSeeder::class,
+            SettingSeeder::class,
 
         ]);
     }

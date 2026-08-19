@@ -3,34 +3,207 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 
+/*
+|--------------------------------------------------------------------------
+| Civil Registry Theme
+|--------------------------------------------------------------------------
+| القيم الافتراضية فقط عند تحميل الصفحة.
+| الثيم الفعلي يتم تطبيقه من filament.theme.
+|--------------------------------------------------------------------------
+*/
 
-/* =========================
-   Sidebar
-   ========================= */
-.fi-sidebar {
-    background-color: #e2e8f0;
-    border-right: 3px solid #475569;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.10);
+:root {
+    --app-primary: #d97706;
+    --app-primary-dark: #b45309;
+    --app-primary-light: #fffbeb;
+
+    --app-sidebar: #451a03;
+    --app-sidebar-hover: #78350f;
+
+    --app-surface: #ffffff;
+    --app-background: #fffbeb;
+    --app-border: #fde68a;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Main Layout
+|--------------------------------------------------------------------------
+*/
 
-/* =========================
-   Dashboard / Main Content
-   ========================= */
+.fi-body {
+    background-color: var(--app-background) !important;
+}
+
 .fi-main {
-    background-color: #f8fafc;
+    background-color: var(--app-background) !important;
 }
 
-
-/* =========================
-   Navigation Items
-   ========================= */
-.fi-sidebar-item {
-    border-radius: 8px;
+.fi-main-ctn {
+    background-color: var(--app-background) !important;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Sidebar
+|--------------------------------------------------------------------------
+*/
 
-/* العنصر النشط */
-.fi-sidebar-item-active {
-    background-color: #cbd5e1;
+.fi-sidebar {
+    background-color: var(--app-sidebar) !important;
 }
+
+.fi-sidebar-group-label {
+    color: #ffffff !important;
+}
+
+.fi-sidebar-item-btn {
+    background-color: transparent !important;
+    color: #ffffff !important;
+
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.fi-sidebar-item-label,
+.fi-sidebar-item-icon {
+    color: #ffffff !important;
+}
+
+/* Hover */
+
+.fi-sidebar-item-btn:hover {
+    background-color: var(--app-sidebar-hover) !important;
+    color: #ffffff !important;
+}
+
+.fi-sidebar-item-btn:hover .fi-sidebar-item-label,
+.fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
+    color: #ffffff !important;
+}
+
+/* Active */
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: var(--app-primary) !important;
+    color: #ffffff !important;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon {
+    color: #ffffff !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Header
+|--------------------------------------------------------------------------
+*/
+
+.fi-header {
+    border-bottom-color: var(--app-border) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sections / Cards
+|--------------------------------------------------------------------------
+*/
+
+.fi-section {
+    border-color: var(--app-border) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Tables
+|--------------------------------------------------------------------------
+*/
+
+.fi-ta-outer {
+    border-color: var(--app-border) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Buttons
+|--------------------------------------------------------------------------
+*/
+
+.fi-btn {
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Inputs
+|--------------------------------------------------------------------------
+*/
+
+.fi-input,
+.fi-select,
+.fi-textarea {
+    border-color: var(--app-border);
+}
+
+.fi-input:focus,
+.fi-select:focus,
+.fi-textarea:focus {
+    border-color: var(--app-primary) !important;
+    --tw-ring-color: var(--app-primary) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Tabs
+|--------------------------------------------------------------------------
+*/
+
+.fi-tabs-tab.fi-active {
+    color: var(--app-primary) !important;
+}
+
+.fi-tabs-tab:hover {
+    color: var(--app-primary) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Links
+|--------------------------------------------------------------------------
+*/
+
+.fi-link {
+    color: var(--app-primary) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Pagination
+|--------------------------------------------------------------------------
+*/
+
+.fi-pagination-item.fi-active {
+    background-color: var(--app-primary) !important;
+}
+
+.fi-pagination-item:hover {
+    color: var(--app-primary) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Checkbox
+|--------------------------------------------------------------------------
+*/
+
+.fi-checkbox:checked {
+    background-color: var(--app-primary) !important;
+    border-color: var(--app-primary) !important;
+}
+
+@import './dashboard.css';

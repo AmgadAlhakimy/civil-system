@@ -1,0 +1,801 @@
+/* =========================================================
+   Civil System Dashboard
+   ========================================================= */
+
+.civil-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.civil-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.civil-dashboard-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.civil-dashboard-header p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.civil-dashboard-date {
+    padding: 10px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   Top Statistics
+   ========================================================= */
+
+.civil-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.civil-stat-card {
+    min-width: 0;
+    min-height: 108px;
+    padding: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+}
+
+.civil-stat-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.civil-stat-info span {
+    display: block;
+    margin-bottom: 7px;
+
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.civil-stat-info strong {
+    display: block;
+
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.civil-stat-info small {
+    display: block;
+    margin-top: 7px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.civil-stat-icon {
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+}
+
+.civil-stat-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.civil-stat-icon.blue {
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+.civil-stat-icon.green {
+    color: #10b981;
+    background: #ecfdf5;
+}
+
+.civil-stat-icon.indigo {
+    color: #4f46e5;
+    background: #eef2ff;
+}
+
+.civil-stat-icon.purple {
+    color: #8b5cf6;
+    background: #f5f3ff;
+}
+
+.civil-stat-icon.orange {
+    color: #f97316;
+    background: #fff7ed;
+}
+
+.civil-stat-icon.red {
+    color: #f43f5e;
+    background: #fff1f2;
+}
+
+
+/* =========================================================
+   Charts
+   ========================================================= */
+
+.civil-dashboard-charts {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.civil-dashboard-charts .civil-dashboard-card {
+    min-width: 0;
+    min-height: 220px;
+    padding: 14px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+
+    overflow: hidden;
+}
+
+/*
+|--------------------------------------------------------------------------
+| توزيع الرسوم
+|--------------------------------------------------------------------------
+| الرسم الخطي = نصف الصفحة
+| الرسم الدائري = ربع الصفحة
+| الفئات العمرية = ربع الصفحة
+*/
+
+
+.chart-transactions {
+    grid-column: span 6;
+}
+
+.civil-doughnut-card,
+.civil-age-card {
+    grid-column: span 3;
+}
+
+/* =========================================================
+   Chart Header
+   ========================================================= */
+
+.civil-chart-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 16px;
+}
+
+.civil-chart-header h2 {
+    margin: 0;
+
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 700;
+
+    color: #0f172a;
+}
+
+.civil-chart-header p {
+    margin: 4px 0 0;
+
+    font-size: 10px;
+    line-height: 1.4;
+
+    color: #94a3b8;
+}
+
+.civil-chart-header select {
+    min-width: 100px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #475569;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   Chart Areas
+   ========================================================= */
+
+.civil-line-chart-area {
+    width: 100%;
+    height: 180px;
+}
+
+.civil-doughnut-chart-area {
+    width: 100%;
+    height: 180px;
+}
+
+.civil-age-chart-area {
+    width: 100%;
+    height: 180px;
+}
+
+
+/* =========================================================
+   Tables & Activities
+   ========================================================= */
+
+.civil-dashboard-lists {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.operations-card {
+    grid-column: span 5;
+}
+
+.citizens-card {
+    grid-column: span 4;
+}
+
+.activities-card {
+    grid-column: span 3;
+}
+
+
+/* =========================================================
+   Bottom
+   ========================================================= */
+
+.civil-dashboard-bottom {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.civil-bottom-card {
+    min-height: 100px;
+    padding: 20px;
+
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   Responsive - 1280px
+   ========================================================= */
+
+@media (max-width: 1280px) {
+
+    .chart-transactions {
+        grid-column: span 6;
+    }
+
+    .civil-doughnut-card,
+    .civil-age-card {
+        grid-column: span 3;
+    }
+
+    .operations-card {
+        grid-column: span 4;
+    }
+
+    .citizens-card {
+        grid-column: span 4;
+    }
+
+    .activities-card {
+        grid-column: span 4;
+    }
+}
+/* =========================================================
+   Responsive - 768px
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .civil-dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chart-large,
+    .chart-medium,
+    .operations-card,
+    .citizens-card,
+    .activities-card {
+        grid-column: span 12;
+    }
+
+    .civil-dashboard-bottom {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =========================================================
+   Responsive - 640px
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+    .civil-dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .civil-dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .civil-dashboard-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   Filament Chart Widgets inside Civil Dashboard
+   إزالة مظهر الكارد الداخلية مع الحفاظ على الكارد الخارجية
+   ========================================================= */
+
+.civil-doughnut-chart-area .fi-section,
+.civil-doughnut-chart-area .fi-wi-widget,
+.civil-age-chart-area .fi-section,
+.civil-age-chart-area .fi-wi-widget {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.civil-doughnut-chart-area .fi-section-content,
+.civil-doughnut-chart-area .fi-wi-widget-content,
+.civil-age-chart-area .fi-section-content,
+.civil-age-chart-area .fi-wi-widget-content {
+    padding: 0 !important;
+}
+
+/* =========================================================
+   ضبط حجم كروت الرسوم
+   ========================================================= */
+
+.civil-doughnut-chart-area,
+.civil-age-chart-area {
+    height: 220px;
+}
+
+/* منع الـ Widget الداخلي من إضافة مسافات زائدة */
+.civil-doughnut-chart-area > *,
+.civil-age-chart-area > * {
+    height: 100%;
+}
+
+/* =========================================================
+   عنوان Widget الداخلي
+   ========================================================= */
+
+.civil-doughnut-chart-area .fi-wi-header,
+.civil-age-chart-area .fi-wi-header {
+    padding: 0 !important;
+    margin-bottom: 8px !important;
+}
+
+.civil-doughnut-chart-area .fi-wi-heading,
+.civil-age-chart-area .fi-wi-heading {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    font-weight: 600 !important;
+}
+
+.civil-transactions-card .fi-section,
+.civil-transactions-card .fi-wi-widget,
+.civil-transactions-card .fi-section-content,
+.civil-transactions-card .fi-wi-widget-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.civil-transactions-card .fi-wi-header {
+    display: none !important;
+}
+
+.civil-transactions-card .fi-wi-widget {
+    min-height: 0 !important;
+}
+
+.civil-transactions-card .civil-line-chart-area {
+    width: 100%;
+    height: 180px;
+}
+
+.civil-chart-header h2 {
+    font-size: 13px;
+}
+
+.civil-chart-header p {
+    font-size: 9px;
+}
+
+.civil-age-chart-area .fi-wi-heading,
+.civil-doughnut-chart-area .fi-wi-heading {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+}
+
+.civil-age-chart-area {
+    height: 180px;
+}
+
+.civil-age-chart-area canvas {
+    max-height: 140px !important;
+}
+
+.civil-doughnut-chart-area {
+    height: 180px;
+}
+
+.civil-doughnut-chart-area canvas {
+    max-height: 140px !important;
+}
+.citizens-card {
+    padding: 16px !important;
+    min-height: 260px;
+}
+
+.civil-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.civil-list-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.civil-list-header span {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.civil-citizens-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.civil-citizen-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.civil-citizen-item:last-child {
+    border-bottom: none;
+}
+
+.civil-citizen-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.civil-citizen-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.civil-citizen-info span {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.civil-citizen-meta {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.civil-citizen-meta > span:first-child {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.civil-citizen-status {
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.civil-citizen-status.active {
+    color: #059669;
+    background: #ecfdf5;
+}
+
+.civil-citizen-status.inactive {
+    color: #dc2626;
+    background: #fef2f2;
+}
+
+.citizens-card {
+    min-width: 0;
+    min-height: 260px;
+    padding: 16px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+
+    overflow: hidden;
+}
+
+.operations-card {
+    min-width: 0;
+    min-height: 260px;
+    padding: 16px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+
+    overflow: hidden;
+}
+
+.civil-operations-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.civil-operation-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.civil-operation-item:last-child {
+    border-bottom: none;
+}
+
+.civil-operation-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.civil-operation-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    color: #0f172a;
+}
+
+.civil-operation-info span {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.civil-operation-meta {
+    flex-shrink: 0;
+}
+
+.civil-operation-meta span {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.activities-card {
+    min-width: 0;
+    min-height: 260px;
+    padding: 16px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+
+    overflow: hidden;
+}
+
+.civil-activities-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.civil-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.civil-activity-item:last-child {
+    border-bottom: none;
+}
+
+.civil-activity-icon {
+    flex-shrink: 0;
+
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.civil-activity-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.civil-activity-info {
+    min-width: 0;
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.civil-activity-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    color: #0f172a;
+}
+
+.civil-activity-info span {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.civil-activity-time {
+    flex-shrink: 0;
+
+    font-size: 8px;
+    color: #94a3b8;
+}
+
+.civil-bottom-card {
+    min-width: 0;
+    min-height: 90px;
+    padding: 14px 16px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.civil-bottom-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.civil-bottom-info span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.civil-bottom-info strong {
+    font-size: 19px;
+    line-height: 1;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.civil-bottom-info small {
+    font-size: 9px;
+    color: #94a3b8;
+}
