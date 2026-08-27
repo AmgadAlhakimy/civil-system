@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ReportFileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
@@ -24,6 +25,21 @@ Route::middleware(['auth'])->group(function () {
         '/reports/{report}/view',
         [ReportFileController::class, 'show']
     )->name('reports.view');
+
+    Route::get('/users/profile-photo/{path}', function (string $path) {
+        $path = 'users/profile-photos/' . $path;
+
+        abort_unless(
+            Storage::disk('local')->exists($path),
+            404
+        );
+
+        return response()->file(
+            Storage::disk('local')->path($path)
+        );
+    })
+        ->where('path', '.*')
+        ->name('users.profile-photo');
 });
 
 require __DIR__.'/auth.php';

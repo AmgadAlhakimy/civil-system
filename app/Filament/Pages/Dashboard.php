@@ -7,6 +7,7 @@ use Filament\Pages\Page;
 class Dashboard extends Page
 {
     protected static ?string $title = 'لوحة التحكم';
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home';
 
     protected static ?string $navigationLabel = 'لوحة التحكم';
@@ -17,7 +18,9 @@ class Dashboard extends Page
 
     public function getHeading(): string
     {
-        return 'لوحة التحكم';
+        $user = auth()->user();
+
+        return 'مرحبًا بك، ' . ($user?->full_name ?? $user?->name);
     }
 
     public function getSubheading(): ?string

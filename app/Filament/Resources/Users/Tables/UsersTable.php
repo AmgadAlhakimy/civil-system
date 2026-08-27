@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -19,6 +20,23 @@ class UsersTable
     {
         return $table
             ->columns([
+
+                ImageColumn::make('profile_photo')
+                    ->label('الصورة')
+                    ->getStateUsing(
+                        fn ($record) => $record->profile_photo
+                            ? route(
+                                'users.profile-photo',
+                                [
+                                    'path' => basename($record->profile_photo),
+                                ]
+                            )
+                            : null
+                    )
+                    ->circular()
+                    ->size(40)
+                    ->placeholder('لا توجد')
+                    ->alignCenter(),
 
                 TextColumn::make('name')
                     ->label('اسم المستخدم')
@@ -62,12 +80,14 @@ class UsersTable
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'active' => 'نشط',
-                        'inactive' => 'غير نشط',
-                        'blocked' => 'محظور',
-                        default => $state,
-                    })
+                    ->formatStateUsing(
+                        fn (string $state): string => match ($state) {
+                            'active' => 'نشط',
+                            'inactive' => 'غير نشط',
+                            'blocked' => 'محظور',
+                            default => $state,
+                        }
+                    )
                     ->sortable(),
 
                 TextColumn::make('last_login_at')

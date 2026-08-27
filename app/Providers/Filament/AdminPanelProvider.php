@@ -4,20 +4,18 @@ namespace App\Providers\Filament;
 
 use App\Services\SettingService;
 use App\Support\Themes;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Pages\Dashboard;
-use Filament\Panel;
-use Filament\PanelProvider;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\TodayStats;
 use App\Filament\Widgets\TransactionsChart;
 use App\Filament\Widgets\BranchesOverview;
 use App\Filament\Widgets\RecentActivities;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Panel;
+use Filament\PanelProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -39,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('dashboard')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName('السجل المدني')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->renderHook(
@@ -52,6 +50,30 @@ class AdminPanelProvider extends PanelProvider
                         )
                     ),
                 ])->render(),
+            )
+            ->renderHook(
+                'panels::body.end',
+                fn (): string => <<<'HTML'
+<script>
+function disableHtmlValidation() {
+    document.querySelectorAll('form').forEach(function (form) {
+        form.setAttribute('novalidate', 'novalidate');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', disableHtmlValidation);
+
+document.addEventListener('livewire:navigated', disableHtmlValidation);
+
+document.addEventListener('livewire:init', function () {
+    disableHtmlValidation();
+
+    Livewire.hook('morph.updated', function () {
+        disableHtmlValidation();
+    });
+});
+</script>
+HTML
             )
             ->colors($theme['colors'])
             ->sidebarCollapsibleOnDesktop()
@@ -77,13 +99,11 @@ class AdminPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Widgets'
             )
             ->widgets([
-               // AccountWidget::class,
                 StatsOverview::class,
                 TodayStats::class,
                 TransactionsChart::class,
                 BranchesOverview::class,
                 RecentActivities::class,
-
             ])
             ->middleware([
                 EncryptCookies::class,

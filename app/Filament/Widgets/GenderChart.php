@@ -33,15 +33,14 @@ class GenderChart extends ChartWidget
                     ],
 
                     'backgroundColor' => [
-                        '#2563EB',
-                        '#DB2777',
+                        '#0F766E',
+                        '#C241A0',
                     ],
 
                     'borderColor' => [
-                        '#1D4ED8',
-                        '#BE185D',
+                        '#115E59',
+                        '#A21A83',
                     ],
-
                     'borderWidth' => 2,
                 ],
             ],
