@@ -16,6 +16,7 @@ class CitizenInfolist
     {
         return $schema
             ->components([
+
                 Section::make()
                     ->schema([
                         Grid::make([
@@ -23,22 +24,44 @@ class CitizenInfolist
                             'md' => 4,
                         ])
                             ->schema([
-                                ImageEntry::make('photo')
-                                    ->label('الصورة الشخصية')
-                                    ->circular()
-                                    ->size(150)
-                                    ->defaultImageUrl(url('/images/default-avatar.png'))
+
+                                Section::make()
+                                    ->schema([
+                                        ImageEntry::make('photo')
+                                            ->label('الصورة الشخصية')
+                                            ->getStateUsing(
+                                                fn ($record) => $record->photo
+                                                    ? route(
+                                                        'citizens.photo',
+                                                        [
+                                                            'path' => basename($record->photo),
+                                                        ]
+                                                    )
+                                                    : null
+                                            )
+                                            ->circular()
+                                            ->imageSize(170)
+                                            ->defaultImageUrl(url('/images/default-avatar.png'))
+                                            ->extraImgAttributes([
+                                                'class' => 'object-cover shadow-lg ring-4 ring-white dark:ring-gray-800',
+                                            ])
+                                            ->alignCenter(),
+                                    ])
                                     ->columnSpan(1),
 
                                 Grid::make(2)
                                     ->schema([
+
                                         TextEntry::make('full_name')
                                             ->label('الاسم الكامل')
-                                            ->state(fn ($record) => trim(
-                                                "{$record->first_name} {$record->father_name} {$record->middle_name} {$record->last_name}"
-                                            ))
+                                            ->state(
+                                                fn ($record) => trim(
+                                                    "{$record->first_name} {$record->father_name} {$record->middle_name} {$record->last_name}"
+                                                )
+                                            )
                                             ->weight('bold')
                                             ->size('xl')
+                                            ->icon('heroicon-o-user')
                                             ->columnSpanFull(),
 
                                         TextEntry::make('national_id')
@@ -66,37 +89,40 @@ class CitizenInfolist
                                                 }
                                             ),
 
-                                        TextEntry::make('is_active')
-                                            ->label('الحالة')
-                                            ->formatStateUsing(
-                                                fn ($state): string => $state ? 'نشط' : 'غير نشط'
-                                            )
-                                            ->badge()
-                                            ->color(
-                                                fn ($state): string => $state ? 'success' : 'danger'
-                                            )
-                                            ->icon(
-                                                fn ($state): string => $state
-                                                    ? 'heroicon-o-check-circle'
-                                                    : 'heroicon-o-x-circle'
-                                            ),
+                                        TextEntry::make('birth_date')
+                                            ->label('تاريخ الميلاد')
+                                            ->date('Y-m-d')
+                                            ->icon('heroicon-o-calendar-days'),
+
+                                        TextEntry::make('phone')
+                                            ->label('رقم الهاتف')
+                                            ->copyable()
+                                            ->copyMessage('تم نسخ رقم الهاتف')
+                                            ->icon('heroicon-o-device-phone-mobile')
+                                            ->placeholder('غير مسجل'),
+
+
                                     ])
                                     ->columnSpan(3),
+
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Tabs::make('بيانات المواطن')
                     ->tabs([
+
                         Tabs\Tab::make('البيانات الشخصية')
                             ->icon('heroicon-o-user')
                             ->schema([
+
                                 Section::make('البيانات الأساسية')
-                                    ->description('المعلومات الشخصية للمواطن')
+                                    ->description('المعلومات الشخصية الأساسية للمواطن')
                                     ->icon('heroicon-o-identification')
                                     ->schema([
                                         Grid::make(3)
                                             ->schema([
+
                                                 TextEntry::make('first_name')
                                                     ->label('الاسم الأول')
                                                     ->placeholder('غير مسجل'),
@@ -127,6 +153,11 @@ class CitizenInfolist
                                                     ->placeholder('غير مسجل')
                                                     ->icon('heroicon-o-map-pin'),
 
+                                                TextEntry::make('occupation')
+                                                    ->label('المهنة')
+                                                    ->placeholder('غير مسجل')
+                                                    ->icon('heroicon-o-briefcase'),
+
                                                 TextEntry::make('marital_status')
                                                     ->label('الحالة الاجتماعية')
                                                     ->formatStateUsing(
@@ -140,24 +171,25 @@ class CitizenInfolist
                                                     )
                                                     ->badge(),
 
-                                                TextEntry::make('occupation')
-                                                    ->label('المهنة')
-                                                    ->placeholder('غير مسجل')
-                                                    ->icon('heroicon-o-briefcase'),
+
+
                                             ]),
                                     ])
                                     ->columnSpanFull(),
+
                             ]),
 
                         Tabs\Tab::make('الاتصال والعنوان')
                             ->icon('heroicon-o-phone')
                             ->schema([
+
                                 Section::make('معلومات الاتصال')
                                     ->description('بيانات التواصل المسجلة للمواطن')
                                     ->icon('heroicon-o-device-phone-mobile')
                                     ->schema([
                                         Grid::make(2)
                                             ->schema([
+
                                                 TextEntry::make('phone')
                                                     ->label('رقم الهاتف')
                                                     ->copyable()
@@ -171,12 +203,13 @@ class CitizenInfolist
                                                     ->copyMessage('تم نسخ البريد الإلكتروني')
                                                     ->icon('heroicon-o-envelope')
                                                     ->placeholder('غير مسجل'),
+
                                             ]),
                                     ])
                                     ->columnSpanFull(),
 
                                 Section::make('العنوان')
-                                    ->description('عنوان السكن المسجل للمواطن')
+                                    ->description('عنوان السكن الحالي المسجل في النظام')
                                     ->icon('heroicon-o-map-pin')
                                     ->schema([
                                         TextEntry::make('address')
@@ -185,24 +218,57 @@ class CitizenInfolist
                                             ->columnSpanFull(),
                                     ])
                                     ->columnSpanFull(),
+
                             ]),
 
                         Tabs\Tab::make('البيانات الحيوية')
                             ->icon('heroicon-o-finger-print')
                             ->schema([
+
                                 Section::make('البيانات الحيوية')
-                                    ->description('البيانات الحيوية المرتبطة بسجل المواطن')
+                                    ->description('الصور والبيانات المستخدمة في التحقق من هوية المواطن')
                                     ->icon('heroicon-o-finger-print')
                                     ->schema([
-                                        Grid::make(2)
+
+                                        Grid::make([
+                                            'default' => 1,
+                                            'md' => 2,
+                                        ])
                                             ->schema([
-                                                ImageEntry::make('face_data')
-                                                    ->label('بصمة الوجه')
-                                                    ->defaultImageUrl(url('/images/default-avatar.png'))
-                                                    ->height(250),
+
+                                                Section::make('بصمة الوجه')
+                                                    ->icon('heroicon-o-face-smile')
+                                                    ->schema([
+                                                        ImageEntry::make('face_data')
+                                                            ->label('')
+                                                            ->hiddenLabel()
+                                                            ->getStateUsing(
+                                                                fn ($record) => $record->face_data
+                                                                    ? route(
+                                                                        'citizens.face',
+                                                                        [
+                                                                            'path' => basename($record->face_data),
+                                                                        ]
+                                                                    )
+                                                                    : null
+                                                            )
+                                                            ->defaultImageUrl(url('/images/default-avatar.png'))
+                                                            ->imageSize(225)
+                                                            ->extraAttributes([
+                                                                'class' => 'flex justify-center',
+                                                            ])
+                                                            ->extraImgAttributes([
+                                                                'class' => 'object-cover rounded-full shadow-md',
+                                                            ])
+                                                            ->columnSpanFull(),
+                                                    ])
+                                                    ->columnSpan(1),
 
                                                 Section::make('حالة البيانات الحيوية')
+                                                    ->description('حالة البيانات والصور المرتبطة بسجل المواطن')
+                                                    ->icon('heroicon-o-shield-check')
                                                     ->schema([
+
                                                         IconEntry::make('is_active')
                                                             ->label('حالة الحساب')
                                                             ->boolean()
@@ -211,40 +277,69 @@ class CitizenInfolist
                                                             ->trueColor('success')
                                                             ->falseColor('danger'),
 
-                                                        TextEntry::make('photo')
+                                                        TextEntry::make('photo_status')
                                                             ->label('الصورة الشخصية')
-                                                            ->state(fn ($record) => $record->photo ? 'مسجلة' : 'غير مسجلة')
+                                                            ->state(
+                                                                fn ($record) => $record->photo
+                                                                    ? 'مسجلة'
+                                                                    : 'غير مسجلة'
+                                                            )
                                                             ->badge()
                                                             ->color(
                                                                 fn ($state): string => $state === 'مسجلة'
                                                                     ? 'success'
                                                                     : 'gray'
+                                                            )
+                                                            ->icon(
+                                                                fn ($state): string => $state === 'مسجلة'
+                                                                    ? 'heroicon-o-check-circle'
+                                                                    : 'heroicon-o-minus-circle'
                                                             ),
 
-                                                        TextEntry::make('face_data')
-                                                            ->label('بيانات الوجه')
-                                                            ->state(fn ($record) => $record->face_data ? 'مسجلة' : 'غير مسجلة')
+                                                        TextEntry::make('face_data_status')
+                                                            ->label('بصمة الوجه')
+                                                            ->state(
+                                                                fn ($record) => $record->face_data
+                                                                    ? 'مسجلة'
+                                                                    : 'غير مسجلة'
+                                                            )
                                                             ->badge()
                                                             ->color(
                                                                 fn ($state): string => $state === 'مسجلة'
                                                                     ? 'success'
                                                                     : 'gray'
+                                                            )
+                                                            ->icon(
+                                                                fn ($state): string => $state === 'مسجلة'
+                                                                    ? 'heroicon-o-check-circle'
+                                                                    : 'heroicon-o-minus-circle'
                                                             ),
-                                                    ]),
+
+                                                    ])
+                                                    ->columnSpan(1),
+
+                                            ])
+                                            ->extraAttributes([
+                                                'class' => 'items-stretch',
                                             ]),
+
                                     ])
                                     ->columnSpanFull(),
+
                             ]),
 
                         Tabs\Tab::make('التحقق')
                             ->icon('heroicon-o-shield-check')
                             ->schema([
+
                                 Section::make('بيانات التحقق')
                                     ->description('معلومات التحقق من بيانات المواطن')
                                     ->icon('heroicon-o-shield-check')
                                     ->schema([
+
                                         Grid::make(3)
                                             ->schema([
+
                                                 TextEntry::make('verified_by')
                                                     ->label('حالة التحقق')
                                                     ->state(
@@ -274,20 +369,26 @@ class CitizenInfolist
                                                     ->dateTime('Y-m-d H:i')
                                                     ->placeholder('لم يتم التحقق')
                                                     ->icon('heroicon-o-calendar-days'),
+
                                             ]),
+
                                     ])
                                     ->columnSpanFull(),
+
                             ]),
 
                         Tabs\Tab::make('معلومات النظام')
                             ->icon('heroicon-o-cog-6-tooth')
                             ->schema([
+
                                 Section::make('سجل النظام')
-                                    ->description('المعلومات الإدارية والتقنية للسجل')
+                                    ->description('المعلومات الإدارية والتقنية الخاصة بسجل المواطن')
                                     ->icon('heroicon-o-server')
                                     ->schema([
+
                                         Grid::make(3)
                                             ->schema([
+
                                                 TextEntry::make('created_at')
                                                     ->label('تاريخ التسجيل')
                                                     ->dateTime('Y-m-d H:i')
@@ -303,12 +404,17 @@ class CitizenInfolist
                                                     ->copyable()
                                                     ->copyMessage('تم نسخ معرف السجل')
                                                     ->icon('heroicon-o-hashtag'),
+
                                             ]),
+
                                     ])
                                     ->columnSpanFull(),
+
                             ]),
+
                     ])
                     ->columnSpanFull(),
+
             ]);
     }
 }

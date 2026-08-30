@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class SettingService
 {
@@ -12,6 +13,10 @@ class SettingService
      */
     public function get(string $key, mixed $default = null): mixed
     {
+        if (! Schema::hasTable('settings')) {
+            return $default;
+        }
+
         $setting = Setting::where('key', $key)->first();
 
         return $setting?->value ?? $default;

@@ -33,6 +33,16 @@ class CitizensTable
 
                 ImageColumn::make('photo')
                     ->label('الصورة')
+                    ->getStateUsing(
+                        fn ($record) => $record->photo
+                            ? route(
+                                'citizens.photo',
+                                [
+                                    'path' => basename($record->photo),
+                                ]
+                            )
+                            : null
+                    )
                     ->circular()
                     ->size(45)
                     ->defaultImageUrl(url('/images/default-avatar.png')),
@@ -49,7 +59,6 @@ class CitizensTable
                         'last_name',
                     ])
                     ->sortable(),
-
 
                 TextColumn::make('gender')
                     ->label('الجنس')

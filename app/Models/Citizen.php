@@ -13,8 +13,6 @@ use Spatie\Activitylog\LogOptions;
 
 class Citizen extends Model
 {
-    use HasFactory, SoftDeletes, HasUuids, LogsActivity;
-
     protected $fillable = [
         'national_id',
         'first_name',
@@ -37,6 +35,8 @@ class Citizen extends Model
         'verified_at',
         'verified_by',
     ];
+
+    use HasFactory, SoftDeletes, HasUuids, LogsActivity;
 
     protected $casts = [
         'birth_date' => 'date',

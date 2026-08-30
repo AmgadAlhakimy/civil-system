@@ -20,9 +20,9 @@ class CitizenFactory extends Factory
         return [
             'national_id' => $this->faker->unique()->numerify('###########'),
             'first_name' => $faker->firstName(),
-            'father_name' => $faker->firstNameMale(),
             'middle_name' => $faker->firstNameMale(),
             'last_name' => $faker->lastName(),
+            'father_name' => $faker->firstNameMale(),
             'mother_name' => $faker->firstNameFemale(),
             'photo' => 'citizens/photos/01KZRJ6N0ZCQ1B69ZRDCEHX4FF.jpeg',
             'birth_date' => $this->faker->dateTimeBetween('-70 years', '-18 years')->format('Y-m-d'),

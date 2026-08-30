@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Branches\Schemas;
 
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -15,31 +14,41 @@ class BranchInfolist
         return $schema
             ->components([
 
-                // البيانات الأساسية
-                Section::make('بيانات الفرع')
-                    ->description('المعلومات الأساسية للفرع')
+                Section::make('البيانات الأساسية')
+                    ->description('المعلومات الأساسية للفرع وبيانات التواصل')
                     ->icon('heroicon-o-building-office-2')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(3)
                             ->schema([
 
                                 TextEntry::make('code')
                                     ->label('رمز الفرع')
-                                    ->badge(),
+                                    ->icon('heroicon-o-hashtag')
+                                    ->badge()
+                                    ->copyable()
+                                    ->copyMessage('تم نسخ رمز الفرع'),
 
                                 TextEntry::make('name')
-                                    ->label('اسم الفرع'),
+                                    ->label('اسم الفرع')
+                                    ->icon('heroicon-o-building-office')
+                                    ->weight('bold')
+                                    ->size('lg'),
 
                                 TextEntry::make('address')
-                                    ->label('عنوان الفرع'),
+                                    ->label('عنوان الفرع')
+                                    ->icon('heroicon-o-map-pin')
+                                    ->columnSpanFull(),
 
                                 TextEntry::make('phone')
                                     ->label('رقم الهاتف')
+                                    ->icon('heroicon-o-phone')
                                     ->copyable()
-                                    ->copyMessage('تم نسخ رقم الهاتف'),
+                                    ->copyMessage('تم نسخ رقم الهاتف')
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('email')
                                     ->label('البريد الإلكتروني')
+                                    ->icon('heroicon-o-envelope')
                                     ->copyable()
                                     ->copyMessage('تم نسخ البريد الإلكتروني')
                                     ->placeholder('غير محدد'),
@@ -48,51 +57,62 @@ class BranchInfolist
                     ])
                     ->columnSpanFull(),
 
-                // الإدارة والحالة
-                Section::make('الإدارة والحالة')
-                    ->description('معلومات مدير الفرع وحالة الفرع')
-                    ->icon('heroicon-o-user')
+                Section::make('إدارة الفرع والحالة')
+                    ->description('معلومات مدير الفرع وحالة التشغيل')
+                    ->icon('heroicon-o-user-group')
                     ->schema([
                         Grid::make(2)
                             ->schema([
 
                                 TextEntry::make('manager_name')
                                     ->label('مدير الفرع')
+                                    ->icon('heroicon-o-user')
+                                    ->weight('bold')
                                     ->placeholder('غير محدد'),
 
-                                IconEntry::make('is_active')
+                                TextEntry::make('is_active')
                                     ->label('حالة الفرع')
-                                    ->boolean(),
+                                    ->icon('heroicon-o-check-circle')
+                                    ->badge()
+                                    ->formatStateUsing(
+                                        fn (bool $state): string => $state
+                                            ? 'نشط'
+                                            : 'غير نشط'
+                                    )
+                                    ->color(
+                                        fn (bool $state): string => $state
+                                            ? 'success'
+                                            : 'danger'
+                                    ),
 
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                // معلومات النظام
                 Section::make('معلومات النظام')
                     ->description('معلومات إنشاء وتحديث وحذف الفرع')
                     ->icon('heroicon-o-clock')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(3)
                             ->schema([
-
                                 TextEntry::make('created_at')
                                     ->label('تاريخ إنشاء الفرع')
+                                    ->icon('heroicon-o-calendar-days')
                                     ->dateTime('Y-m-d H:i'),
 
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
+                                    ->icon('heroicon-o-arrow-path')
                                     ->dateTime('Y-m-d H:i'),
 
                                 TextEntry::make('deleted_at')
                                     ->label('تاريخ الحذف')
+                                    ->icon('heroicon-o-trash')
                                     ->dateTime('Y-m-d H:i')
                                     ->placeholder('غير محذوف'),
-
                             ]),
                     ])
                     ->columnSpanFull(),
-
             ]);
     }
 }

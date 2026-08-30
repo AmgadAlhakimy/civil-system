@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -24,12 +25,6 @@ class Settings extends Page
     protected static ?int $navigationSort = 5;
 
     public ?array $data = [];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Navigation
-    |--------------------------------------------------------------------------
-    */
 
     public static function getNavigationGroup(): ?string
     {
@@ -46,23 +41,11 @@ class Settings extends Page
         return 'الإعدادات';
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Mount
-    |--------------------------------------------------------------------------
-    */
-
     public function mount(): void
     {
         $settings = app(SettingService::class);
 
         $this->form->fill([
-            /*
-            |--------------------------------------------------------------------------
-            | General
-            |--------------------------------------------------------------------------
-            */
-
             'system_name' => $settings->get(
                 'system_name',
                 'السجل المدني'
@@ -78,59 +61,15 @@ class Settings extends Page
                 'Asia/Aden'
             ),
 
-            'locale' => $settings->get(
-                'locale',
-                'ar'
-            ),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Appearance
-            |--------------------------------------------------------------------------
-            */
-
             'theme' => $settings->get(
                 'theme',
                 'gold'
             ),
 
-            'sidebar_collapsed' => $settings->get(
-                'sidebar_collapsed',
-                false
-            ),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Civil Registry
-            |--------------------------------------------------------------------------
-            */
-
-            'national_id_length' => $settings->get(
-                'national_id_length',
-                11
-            ),
-
-            'family_card_number_length' => $settings->get(
-                'family_card_number_length',
-                11
-            ),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Security
-            |--------------------------------------------------------------------------
-            */
-
             'activity_log_enabled' => $settings->get(
                 'activity_log_enabled',
                 true
             ),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Backup
-            |--------------------------------------------------------------------------
-            */
 
             'automatic_backup_enabled' => $settings->get(
                 'automatic_backup_enabled',
@@ -139,160 +78,142 @@ class Settings extends Page
         ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Form
-    |--------------------------------------------------------------------------
-    */
-
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
 
-                /*
-                |--------------------------------------------------------------------------
-                | General Settings
-                |--------------------------------------------------------------------------
-                */
-
                 Section::make('الإعدادات العامة')
-                    ->description('الإعدادات الأساسية للنظام')
+                    ->description('المعلومات الأساسية والإعدادات العامة للنظام')
+                    ->icon('heroicon-o-cog-6-tooth')
                     ->schema([
+                        Grid::make(2)
+                            ->schema([
 
-                        TextInput::make('system_name')
-                            ->label('اسم النظام')
-                            ->required()
-                            ->maxLength(255),
+                                TextInput::make('system_name')
+                                    ->label('اسم النظام')
+                                    ->placeholder('مثال: السجل المدني')
+                                    ->prefixIcon('heroicon-o-building-office-2')
+                                    ->required()
+                                    ->minLength(3)
+                                    ->maxLength(255)
+                                    ->validationMessages([
+                                        'required' => 'حقل اسم النظام مطلوب',
+                                        'min' => 'يجب ألا يقل اسم النظام عن 3 أحرف',
+                                        'max' => 'يجب ألا يتجاوز اسم النظام 255 حرفًا',
+                                    ]),
 
-                        TextInput::make('organization_name')
-                            ->label('اسم الجهة')
-                            ->maxLength(255),
+                                TextInput::make('organization_name')
+                                    ->label('اسم الجهة')
+                                    ->placeholder('مثال: مصلحة الأحوال المدنية والسجل المدني')
+                                    ->prefixIcon('heroicon-o-building-library')
+                                    ->required()
+                                    ->minLength(3)
+                                    ->maxLength(255)
+                                    ->validationMessages([
+                                        'required' => 'حقل اسم الجهة مطلوب',
+                                        'min' => 'يجب ألا يقل اسم الجهة عن 3 أحرف',
+                                        'max' => 'يجب ألا يتجاوز اسم الجهة 255 حرفًا',
+                                    ]),
 
-                        Select::make('timezone')
-                            ->label('المنطقة الزمنية')
-                            ->options([
-                                'Asia/Aden' => 'اليمن - Asia/Aden',
-                                'Asia/Riyadh' => 'السعودية - Asia/Riyadh',
-                                'UTC' => 'UTC',
-                            ])
-                            ->required(),
+                                Select::make('timezone')
+                                    ->label('المنطقة الزمنية')
+                                    ->options([
+                                        'Asia/Aden' => 'اليمن - صنعاء (Asia/Aden)',
+                                        'Asia/Riyadh' => 'السعودية - الرياض (Asia/Riyadh)',
+                                        'UTC' => 'التوقيت العالمي (UTC)',
+                                    ])
+                                    ->prefixIcon('heroicon-o-clock')
+                                    ->default('Asia/Aden')
+                                    ->searchable()
+                                    ->required()
+                                    ->native(false)
+                                    ->validationMessages([
+                                        'required' => 'يرجى اختيار المنطقة الزمنية',
+                                    ]),
 
-                        Select::make('locale')
-                            ->label('لغة النظام')
-                            ->options([
-                                'ar' => 'العربية',
-                                'en' => 'English',
-                            ])
-                            ->required(),
+                                Select::make('theme')
+                                    ->label('لون النظام')
+                                    ->options(
+                                        collect(Themes::all())
+                                            ->mapWithKeys(
+                                                function (array $theme, string $key): array {
+                                                    $name = $theme['name'] ?? $key;
+                                                    $primary = $theme['css']['primary'] ?? '#d97706';
 
+                                                    return [
+                                                        $key => "
+                                                            <div class=\"flex items-center gap-3\">
+                                                                <span
+                                                                    class=\"w-7 h-7 rounded-full ring-2 ring-white shadow-sm\"
+                                                                    style=\"background-color: {$primary}\"
+                                                                ></span>
+                                                                <span>{$name}</span>
+                                                            </div>
+                                                        ",
+                                                    ];
+                                                }
+                                            )
+                                            ->toArray()
+                                    )
+                                    ->allowHtml()
+                                    ->prefixIcon('heroicon-o-swatch')
+                                    ->default('gold')
+                                    ->required()
+                                    ->native(false)
+                                    ->live()
+                                    ->afterStateUpdated(function (?string $state): void {
+                                        if ($state) {
+                                            $this->js(
+                                                'window.applyCivilTheme(' . json_encode($state) . ');'
+                                            );
+                                        }
+                                    })
+                                    ->validationMessages([
+                                        'required' => 'يرجى اختيار لون النظام',
+                                    ])
+                                    ->helperText(
+                                        'يتم تطبيق اللون مباشرة على واجهة النظام عند اختياره.'
+                                    ),
+
+                            ]),
                     ])
-                    ->columns(2),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Appearance
-                |--------------------------------------------------------------------------
-                */
-
-                Section::make('المظهر والواجهة')
-                    ->description('تخصيص مظهر لوحة التحكم وواجهة النظام')
-                    ->schema([
-
-                        Select::make('theme')
-                            ->label('لون النظام')
-                            ->options(Themes::options())
-                            ->default('gold')
-                            ->required()
-                            ->live(),
-
-                        Toggle::make('sidebar_collapsed')
-                            ->label('طي القائمة الجانبية')
-                            ->default(false),
-
-                    ])
-                    ->columns(2),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Civil Registry
-                |--------------------------------------------------------------------------
-                */
-
-                Section::make('إعدادات السجل المدني')
-                    ->description('إعدادات أرقام السجل المدني')
-                    ->schema([
-
-                        TextInput::make('national_id_length')
-                            ->label('طول الرقم الوطني')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(50)
-                            ->required(),
-
-                        TextInput::make('family_card_number_length')
-                            ->label('طول رقم البطاقة العائلية')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(50)
-                            ->required(),
-
-                    ])
-                    ->columns(2),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Security
-                |--------------------------------------------------------------------------
-                */
+                    ->columnSpanFull(),
 
                 Section::make('إعدادات الأمان')
                     ->description('إعدادات حماية ومراقبة النظام')
+                    ->icon('heroicon-o-shield-check')
                     ->schema([
-
                         Toggle::make('activity_log_enabled')
                             ->label('تفعيل سجل الأنشطة')
-                            ->default(true),
-
-                    ]),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Backup
-                |--------------------------------------------------------------------------
-                */
+                            ->helperText('تسجيل عمليات المستخدمين وتغييرات بيانات النظام لأغراض المراجعة والمتابعة.')
+                            ->default(true)
+                            ->inline(false),
+                    ])
+                    ->columnSpanFull(),
 
                 Section::make('إعدادات النسخ الاحتياطي')
                     ->description('إعدادات النسخ الاحتياطي للنظام')
+                    ->icon('heroicon-o-server-stack')
                     ->schema([
 
                         Toggle::make('automatic_backup_enabled')
                             ->label('تفعيل النسخ الاحتياطي التلقائي')
+                            ->helperText('السماح للنظام بتنفيذ النسخ الاحتياطي التلقائي')
                             ->default(true),
 
-                    ]),
+                    ])
+                    ->columnSpanFull(),
 
             ])
             ->statePath('data');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Save
-    |--------------------------------------------------------------------------
-    */
 
     public function save(): void
     {
         $data = $this->form->getState();
 
         $settings = app(SettingService::class);
-
-        /*
-        |--------------------------------------------------------------------------
-        | General
-        |--------------------------------------------------------------------------
-        */
 
         $settings->set(
             'system_name',
@@ -318,19 +239,6 @@ class Settings extends Page
         );
 
         $settings->set(
-            'locale',
-            $data['locale'],
-            'general',
-            'لغة النظام'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Appearance
-        |--------------------------------------------------------------------------
-        */
-
-        $settings->set(
             'theme',
             $data['theme'],
             'appearance',
@@ -339,51 +247,11 @@ class Settings extends Page
         );
 
         $settings->set(
-            'sidebar_collapsed',
-            (bool) $data['sidebar_collapsed'],
-            'appearance',
-            'طي القائمة الجانبية افتراضيًا',
-            true
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Civil Registry
-        |--------------------------------------------------------------------------
-        */
-
-        $settings->set(
-            'national_id_length',
-            (int) $data['national_id_length'],
-            'civil_registry',
-            'طول الرقم الوطني'
-        );
-
-        $settings->set(
-            'family_card_number_length',
-            (int) $data['family_card_number_length'],
-            'civil_registry',
-            'طول رقم البطاقة العائلية'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Security
-        |--------------------------------------------------------------------------
-        */
-
-        $settings->set(
             'activity_log_enabled',
             (bool) $data['activity_log_enabled'],
             'security',
             'تفعيل سجل الأنشطة'
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Backup
-        |--------------------------------------------------------------------------
-        */
 
         $settings->set(
             'automatic_backup_enabled',
@@ -392,40 +260,13 @@ class Settings extends Page
             'تفعيل النسخ الاحتياطي التلقائي'
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Apply Theme Immediately
-        |--------------------------------------------------------------------------
-        |
-        | لا نحتاج إلى window.location.reload()
-        |
-        | theme.blade.php يحتوي على:
-        |
-        | window.applyCivilTheme()
-        |
-        | وهذه الدالة تقوم بتحديث:
-        | - اللون الأساسي
-        | - Sidebar
-        | - Hover
-        | - الخلفية
-        | - الحدود
-        | - ألوان Filament الأساسية
-        |
-        */
-
-        $this->js("
-            window.applyCivilTheme('{$data['theme']}');
-        ");
-
-        /*
-        |--------------------------------------------------------------------------
-        | Notification
-        |--------------------------------------------------------------------------
-        */
+        $this->js(
+            'window.applyCivilTheme(' . json_encode($data['theme']) . ');'
+        );
 
         Notification::make()
             ->title('تم حفظ الإعدادات بنجاح')
-            ->body('تم تطبيق المظهر الجديد مباشرة.')
+            ->body('تم تطبيق الإعدادات الجديدة بنجاح.')
             ->success()
             ->send();
     }

@@ -36,7 +36,7 @@ public static function getRecordTitle($record): string
     {
         return 'السجل المدني';
     }
-    protected static ?string $recordTitleAttribute = 'full_name';
+//    protected static ?string $recordTitleAttribute = 'full_name';
     protected static ?string $modelLabel = 'مواطن';
 
     protected static ?string $pluralModelLabel = 'المواطنون';
