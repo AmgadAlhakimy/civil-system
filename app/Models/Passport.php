@@ -44,6 +44,12 @@ class Passport extends Model
             ->dontSubmitEmptyLogs();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | العلاقات
+    |--------------------------------------------------------------------------
+    */
+
     public function citizen(): BelongsTo
     {
         return $this->belongsTo(Citizen::class);
@@ -57,5 +63,59 @@ class Passport extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | مدة صلاحية الجواز
+    |--------------------------------------------------------------------------
+    */
+
+    public function validityYears(): int
+    {
+        return 5;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | التحقق من انتهاء الجواز
+    |--------------------------------------------------------------------------
+    */
+
+    public function isExpired(): bool
+    {
+        return $this->expiry_date !== null
+            && $this->expiry_date->isPast();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | التحقق من أن الجواز فعال
+    |--------------------------------------------------------------------------
+    */
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active'
+            && ! $this->isExpired();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | تحديث الحالة حسب تاريخ الانتهاء
+    |--------------------------------------------------------------------------
+    */
+
+    public function updateExpirationStatus(): void
+    {
+        if (
+            $this->expiry_date !== null
+            && $this->expiry_date->isPast()
+            && in_array($this->status, ['approved', 'active'], true)
+        ) {
+            $this->update([
+                'status' => 'expired',
+            ]);
+        }
     }
 }

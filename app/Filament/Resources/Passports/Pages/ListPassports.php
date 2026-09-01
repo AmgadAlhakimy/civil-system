@@ -14,7 +14,7 @@ class ListPassports extends ListRecords
     {
         return [
             CreateAction::make()
-            ->label('إصدار جواز جديد'),
+                ->label('تقديم طلب جواز'),
         ];
     }
 }

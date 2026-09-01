@@ -29,11 +29,23 @@ class PassportsTable
                     ->weight('bold')
                     ->icon('heroicon-o-identification'),
 
-                TextColumn::make('citizen.full_name')
+                TextColumn::make('citizen')
                     ->label('المواطن')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->citizen?->first_name} {$record->citizen?->father_name} {$record->citizen?->middle_name} {$record->citizen?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                                $record->citizen?->first_name,
+                                $record->citizen?->father_name,
+                                $record->citizen?->middle_name,
+                                $record->citizen?->last_name,
+                            ])
+                                ->filter()
+                                ->join(' ')
+                            . (
+                            $record->citizen?->national_id
+                                ? ' — ' . $record->citizen->national_id
+                                : ''
+                            )
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('citizen', function ($query) use ($search) {
@@ -41,11 +53,19 @@ class PassportsTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.citizen_id',
+                                $direction
+                            );
+                        }
+                    ),
 
                 TextColumn::make('type')
                     ->label('نوع الجواز')
@@ -80,15 +100,17 @@ class PassportsTable
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم الإصدار')
                     ->sortable(),
 
                 TextColumn::make('expiry_date')
                     ->label('تاريخ الانتهاء')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم تحديده')
                     ->sortable(),
 
                 TextColumn::make('issuedBy.name')
-                    ->label('تم الإصدار بواسطة')
+                    ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 

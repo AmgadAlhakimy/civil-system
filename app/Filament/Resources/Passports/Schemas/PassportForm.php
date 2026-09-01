@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Passports\Schemas;
 
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -21,16 +20,50 @@ class PassportForm
                     ->description('المعلومات الأساسية لجواز السفر')
                     ->icon('heroicon-o-identification')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(6)
                             ->schema([
 
                                 Select::make('citizen_id')
                                     ->label('المواطن')
-                                    ->relationship('citizen', 'full_name')
-                                    ->searchable()
+                                    ->relationship(
+                                        name: 'citizen',
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: fn ($query) => $query
+                                            ->orderBy('first_name')
+                                            ->orderBy('father_name')
+                                            ->orderBy('middle_name')
+                                            ->orderBy('last_name')
+                                    )
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                                $record->first_name,
+                                                $record->father_name,
+                                                $record->middle_name,
+                                                $record->last_name,
+                                            ])
+                                                ->filter()
+                                                ->join(' ')
+                                            . ' — ' . $record->national_id
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
+                                    ->columnSpan(3)
+                                    ->disabled(
+                                        fn ($record): bool => $record?->status !== null
+                                            && ! in_array($record->status, [
+                                                'pending',
+                                                'rejected',
+                                            ], true)
+                                    )
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار المواطن',
                                     ]),
@@ -38,14 +71,25 @@ class PassportForm
                                 TextInput::make('passport_number')
                                     ->label('رقم الجواز')
                                     ->required()
-                                    ->maxLength(20)
+                                    ->maxLength(9)
+                                    ->rule('regex:/^[0-9]{9}$/')
                                     ->unique(
                                         table: 'passports',
                                         column: 'passport_number',
                                         ignoreRecord: true,
                                     )
+                                    ->columnSpan(2)
+                                    ->disabled(
+                                        fn ($record): bool => $record?->status !== null
+                                            && ! in_array($record->status, [
+                                                'pending',
+                                                'rejected',
+                                            ], true)
+                                    )
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'رقم الجواز مطلوب',
+                                        'regex' => 'رقم الجواز يجب أن يتكون من 9 أرقام بالضبط',
                                         'unique' => 'رقم الجواز مسجل مسبقاً',
                                     ]),
 
@@ -58,42 +102,24 @@ class PassportForm
                                     ])
                                     ->required()
                                     ->native(false)
+                                    ->columnSpan(1)
+                                    ->disabled(
+                                        fn ($record): bool => $record?->status !== null
+                                            && ! in_array($record->status, [
+                                                'pending',
+                                                'rejected',
+                                            ], true)
+                                    )
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار نوع الجواز',
-                                    ]),
-
-                                DatePicker::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->maxDate(now())
-                                    ->default(now())
-                                    ->closeOnDateSelection()
-                                    ->validationMessages([
-                                        'required' => 'يرجى تحديد تاريخ إصدار الجواز',
-                                    ]),
-
-                                DatePicker::make('expiry_date')
-                                    ->label('تاريخ الانتهاء')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->minDate(fn ($get) => $get('issue_date'))
-                                    ->closeOnDateSelection()
-                                    ->columnSpanFull()
-                                    ->validationMessages([
-                                        'required' => 'يرجى تحديد تاريخ انتهاء الجواز',
-                                        'after' => 'يجب أن يكون تاريخ الانتهاء بعد تاريخ الإصدار',
                                     ]),
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('معلومات إضافية')
-                    ->description('ملاحظات وبيانات إضافية مرتبطة بالجواز')
+                    ->description('الملاحظات والبيانات الإضافية المرتبطة بالجواز')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Grid::make(2)
