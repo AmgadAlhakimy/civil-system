@@ -19,7 +19,6 @@ class IdentityCardsTable
     {
         return $table
             ->columns([
-
                 TextColumn::make('id_number')
                     ->label('رقم البطاقة')
                     ->searchable()
@@ -29,11 +28,18 @@ class IdentityCardsTable
                     ->weight('bold')
                     ->icon('heroicon-o-identification'),
 
-                TextColumn::make('citizen.full_name')
+                TextColumn::make('citizen')
                     ->label('المواطن')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->citizen?->first_name} {$record->citizen?->father_name} {$record->citizen?->middle_name} {$record->citizen?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->citizen?->first_name,
+                            $record->citizen?->father_name,
+                            $record->citizen?->middle_name,
+                            $record->citizen?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('citizen', function ($query) use ($search) {
@@ -41,17 +47,27 @@ class IdentityCardsTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.citizen_id',
+                                $direction
+                            );
+                        }
+                    ),
 
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
+                            'approved' => 'معتمدة',
+                            'rejected' => 'مرفوضة',
                             'active' => 'سارية',
                             'expired' => 'منتهية',
                             'cancelled' => 'ملغاة',
@@ -66,17 +82,18 @@ class IdentityCardsTable
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم الإصدار')
                     ->sortable(),
 
                 TextColumn::make('expiry_date')
                     ->label('تاريخ الانتهاء')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم تحديده')
                     ->sortable(),
 
                 TextColumn::make('issuedBy.name')
-                    ->label('تم الإصدار بواسطة')
+                    ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
-                    ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('approvedBy.name')
@@ -111,11 +128,12 @@ class IdentityCardsTable
             ])
 
             ->filters([
-
                 SelectFilter::make('status')
                     ->label('حالة البطاقة')
                     ->options([
                         'pending' => 'قيد الانتظار',
+                        'approved' => 'معتمدة',
+                        'rejected' => 'مرفوضة',
                         'active' => 'سارية',
                         'expired' => 'منتهية',
                         'cancelled' => 'ملغاة',
@@ -128,7 +146,6 @@ class IdentityCardsTable
             ])
 
             ->recordActions([
-
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye'),
@@ -139,9 +156,7 @@ class IdentityCardsTable
             ])
 
             ->toolbarActions([
-
                 BulkActionGroup::make([
-
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->requiresConfirmation()
@@ -152,7 +167,7 @@ class IdentityCardsTable
                         ->modalSubmitActionLabel('نعم، حذف'),
 
                     RestoreBulkAction::make()
-                        ->label('استعادة المحدد')
+                        ->label('استعادة البطاقات')
                         ->requiresConfirmation()
                         ->modalHeading('استعادة البطاقات')
                         ->modalDescription(
@@ -168,7 +183,6 @@ class IdentityCardsTable
                             'تحذير: سيتم حذف البطاقات نهائيًا ولا يمكن استعادتها.'
                         )
                         ->modalSubmitActionLabel('نعم، حذف نهائي'),
-
                 ])
                     ->label('إجراءات جماعية'),
             ])

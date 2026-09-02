@@ -23,6 +23,7 @@ class EditIdentityCard extends EditRecord
         unset(
             $data['issued_by'],
             $data['issue_date'],
+            $data['expiry_date'],
             $data['approved_by'],
             $data['approved_at'],
             $data['print_count'],
@@ -40,13 +41,13 @@ class EditIdentityCard extends EditRecord
                 ->icon('heroicon-o-eye'),
 
             DeleteAction::make()
-                ->label('حذف'),
+                ->label('حذف البطاقة'),
 
             ForceDeleteAction::make()
                 ->label('حذف نهائي'),
 
             RestoreAction::make()
-                ->label('استعادة'),
+                ->label('استعادة البطاقة'),
         ];
     }
 }

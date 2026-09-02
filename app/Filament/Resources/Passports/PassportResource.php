@@ -23,12 +23,14 @@ class PassportResource extends Resource
     protected static ?string $model = Passport::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
     protected static ?int $navigationSort = 2;
 
     public static function getNavigationGroup(): ?string
     {
         return 'السجل المدني';
     }
+
     protected static ?string $recordTitleAttribute = 'passport_number';
 
     protected static ?string $modelLabel = 'جواز';
@@ -57,9 +59,7 @@ class PassportResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

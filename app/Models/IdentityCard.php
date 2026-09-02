@@ -2,20 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class IdentityCard extends Model
 {
-    use HasFactory;
-    use HasUuids;
-    use SoftDeletes;
-    use LogsActivity;
+    use HasFactory, HasUuids, SoftDeletes, LogsActivity;
 
     protected $keyType = 'string';
 
@@ -66,5 +63,35 @@ class IdentityCard extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function validityYears(): int
+    {
+        return 5;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expiry_date !== null
+            && $this->expiry_date->isPast();
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active'
+            && ! $this->isExpired();
+    }
+
+    public function updateExpirationStatus(): void
+    {
+        if (
+            $this->expiry_date !== null
+            && $this->expiry_date->isPast()
+            && $this->status === 'active'
+        ) {
+            $this->update([
+                'status' => 'expired',
+            ]);
+        }
     }
 }

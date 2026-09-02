@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\IdentityCards\Schemas;
 
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -16,22 +15,46 @@ class IdentityCardForm
     {
         return $schema
             ->components([
-
                 Section::make('بيانات البطاقة الشخصية')
                     ->description('المعلومات الأساسية للبطاقة الشخصية')
                     ->icon('heroicon-o-identification')
                     ->schema([
-
                         Grid::make(2)
                             ->schema([
-
                                 Select::make('citizen_id')
                                     ->label('المواطن')
-                                    ->relationship('citizen', 'full_name')
-                                    ->searchable()
+                                    ->relationship(
+                                        name: 'citizen',
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: fn ($query) => $query
+                                            ->orderBy('first_name')
+                                            ->orderBy('father_name')
+                                            ->orderBy('middle_name')
+                                            ->orderBy('last_name')
+                                    )
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                                $record->first_name,
+                                                $record->father_name,
+                                                $record->middle_name,
+                                                $record->last_name,
+                                            ])
+                                                ->filter()
+                                                ->join(' ')
+                                            . ' — ' . $record->national_id
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
+                                    ->disabled(fn ($record): bool => $record !== null)
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار المواطن',
                                     ]),
@@ -39,10 +62,8 @@ class IdentityCardForm
                                 TextInput::make('id_number')
                                     ->label('رقم البطاقة')
                                     ->required()
-                                    ->numeric()
-                                    ->rules([
-                                        'digits:11',
-                                    ])
+                                    ->maxLength(11)
+                                    ->rule('regex:/^[0-9]{11}$/')
                                     ->unique(
                                         table: 'identity_cards',
                                         column: 'id_number',
@@ -50,32 +71,8 @@ class IdentityCardForm
                                     )
                                     ->validationMessages([
                                         'required' => 'رقم البطاقة مطلوب',
-                                        'digits' => 'يجب أن يتكون رقم البطاقة من 11 رقمًا بالضبط',
-                                        'numeric' => 'رقم البطاقة يجب أن يحتوي على أرقام فقط',
+                                        'regex' => 'رقم البطاقة يجب أن يتكون من 11 رقمًا بالضبط',
                                         'unique' => 'رقم البطاقة مسجل مسبقًا',
-                                    ]),
-
-                                DatePicker::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->default(now())
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->maxDate(now())
-                                    ->disabled()
-                                    ->dehydrated(),
-
-                                DatePicker::make('expiry_date')
-                                    ->label('تاريخ الانتهاء')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->minDate(fn ($get) => $get('issue_date'))
-                                    ->closeOnDateSelection()
-                                    ->validationMessages([
-                                        'required' => 'يرجى تحديد تاريخ انتهاء البطاقة',
                                     ]),
                             ]),
                     ])
@@ -85,10 +82,8 @@ class IdentityCardForm
                     ->description('ملاحظات وبيانات إضافية مرتبطة بالبطاقة')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
-
                         Grid::make(2)
                             ->schema([
-
                                 Textarea::make('notes')
                                     ->label('ملاحظات')
                                     ->rows(4)
@@ -97,11 +92,9 @@ class IdentityCardForm
                                 Textarea::make('qr_code')
                                     ->label('رمز QR')
                                     ->rows(4),
-
                             ]),
                     ])
                     ->columnSpanFull(),
-
             ]);
     }
 }

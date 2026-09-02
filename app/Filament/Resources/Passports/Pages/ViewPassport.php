@@ -41,9 +41,10 @@ class ViewPassport extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد الجواز')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد هذا الجواز؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 5 سنوات.'
+                    'هل أنت متأكد من اعتماد هذا الجواز؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 5 سنوات، وسيصبح الجواز ساريًا.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
+                ->modalCancelActionLabel('إلغاء')
                 ->visible(fn (): bool => $this->record->status === 'pending')
                 ->action(function (): void {
                     if ($this->record->status !== 'pending') {
@@ -59,7 +60,7 @@ class ViewPassport extends ViewRecord
                     $issueDate = now();
 
                     $this->record->update([
-                        'status' => 'approved',
+                        'status' => 'active',
                         'approved_by' => auth()->id(),
                         'approved_at' => $issueDate,
                         'issue_date' => $issueDate->toDateString(),
@@ -71,7 +72,7 @@ class ViewPassport extends ViewRecord
 
                     Notification::make()
                         ->title('تم اعتماد الجواز بنجاح')
-                        ->body('تم تحديد تاريخ الإصدار وتاريخ الانتهاء لمدة 5 سنوات.')
+                        ->body('تم إصدار الجواز وأصبح ساريًا لمدة 5 سنوات.')
                         ->success()
                         ->send();
 
@@ -86,60 +87,6 @@ class ViewPassport extends ViewRecord
                     ]);
                 }),
 
-            Action::make('activate')
-                ->label('تفعيل الجواز')
-                ->icon('heroicon-o-bolt')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalHeading('تفعيل الجواز')
-                ->modalDescription(
-                    'هل أنت متأكد من تفعيل هذا الجواز؟ بعد التفعيل سيصبح الجواز فعالًا وصالحًا للاستخدام.'
-                )
-                ->modalSubmitActionLabel('نعم، تفعيل')
-                ->visible(fn (): bool => $this->record->status === 'approved')
-                ->action(function (): void {
-                    if ($this->record->status !== 'approved') {
-                        Notification::make()
-                            ->title('لا يمكن تفعيل الجواز')
-                            ->body('يجب اعتماد الجواز أولًا.')
-                            ->warning()
-                            ->send();
-
-                        return;
-                    }
-
-                    if (
-                        ! $this->record->issue_date
-                        || ! $this->record->expiry_date
-                        || ! $this->record->approved_by
-                        || ! $this->record->approved_at
-                    ) {
-                        Notification::make()
-                            ->title('لا يمكن تفعيل الجواز')
-                            ->body('بيانات الاعتماد والإصدار غير مكتملة.')
-                            ->danger()
-                            ->send();
-
-                        return;
-                    }
-
-                    $this->record->update([
-                        'status' => 'active',
-                    ]);
-
-                    Notification::make()
-                        ->title('تم تفعيل الجواز بنجاح')
-                        ->body('أصبح الجواز الآن فعالًا وصالحًا للاستخدام.')
-                        ->success()
-                        ->send();
-
-                    $this->record->refresh();
-
-                    $this->refreshFormData([
-                        'status',
-                    ]);
-                }),
-
             Action::make('print')
                 ->label('طباعة الجواز')
                 ->icon('heroicon-o-printer')
@@ -150,12 +97,13 @@ class ViewPassport extends ViewRecord
                     'هل أنت متأكد من طباعة هذا الجواز؟ سيتم تسجيل عملية الطباعة في النظام.'
                 )
                 ->modalSubmitActionLabel('نعم، طباعة')
+                ->modalCancelActionLabel('إلغاء')
                 ->visible(fn (): bool => $this->record->status === 'active')
                 ->action(function () {
                     if ($this->record->status !== 'active') {
                         Notification::make()
                             ->title('لا يمكن طباعة الجواز')
-                            ->body('يجب أن يكون الجواز فعالًا قبل طباعته.')
+                            ->body('يجب أن يكون الجواز ساريًا قبل طباعته.')
                             ->warning()
                             ->send();
 
@@ -197,9 +145,8 @@ class ViewPassport extends ViewRecord
 
                     $status = match ($this->record->status) {
                         'pending' => 'قيد الانتظار',
-                        'approved' => 'معتمد',
                         'rejected' => 'مرفوض',
-                        'active' => 'فعال',
+                        'active' => 'ساري',
                         'expired' => 'منتهي',
                         'cancelled' => 'ملغي',
                         'lost' => 'مفقود',
@@ -299,6 +246,7 @@ class ViewPassport extends ViewRecord
                     'هل أنت متأكد من رفض هذا الجواز؟'
                 )
                 ->modalSubmitActionLabel('نعم، رفض')
+                ->modalCancelActionLabel('إلغاء')
                 ->visible(fn (): bool => $this->record->status === 'pending')
                 ->action(function (): void {
                     if ($this->record->status !== 'pending') {
@@ -313,6 +261,10 @@ class ViewPassport extends ViewRecord
 
                     $this->record->update([
                         'status' => 'rejected',
+                        'approved_by' => null,
+                        'approved_at' => null,
+                        'issue_date' => null,
+                        'expiry_date' => null,
                     ]);
 
                     Notification::make()
@@ -325,6 +277,10 @@ class ViewPassport extends ViewRecord
 
                     $this->refreshFormData([
                         'status',
+                        'approved_by',
+                        'approved_at',
+                        'issue_date',
+                        'expiry_date',
                     ]);
                 }),
 

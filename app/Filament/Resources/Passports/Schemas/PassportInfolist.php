@@ -61,9 +61,8 @@ class PassportInfolist
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',
-                                            'approved' => 'معتمد',
                                             'rejected' => 'مرفوض',
-                                            'active' => 'فعال',
+                                            'active' => 'ساري',
                                             'expired' => 'منتهي',
                                             'cancelled' => 'ملغي',
                                             'lost' => 'مفقود',

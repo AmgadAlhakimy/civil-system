@@ -6,13 +6,9 @@ use App\Models\Citizen;
 use App\Models\IdentityCard;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class IdentityCardSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $citizens = Citizen::query()
@@ -26,36 +22,25 @@ class IdentityCardSeeder extends Seeder
         }
 
         foreach ($citizens as $index => $citizen) {
+            $issueDate = now()->subYear();
 
             IdentityCard::create([
-                'id' => (string) Str::uuid(),
-
                 'citizen_id' => $citizen->id,
-
-                'id_number' => 'ID' . str_pad(
-                        $index + 1,
-                        8,
-                        '0',
-                        STR_PAD_LEFT
-                    ),
-
-                'issue_date' => now()->subYear(),
-
-                'expiry_date' => now()->addYears(4),
-
+                'id_number' => str_pad(
+                    (string) ($index + 1),
+                    11,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+                'issue_date' => $issueDate,
+                'expiry_date' => $issueDate->copy()->addYears(5),
                 'status' => 'active',
-
                 'notes' => null,
-
                 'qr_code' => null,
-
                 'print_count' => 1,
-
                 'issued_by' => $user->id,
-
                 'approved_by' => $user->id,
-
-                'approved_at' => now(),
+                'approved_at' => $issueDate,
             ]);
         }
     }

@@ -16,14 +16,14 @@ class CreatePassport extends CreateRecord
         $existingPassport = Passport::query()
             ->where('citizen_id', $data['citizen_id'])
             ->where('type', $data['type'])
-            ->whereIn('status', ['pending', 'approved', 'active'])
+            ->whereIn('status', ['pending', 'active'])
             ->exists();
 
         if ($existingPassport) {
             Notification::make()
                 ->danger()
                 ->title('لا يمكن إنشاء الجواز')
-                ->body('هذا المواطن لديه بالفعل جواز من نفس النوع قيد المعالجة أو ساري المفعول.')
+                ->body('هذا المواطن لديه بالفعل طلب جواز من نفس النوع قيد المعالجة أو جواز ساري المفعول.')
                 ->persistent()
                 ->send();
 

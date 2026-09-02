@@ -248,7 +248,7 @@
         return $arabic->utf8Glyphs($text);
     };
 
-    $citizen = $passport->citizen;
+    $citizen = $identityCard->citizen;
 
     $fullName = collect([
         $citizen?->first_name,
@@ -261,48 +261,42 @@
 
     $fullName = $shapeArabic($fullName);
 
-    $type = match ($passport->type) {
-        'ordinary' => $shapeArabic('عادي'),
-        'diplomatic' => $shapeArabic('دبلوماسي'),
-        'official' => $shapeArabic('رسمي'),
-        default => $shapeArabic('غير محدد'),
-    };
-
-    $status = match ($passport->status) {
+    $status = match ($identityCard->status) {
         'pending' => $shapeArabic('قيد الانتظار'),
         'approved' => $shapeArabic('معتمد'),
         'rejected' => $shapeArabic('مرفوض'),
-        'active' => $shapeArabic('فعال'),
-        'expired' => $shapeArabic('منتهي'),
-        'cancelled' => $shapeArabic('ملغي'),
-        'lost' => $shapeArabic('مفقود'),
-        'damaged' => $shapeArabic('تالف'),
+        'active' => $shapeArabic('سارية'),
+        'expired' => $shapeArabic('منتهية'),
+        'cancelled' => $shapeArabic('ملغاة'),
+        'lost' => $shapeArabic('مفقودة'),
+        'damaged' => $shapeArabic('تالفة'),
         default => $shapeArabic('غير محدد'),
     };
 
-    $authority = $shapeArabic('مصلحة الهجرة والجوازات - اليمن');
+    $authority = $shapeArabic('مصلحة الأحوال المدنية والسجل المدني - اليمن');
 
     $photoPlaceholder = $shapeArabic('صورة غير متوفرة');
-    $photoLabel = $shapeArabic('صورة صاحب الجواز');
+    $photoLabel = $shapeArabic('صورة صاحب البطاقة');
     $qrTitle = $shapeArabic('رمز التحقق الإلكتروني');
+
     $footerText1 = $shapeArabic(
-        'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني والجوازات بالجمهورية اليمنية.'
+        'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني بالجمهورية اليمنية.'
     );
+
     $footerText2 = $shapeArabic(
         'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
     );
 
-    $passportNumberLabel = $shapeArabic('رقم الجواز');
+    $idNumberLabel = $shapeArabic('رقم البطاقة');
     $nationalIdLabel = $shapeArabic('الرقم الوطني');
     $fullNameLabel = $shapeArabic('الاسم الكامل');
-    $typeLabel = $shapeArabic('نوع الجواز');
-    $statusLabel = $shapeArabic('حالة الجواز');
+    $statusLabel = $shapeArabic('حالة البطاقة');
     $issueDateLabel = $shapeArabic('تاريخ الإصدار');
     $expiryDateLabel = $shapeArabic('تاريخ الانتهاء');
     $authorityLabel = $shapeArabic('جهة الإصدار');
 
     $documentTitle = $shapeArabic('الجمهورية اليمنية');
-    $documentSubtitle = $shapeArabic('مستخرج بيانات جواز سفر');
+    $documentSubtitle = $shapeArabic('مستخرج بيانات بطاقة شخصية');
 
     $photo = $citizen?->photo;
 @endphp
@@ -331,14 +325,14 @@
 
                     <tr>
                         <th>
-                            {{ $passportNumberLabel }}
+                            {{ $idNumberLabel }}
                             <br>
-                            <span class="label-en">Passport No.</span>
+                            <span class="label-en">Identity Card No.</span>
                         </th>
 
                         <td>
                             <span class="document-number">
-                                {{ $passport->passport_number }}
+                                {{ $identityCard->id_number }}
                             </span>
                         </td>
                     </tr>
@@ -373,20 +367,6 @@
 
                     <tr>
                         <th>
-                            {{ $typeLabel }}
-                            <br>
-                            <span class="label-en">Type</span>
-                        </th>
-
-                        <td>
-                            <span class="arabic-text">
-                                {{ $type }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>
                             {{ $statusLabel }}
                             <br>
                             <span class="label-en">Status</span>
@@ -408,7 +388,7 @@
 
                         <td>
                             <span class="ltr-text">
-                                {{ $passport->issue_date?->format('Y-m-d') ?? '---' }}
+                                {{ $identityCard->issue_date?->format('Y-m-d') ?? '---' }}
                             </span>
                         </td>
                     </tr>
@@ -422,7 +402,7 @@
 
                         <td>
                             <span class="ltr-text">
-                                {{ $passport->expiry_date?->format('Y-m-d') ?? '---' }}
+                                {{ $identityCard->expiry_date?->format('Y-m-d') ?? '---' }}
                             </span>
                         </td>
                     </tr>
@@ -484,7 +464,7 @@
         </div>
 
         <div class="qr-box">
-            {{ $passport->qr_code ?: $passport->passport_number }}
+            {{ $identityCard->qr_code ?: $identityCard->id_number }}
         </div>
 
         <div class="footer-text">

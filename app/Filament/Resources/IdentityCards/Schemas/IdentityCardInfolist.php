@@ -13,56 +13,69 @@ class IdentityCardInfolist
     {
         return $schema
             ->components([
-
                 Section::make('بيانات البطاقة الشخصية')
                     ->description('المعلومات الأساسية للبطاقة الشخصية')
                     ->icon('heroicon-o-identification')
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextEntry::make('id_number')
                                     ->label('رقم البطاقة')
+                                    ->weight('bold')
                                     ->copyable()
                                     ->copyMessage('تم نسخ رقم البطاقة'),
 
-                                TextEntry::make('citizen.full_name')
-                                    ->label('المواطن'),
+                                TextEntry::make('citizen')
+                                    ->label('المواطن')
+                                    ->formatStateUsing(
+                                        fn ($record): string => collect([
+                                            $record->citizen?->first_name,
+                                            $record->citizen?->father_name,
+                                            $record->citizen?->middle_name,
+                                            $record->citizen?->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    ),
 
                                 TextEntry::make('status')
                                     ->label('حالة البطاقة')
                                     ->badge()
-                                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                                        'pending' => 'قيد الانتظار',
-                                        'active' => 'سارية',
-                                        'expired' => 'منتهية',
-                                        'cancelled' => 'ملغاة',
-                                        'lost' => 'مفقودة',
-                                        'damaged' => 'تالفة',
-                                        default => 'غير محدد',
-                                    }),
+                                    ->formatStateUsing(
+                                        fn (?string $state): string => match ($state) {
+                                            'pending' => 'قيد الانتظار',
+                                            'rejected' => 'مرفوضة',
+                                            'active' => 'سارية',
+                                            'expired' => 'منتهية',
+                                            'cancelled' => 'ملغاة',
+                                            'lost' => 'مفقودة',
+                                            'damaged' => 'تالفة',
+                                            default => 'غير محدد',
+                                        }
+                                    ),
 
                                 TextEntry::make('issue_date')
                                     ->label('تاريخ الإصدار')
-                                    ->date('Y-m-d'),
+                                    ->date('d/m/Y')
+                                    ->placeholder('لم يتم الإصدار بعد'),
 
                                 TextEntry::make('expiry_date')
                                     ->label('تاريخ الانتهاء')
-                                    ->date('Y-m-d'),
-
+                                    ->date('d/m/Y')
+                                    ->placeholder('لم يتم تحديده بعد'),
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('بيانات الإصدار والاعتماد')
-                    ->description('المعلومات النظامية المتعلقة بإصدار واعتماد البطاقة')
+                    ->description('المعلومات النظامية المتعلقة بإنشاء واعتماد البطاقة')
                     ->icon('heroicon-o-shield-check')
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextEntry::make('issuedBy.name')
-                                    ->label('تم الإصدار بواسطة'),
+                                    ->label('تم إنشاء الطلب بواسطة')
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('approvedBy.name')
                                     ->label('تم الاعتماد بواسطة')
@@ -70,24 +83,22 @@ class IdentityCardInfolist
 
                                 TextEntry::make('approved_at')
                                     ->label('تاريخ ووقت الاعتماد')
-                                    ->dateTime('Y-m-d H:i')
+                                    ->dateTime('d/m/Y H:i')
                                     ->placeholder('لم يتم الاعتماد بعد'),
 
                                 TextEntry::make('print_count')
                                     ->label('عدد مرات الطباعة')
                                     ->numeric(),
-
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('معلومات إضافية')
-                    ->description('الملاحظات والبيانات الإضافية')
+                    ->description('ملاحظات وبيانات إضافية مرتبطة بالبطاقة')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextEntry::make('notes')
                                     ->label('ملاحظات')
                                     ->placeholder('لا توجد ملاحظات')
@@ -97,7 +108,6 @@ class IdentityCardInfolist
                                     ->label('رمز QR')
                                     ->placeholder('لا يوجد رمز QR')
                                     ->columnSpanFull(),
-
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -108,24 +118,21 @@ class IdentityCardInfolist
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextEntry::make('created_at')
                                     ->label('تاريخ التسجيل')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('d/m/Y H:i'),
 
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('d/m/Y H:i'),
 
                                 TextEntry::make('deleted_at')
                                     ->label('تاريخ الحذف')
-                                    ->dateTime('Y-m-d H:i')
+                                    ->dateTime('d/m/Y H:i')
                                     ->placeholder('غير محذوف'),
-
                             ]),
                     ])
                     ->columnSpanFull(),
-
             ]);
     }
 }

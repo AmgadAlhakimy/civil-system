@@ -33,18 +33,13 @@ class PassportsTable
                     ->label('المواطن')
                     ->getStateUsing(
                         fn ($record): string => collect([
-                                $record->citizen?->first_name,
-                                $record->citizen?->father_name,
-                                $record->citizen?->middle_name,
-                                $record->citizen?->last_name,
-                            ])
-                                ->filter()
-                                ->join(' ')
-                            . (
-                            $record->citizen?->national_id
-                                ? ' — ' . $record->citizen->national_id
-                                : ''
-                            )
+                            $record->citizen?->first_name,
+                            $record->citizen?->father_name,
+                            $record->citizen?->middle_name,
+                            $record->citizen?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
                     )
                     ->searchable(
                         query: function ($query, string $search): void {
@@ -84,9 +79,8 @@ class PassportsTable
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
-                            'approved' => 'معتمد',
                             'rejected' => 'مرفوض',
-                            'active' => 'فعال',
+                            'active' => 'ساري',
                             'expired' => 'منتهي',
                             'cancelled' => 'ملغي',
                             'lost' => 'مفقود',
@@ -158,9 +152,8 @@ class PassportsTable
                     ->label('حالة الجواز')
                     ->options([
                         'pending' => 'قيد الانتظار',
-                        'approved' => 'معتمد',
                         'rejected' => 'مرفوض',
-                        'active' => 'فعال',
+                        'active' => 'ساري',
                         'expired' => 'منتهي',
                         'cancelled' => 'ملغي',
                         'lost' => 'مفقود',
@@ -177,7 +170,7 @@ class PassportsTable
                     ->icon('heroicon-o-eye'),
 
                 EditAction::make()
-                    ->label('تعديل')
+                    ->label('تعديل الجواز')
                     ->icon('heroicon-o-pencil-square'),
             ])
 

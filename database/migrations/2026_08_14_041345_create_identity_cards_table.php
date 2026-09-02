@@ -6,25 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('identity_cards', function (Blueprint $table) {
-
             $table->uuid('id')->primary();
 
             $table->uuid('citizen_id');
 
             $table->string('id_number', 20)->unique();
 
-            $table->date('issue_date');
-
-            $table->date('expiry_date');
-
             $table->enum('status', [
                 'pending',
+                'rejected',
                 'active',
                 'expired',
                 'cancelled',
@@ -32,27 +25,20 @@ return new class extends Migration
                 'damaged',
             ])->default('pending');
 
-            $table->text('notes')->nullable();
+            $table->date('issue_date')->nullable();
+            $table->date('expiry_date')->nullable();
 
+            $table->text('notes')->nullable();
             $table->text('qr_code')->nullable();
 
             $table->integer('print_count')->default(0);
 
             $table->uuid('issued_by');
-
             $table->uuid('approved_by')->nullable();
-
             $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
-
             $table->softDeletes();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Foreign Keys
-            |--------------------------------------------------------------------------
-            */
 
             $table->foreign('citizen_id')
                 ->references('id')
@@ -69,12 +55,6 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Indexes
-            |--------------------------------------------------------------------------
-            */
-
             $table->index('status');
             $table->index('issue_date');
             $table->index('expiry_date');
@@ -82,9 +62,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('identity_cards');
