@@ -50,6 +50,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Foreign Keys
+            |--------------------------------------------------------------------------
+            */
+
             $table->foreign('citizen_id')
                 ->references('id')
                 ->on('citizens')
@@ -58,7 +64,7 @@ return new class extends Migration
             $table->foreign('branch_id')
                 ->references('id')
                 ->on('branches')
-                ->onDelete('cascade');
+                ->onDelete('restrict');
 
             $table->foreign('user_id')
                 ->references('id')
@@ -70,12 +76,24 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
+            /*
+            |--------------------------------------------------------------------------
+            | Indexes
+            |--------------------------------------------------------------------------
+            */
+
             $table->index('citizen_id');
             $table->index('branch_id');
             $table->index('user_id');
             $table->index('appointment_date');
             $table->index('status');
             $table->index('service_type');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prevent Duplicate Appointment Slot
+            |--------------------------------------------------------------------------
+            */
 
             $table->unique([
                 'branch_id',

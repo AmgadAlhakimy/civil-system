@@ -49,16 +49,31 @@ class CitizensTable
 
                 TextColumn::make('full_name')
                     ->label('الاسم الكامل')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->first_name} {$record->father_name} {$record->middle_name} {$record->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => trim(
+                            implode(' ', array_filter([
+                                $record->first_name,
+                                $record->father_name,
+                                $record->middle_name,
+                                $record->last_name,
+                            ]))
+                        )
+                    )
                     ->searchable([
                         'first_name',
                         'father_name',
                         'middle_name',
                         'last_name',
                     ])
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query
+                                ->orderBy('first_name', $direction)
+                                ->orderBy('father_name', $direction)
+                                ->orderBy('middle_name', $direction)
+                                ->orderBy('last_name', $direction);
+                        }
+                    ),
 
                 TextColumn::make('gender')
                     ->label('الجنس')

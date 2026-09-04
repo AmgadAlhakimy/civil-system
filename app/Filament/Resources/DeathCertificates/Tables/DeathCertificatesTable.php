@@ -53,7 +53,22 @@ class DeathCertificatesTable
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query
+                                ->join(
+                                    'citizens',
+                                    'death_certificates.deceased_id',
+                                    '=',
+                                    'citizens.id'
+                                )
+                                ->orderBy('citizens.first_name', $direction)
+                                ->orderBy('citizens.father_name', $direction)
+                                ->orderBy('citizens.middle_name', $direction)
+                                ->orderBy('citizens.last_name', $direction)
+                                ->select('death_certificates.*');
+                        }
+                    ),
 
                 TextColumn::make('deceased.national_id')
                     ->label('الرقم الوطني')

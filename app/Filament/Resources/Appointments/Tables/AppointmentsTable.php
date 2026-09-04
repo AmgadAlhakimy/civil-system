@@ -19,14 +19,18 @@ class AppointmentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('citizen.full_name')
+                TextColumn::make('citizen')
                     ->label('المواطن')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->citizen?->first_name} " .
-                        "{$record->citizen?->father_name} " .
-                        "{$record->citizen?->middle_name} " .
-                        "{$record->citizen?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => trim(
+                            implode(' ', array_filter([
+                                $record->citizen?->first_name,
+                                $record->citizen?->father_name,
+                                $record->citizen?->middle_name,
+                                $record->citizen?->last_name,
+                            ]))
+                        ) ?: 'غير محدد'
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('citizen', function ($query) use ($search) {
@@ -39,7 +43,22 @@ class AppointmentsTable
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query
+                                ->join(
+                                    'citizens',
+                                    'appointments.citizen_id',
+                                    '=',
+                                    'citizens.id'
+                                )
+                                ->orderBy('citizens.first_name', $direction)
+                                ->orderBy('citizens.father_name', $direction)
+                                ->orderBy('citizens.middle_name', $direction)
+                                ->orderBy('citizens.last_name', $direction)
+                                ->select('appointments.*');
+                        }
+                    ),
 
                 TextColumn::make('branch.name')
                     ->label('الفرع')
@@ -53,16 +72,20 @@ class AppointmentsTable
                         fn (?string $state): string => match ($state) {
                             'passport_new' => 'إصدار جواز سفر',
                             'passport_renew' => 'تجديد جواز سفر',
-                            'passport_lost' => 'بدل فاقد جواز سفر',
-                            'passport_damaged' => 'بدل تالف جواز سفر',
+                            'passport_lost' => 'بدل فاقد لجواز السفر',
+                            'passport_damaged' => 'بدل تالف لجواز السفر',
+
                             'national_id_new' => 'إصدار بطاقة شخصية',
                             'national_id_renew' => 'تجديد بطاقة شخصية',
-                            'national_id_lost' => 'بدل فاقد بطاقة شخصية',
-                            'national_id_damaged' => 'بدل تالف بطاقة شخصية',
+                            'national_id_lost' => 'بدل فاقد للبطاقة الشخصية',
+                            'national_id_damaged' => 'بدل تالف للبطاقة الشخصية',
+
                             'family_card_new' => 'إصدار بطاقة عائلية',
                             'family_card_renew' => 'تجديد بطاقة عائلية',
+
                             'birth_certificate' => 'إصدار شهادة ميلاد',
                             'death_certificate' => 'إصدار شهادة وفاة',
+
                             default => $state ?? 'غير محدد',
                         }
                     )
@@ -101,16 +124,16 @@ class AppointmentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('confirmedBy.name')
-                    ->label('تم الاعتماد بواسطة')
+                    ->label('تم التأكيد بواسطة')
                     ->sortable()
-                    ->placeholder('لم يتم الاعتماد')
+                    ->placeholder('لم يتم التأكيد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('confirmed_at')
-                    ->label('تاريخ الاعتماد')
+                    ->label('تاريخ التأكيد')
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
-                    ->placeholder('لم يتم الاعتماد')
+                    ->placeholder('لم يتم التأكيد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('notes')
@@ -153,14 +176,17 @@ class AppointmentsTable
                     ->options([
                         'passport_new' => 'إصدار جواز سفر',
                         'passport_renew' => 'تجديد جواز سفر',
-                        'passport_lost' => 'بدل فاقد جواز سفر',
-                        'passport_damaged' => 'بدل تالف جواز سفر',
+                        'passport_lost' => 'بدل فاقد لجواز السفر',
+                        'passport_damaged' => 'بدل تالف لجواز السفر',
+
                         'national_id_new' => 'إصدار بطاقة شخصية',
                         'national_id_renew' => 'تجديد بطاقة شخصية',
-                        'national_id_lost' => 'بدل فاقد بطاقة شخصية',
-                        'national_id_damaged' => 'بدل تالف بطاقة شخصية',
+                        'national_id_lost' => 'بدل فاقد للبطاقة الشخصية',
+                        'national_id_damaged' => 'بدل تالف للبطاقة الشخصية',
+
                         'family_card_new' => 'إصدار بطاقة عائلية',
                         'family_card_renew' => 'تجديد بطاقة عائلية',
+
                         'birth_certificate' => 'إصدار شهادة ميلاد',
                         'death_certificate' => 'إصدار شهادة وفاة',
                     ]),

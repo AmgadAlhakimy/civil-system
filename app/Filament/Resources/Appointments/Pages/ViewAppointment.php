@@ -54,10 +54,105 @@ class ViewAppointment extends ViewRecord
                     ]);
                 }),
 
+            Action::make('attended')
+                ->label('تم الحضور')
+                ->icon('heroicon-o-user')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('تسجيل الحضور')
+                ->modalDescription(
+                    'هل أنت متأكد من تسجيل حضور المواطن لهذا الموعد؟'
+                )
+                ->modalSubmitActionLabel('نعم، تم الحضور')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(fn (): bool => $this->record->status === 'confirmed')
+                ->action(function (): void {
+
+                    $this->record->update([
+                        'status' => 'attended',
+                    ]);
+
+                    Notification::make()
+                        ->title('تم تسجيل الحضور')
+                        ->body('تم تسجيل حضور المواطن بنجاح.')
+                        ->success()
+                        ->send();
+
+                    $this->refreshFormData([
+                        'status',
+                    ]);
+                }),
+
+            Action::make('no_show')
+                ->label('لم يحضر')
+                ->icon('heroicon-o-user-minus')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('تسجيل عدم الحضور')
+                ->modalDescription(
+                    'هل أنت متأكد من أن المواطن لم يحضر لهذا الموعد؟'
+                )
+                ->modalSubmitActionLabel('نعم، لم يحضر')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(fn (): bool => $this->record->status === 'confirmed')
+                ->action(function (): void {
+
+                    $this->record->update([
+                        'status' => 'no_show',
+                    ]);
+
+                    Notification::make()
+                        ->title('تم تسجيل عدم الحضور')
+                        ->body('تم تسجيل الموعد على أنه لم يحضر.')
+                        ->warning()
+                        ->send();
+
+                    $this->refreshFormData([
+                        'status',
+                    ]);
+                }),
+
+            Action::make('cancel')
+                ->label('إلغاء الموعد')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('إلغاء الموعد')
+                ->modalDescription(
+                    'هل أنت متأكد من إلغاء هذا الموعد؟ لا يمكن التراجع عن هذه العملية من هذه الصفحة.'
+                )
+                ->modalSubmitActionLabel('نعم، إلغاء الموعد')
+                ->modalCancelActionLabel('تراجع')
+                ->visible(fn (): bool => in_array(
+                    $this->record->status,
+                    ['pending', 'confirmed'],
+                    true
+                ))
+                ->action(function (): void {
+
+                    $this->record->update([
+                        'status' => 'cancelled',
+                    ]);
+
+                    Notification::make()
+                        ->title('تم إلغاء الموعد')
+                        ->body('تم إلغاء الموعد بنجاح.')
+                        ->danger()
+                        ->send();
+
+                    $this->refreshFormData([
+                        'status',
+                    ]);
+                }),
+
             EditAction::make()
                 ->label('تعديل')
-                ->icon('heroicon-o-pencil-square'),
-
+                ->icon('heroicon-o-pencil-square')
+                ->visible(fn (): bool => in_array(
+                    $this->record->status,
+                    ['pending', 'confirmed'],
+                    true
+                )),
         ];
     }
 }

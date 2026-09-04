@@ -14,11 +14,6 @@ class AppointmentInfolist
         return $schema
             ->components([
 
-                /*
-                |--------------------------------------------------------------------------
-                | بيانات الموعد
-                |--------------------------------------------------------------------------
-                */
                 Section::make('بيانات الموعد')
                     ->description('المعلومات الأساسية للموعد')
                     ->icon('heroicon-o-calendar-days')
@@ -76,11 +71,6 @@ class AppointmentInfolist
                     ])
                     ->columnSpanFull(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | بيانات المواطن
-                |--------------------------------------------------------------------------
-                */
                 Section::make('بيانات المواطن')
                     ->description('بيانات المواطن صاحب الموعد')
                     ->icon('heroicon-o-user')
@@ -88,9 +78,18 @@ class AppointmentInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('citizen.full_name')
+                                TextEntry::make('citizen')
                                     ->label('اسم المواطن')
-                                    ->placeholder('غير محدد'),
+                                    ->state(
+                                        fn ($record): string => trim(
+                                            implode(' ', array_filter([
+                                                $record->citizen?->first_name,
+                                                $record->citizen?->father_name,
+                                                $record->citizen?->middle_name,
+                                                $record->citizen?->last_name,
+                                            ]))
+                                        ) ?: 'غير محدد'
+                                    ),
 
                                 TextEntry::make('citizen.national_id')
                                     ->label('الرقم الوطني')
@@ -118,11 +117,6 @@ class AppointmentInfolist
                     ])
                     ->columnSpanFull(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | بيانات الفرع
-                |--------------------------------------------------------------------------
-                */
                 Section::make('بيانات الفرع')
                     ->description('الفرع المحدد لتنفيذ الخدمة')
                     ->icon('heroicon-o-building-office')
@@ -142,11 +136,6 @@ class AppointmentInfolist
                     ])
                     ->columnSpanFull(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | معلومات التأكيد
-                |--------------------------------------------------------------------------
-                */
                 Section::make('بيانات تأكيد الموعد')
                     ->description('المعلومات المتعلقة بتأكيد الموعد')
                     ->icon('heroicon-o-check-circle')
@@ -167,11 +156,6 @@ class AppointmentInfolist
                     ])
                     ->columnSpanFull(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | معلومات إضافية
-                |--------------------------------------------------------------------------
-                */
                 Section::make('معلومات إضافية')
                     ->description('الملاحظات والبيانات الإضافية المرتبطة بالموعد')
                     ->icon('heroicon-o-information-circle')
@@ -190,11 +174,6 @@ class AppointmentInfolist
                     ])
                     ->columnSpanFull(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | معلومات النظام
-                |--------------------------------------------------------------------------
-                */
                 Section::make('معلومات النظام')
                     ->description('معلومات إنشاء وتحديث سجل الموعد')
                     ->icon('heroicon-o-clock')

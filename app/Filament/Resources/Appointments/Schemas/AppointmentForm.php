@@ -31,9 +31,30 @@ class AppointmentForm
                                     ->label('المواطن')
                                     ->relationship(
                                         name: 'citizen',
-                                        titleAttribute: 'full_name',
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: fn ($query) => $query
+                                            ->orderBy('first_name')
+                                            ->orderBy('father_name')
+                                            ->orderBy('middle_name')
+                                            ->orderBy('last_name'),
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record): string => trim(
+                                                implode(' ', array_filter([
+                                                    $record->first_name,
+                                                    $record->father_name,
+                                                    $record->middle_name,
+                                                    $record->last_name,
+                                                ]))
+                                            ) . ' — ' . $record->national_id
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
@@ -82,7 +103,11 @@ class AppointmentForm
                                     ->live()
                                     ->rules([
                                         function ($get, $record) {
-                                            return function (string $attribute, $value, $fail) use ($get, $record) {
+                                            return function (
+                                                string $attribute,
+                                                       $value,
+                                                       $fail
+                                            ) use ($get, $record) {
 
                                                 $citizenId = $get('citizen_id');
 

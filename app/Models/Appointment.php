@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Appointment extends Model
 {
-    use HasFactory, SoftDeletes, HasUuids, LogsActivity;
+    use HasFactory, HasUuids, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'citizen_id',
@@ -32,6 +32,10 @@ class Appointment extends Model
         'appointment_date' => 'date',
         'confirmed_at' => 'datetime',
     ];
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
 
     public function getActivitylogOptions(): LogOptions
     {
