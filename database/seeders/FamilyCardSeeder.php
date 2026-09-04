@@ -11,25 +11,31 @@ class FamilyCardSeeder extends Seeder
 {
     public function run(): void
     {
-        $citizen = Citizen::query()->first();
         $user = User::query()->first();
 
-        if (! $citizen || ! $user) {
+        $citizens = Citizen::query()
+            ->orderBy('created_at')
+            ->limit(20)
+            ->get();
+
+        if (! $user || $citizens->count() < 20) {
             return;
         }
 
-        FamilyCard::create([
-            'head_id' => $citizen->id,
-            'card_number' => '10000000001',
-            'issue_date' => now()->toDateString(),
-            'expiry_date' => now()->addYears(5)->toDateString(),
-            'status' => 'pending',
-            'notes' => null,
-            'qr_code' => null,
-            'print_count' => 0,
-            'issued_by' => $user->id,
-            'approved_by' => null,
-            'approved_at' => null,
-        ]);
+        for ($i = 0; $i < 5; $i++) {
+            FamilyCard::create([
+                'head_id' => $citizens[$i * 4]->id,
+                'card_number' => '1000000000' . ($i + 1),
+                'issue_date' => null,
+                'expiry_date' => null,
+                'status' => 'pending',
+                'notes' => null,
+                'qr_code' => null,
+                'print_count' => 0,
+                'issued_by' => $user->id,
+                'approved_by' => null,
+                'approved_at' => null,
+            ]);
+        }
     }
 }

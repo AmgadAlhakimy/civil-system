@@ -7,7 +7,7 @@
 
     <title>السجل المدني | البوابة الإلكترونية</title>
 
-    <!-- الخط -->
+    {{-- الخط --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -16,32 +16,109 @@
         rel="stylesheet"
     >
 
-    <!-- Tailwind CSS -->
+    {{-- Tailwind CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
+
+    @php
+        use App\Services\SettingService;
+        use App\Support\Themes;
+
+        $settings = app(SettingService::class);
+
+        /*
+        |--------------------------------------------------------------------------
+        | الثيم الحالي
+        |--------------------------------------------------------------------------
+        | السماوي هو الافتراضي.
+        */
+
+        $themeKey = $settings->get('theme', 'cyan');
+
+        $themes = Themes::all();
+
+        $currentTheme = $themes[$themeKey] ?? $themes['cyan'] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | الحصول على ألوان الثيم
+        |--------------------------------------------------------------------------
+        */
+
+        $primary = $currentTheme['css']['primary'] ?? '#0891b2';
+        $primaryDark = $currentTheme['css']['primary-dark'] ?? '#0e7490';
+        $primaryLight = $currentTheme['css']['primary-light'] ?? '#22d3ee';
+
+        /*
+        |--------------------------------------------------------------------------
+        | لون الخلفية الداكنة للواجهة
+        |--------------------------------------------------------------------------
+        */
+
+        $dark = $currentTheme['css']['sidebar'] ?? '#0f172a';
+
+        /*
+        |--------------------------------------------------------------------------
+        | درجات اللون الأساسي
+        |--------------------------------------------------------------------------
+        */
+
+        $primary50 = $currentTheme['css']['primary-50'] ?? '#ecfeff';
+        $primary100 = $currentTheme['css']['primary-100'] ?? '#cffafe';
+        $primary200 = $currentTheme['css']['primary-200'] ?? '#a5f3fc';
+        $primary300 = $currentTheme['css']['primary-300'] ?? '#67e8f9';
+        $primary400 = $currentTheme['css']['primary-400'] ?? '#22d3ee';
+        $primary500 = $currentTheme['css']['primary-500'] ?? $primary;
+        $primary600 = $currentTheme['css']['primary-600'] ?? $primary;
+        $primary700 = $currentTheme['css']['primary-700'] ?? $primaryDark;
+        $primary800 = $currentTheme['css']['primary-800'] ?? '#155e75';
+        $primary900 = $currentTheme['css']['primary-900'] ?? '#164e63';
+    @endphp
+
+    <style>
+        :root {
+            --app-primary: {{ $primary }};
+            --app-primary-dark: {{ $primaryDark }};
+            --app-primary-light: {{ $primaryLight }};
+
+            --app-primary-50: {{ $primary50 }};
+            --app-primary-100: {{ $primary100 }};
+            --app-primary-200: {{ $primary200 }};
+            --app-primary-300: {{ $primary300 }};
+            --app-primary-400: {{ $primary400 }};
+            --app-primary-500: {{ $primary500 }};
+            --app-primary-600: {{ $primary600 }};
+            --app-primary-700: {{ $primary700 }};
+            --app-primary-800: {{ $primary800 }};
+            --app-primary-900: {{ $primary900 }};
+
+            --app-dark: {{ $dark }};
+        }
+    </style>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+
                     fontFamily: {
                         sans: ['Cairo', 'sans-serif'],
                     },
 
                     colors: {
+
                         primary: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            600: '#475569',
-                            700: '#334155',
-                            800: '#1e293b',
-                            900: '#0f172a',
+                            50: 'var(--app-primary-50)',
+                            100: 'var(--app-primary-100)',
+                            200: 'var(--app-primary-200)',
+                            300: 'var(--app-primary-300)',
+                            400: 'var(--app-primary-400)',
+                            500: 'var(--app-primary-500)',
+                            600: 'var(--app-primary-600)',
+                            700: 'var(--app-primary-700)',
+                            800: 'var(--app-primary-800)',
+                            900: 'var(--app-primary-900)',
                         },
 
-                        gold: {
-                            400: '#fbbf24',
-                            500: '#d97706',
-                            600: '#b45309',
-                        }
                     }
                 }
             }
@@ -54,25 +131,28 @@
 <body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
 
-<!-- =========================================================
-     NAVBAR
-========================================================= -->
+{{-- =========================================================
+    NAVBAR
+========================================================= --}}
 
-<header class="bg-primary-900 border-b border-slate-700 sticky top-0 z-50">
+<header
+    class="sticky top-0 z-50 border-b border-white/10"
+    style="background-color: var(--app-dark);"
+>
 
     <div class="max-w-7xl mx-auto px-6">
 
         <div class="h-20 flex items-center justify-between">
 
-            <!-- الشعار -->
+            {{-- الشعار --}}
 
             <div class="flex items-center gap-4">
 
                 <div
                     class="w-11 h-11 rounded-xl
-                           bg-gold-500
                            flex items-center justify-center
                            shadow-lg"
+                    style="background-color: var(--app-primary);"
                 >
 
                     <svg
@@ -106,18 +186,21 @@
             </div>
 
 
-            <!-- زر الدخول -->
+            {{-- زر الدخول --}}
 
             @auth
 
                 <a
                     href="{{ url('/dashboard') }}"
                     class="flex items-center gap-2
-                           bg-white text-primary-900
-                           px-5 py-2.5 rounded-lg
+                           text-white
+                           px-5 py-2.5
+                           rounded-lg
                            font-semibold text-sm
-                           hover:bg-slate-100
-                           transition"
+                           transition
+                           shadow-md
+                           hover:opacity-90"
+                    style="background-color: var(--app-primary);"
                 >
 
                     <svg
@@ -143,12 +226,14 @@
                 <a
                     href="{{ url('/dashboard/login') }}"
                     class="flex items-center gap-2
-                           bg-gold-500 text-white
-                           px-5 py-2.5 rounded-lg
+                           text-white
+                           px-5 py-2.5
+                           rounded-lg
                            font-semibold text-sm
-                           hover:bg-gold-600
                            transition
-                           shadow-md"
+                           shadow-md
+                           hover:opacity-90"
+                    style="background-color: var(--app-primary);"
                 >
 
                     <svg
@@ -179,35 +264,40 @@
 
 
 
-<!-- =========================================================
-     HERO
-========================================================= -->
+{{-- =========================================================
+    HERO
+========================================================= --}}
 
-<section class="relative overflow-hidden bg-primary-900">
+<section
+    class="relative overflow-hidden"
+    style="background-color: var(--app-dark);"
+>
 
-    <!-- زخرفة خلفية -->
+    {{-- زخرفة خلفية --}}
 
     <div
         class="absolute top-0 right-1/2
                w-[500px] h-[500px]
-               bg-gold-500/10
                rounded-full blur-3xl
                translate-x-1/2
-               -translate-y-1/2"
+               -translate-y-1/2
+               opacity-20"
+        style="background-color: var(--app-primary);"
     ></div>
 
 
     <div
         class="absolute bottom-0 left-0
                w-[400px] h-[400px]
-               bg-blue-500/10
                rounded-full blur-3xl
                -translate-x-1/3
-               translate-y-1/3"
+               translate-y-1/3
+               opacity-10"
+        style="background-color: var(--app-primary-light);"
     ></div>
 
 
-    <!-- المحتوى -->
+    {{-- المحتوى --}}
 
     <div
         class="relative max-w-5xl mx-auto
@@ -215,17 +305,17 @@
                text-center"
     >
 
-        <!-- الشعار -->
+        {{-- الشعار --}}
 
         <div class="flex justify-center mb-7">
 
             <div
                 class="w-20 h-20
                        rounded-2xl
-                       bg-gold-500
                        flex items-center justify-center
                        shadow-2xl
                        ring-8 ring-white/5"
+                style="background-color: var(--app-primary);"
             >
 
                 <svg
@@ -247,7 +337,7 @@
         </div>
 
 
-        <!-- الشارة -->
+        {{-- الشارة --}}
 
         <div
             class="inline-flex items-center gap-2
@@ -255,16 +345,16 @@
                    rounded-full
                    bg-white/10
                    border border-white/10
-                   text-gold-400
                    text-sm font-semibold
                    mb-6"
+            style="color: var(--app-primary-400);"
         >
 
             <span
                 class="w-2 h-2
                        rounded-full
-                       bg-gold-400
                        animate-pulse"
+                style="background-color: var(--app-primary-400);"
             ></span>
 
             منظومة إلكترونية متكاملة
@@ -272,7 +362,7 @@
         </div>
 
 
-        <!-- العنوان -->
+        {{-- العنوان --}}
 
         <h2
             class="text-4xl
@@ -286,7 +376,7 @@
 
             بوابة
 
-            <span class="text-gold-400">
+            <span style="color: var(--app-primary-400);">
                 السجل المدني
             </span>
 
@@ -299,7 +389,7 @@
         </h2>
 
 
-        <!-- الوصف -->
+        {{-- الوصف --}}
 
         <p
             class="max-w-3xl mx-auto
@@ -315,7 +405,7 @@
         </p>
 
 
-        <!-- الأزرار -->
+        {{-- الأزرار --}}
 
         <div
             class="flex flex-col
@@ -335,14 +425,14 @@
                            justify-center
                            gap-2
                            min-w-52
-                           bg-gold-500
                            text-white
                            px-7 py-3.5
                            rounded-xl
                            font-bold
-                           hover:bg-gold-600
                            transition
-                           shadow-lg"
+                           shadow-lg
+                           hover:opacity-90"
+                    style="background-color: var(--app-primary);"
                 >
 
                     الدخول إلى لوحة التحكم
@@ -372,14 +462,14 @@
                            justify-center
                            gap-2
                            min-w-52
-                           bg-gold-500
                            text-white
                            px-7 py-3.5
                            rounded-xl
                            font-bold
-                           hover:bg-gold-600
                            transition
-                           shadow-lg"
+                           shadow-lg
+                           hover:opacity-90"
+                    style="background-color: var(--app-primary);"
                 >
 
                     الدخول إلى النظام
@@ -413,8 +503,7 @@
                        rounded-xl
                        font-semibold
                        text-white
-                       border
-                       border-white/20
+                       border border-white/20
                        hover:bg-white/10
                        transition"
             >
@@ -429,9 +518,9 @@
 
 
 
-<!-- =========================================================
-     STATISTICS
-========================================================= -->
+{{-- =========================================================
+    STATISTICS
+========================================================= --}}
 
 <section class="relative -mt-10 z-10">
 
@@ -458,7 +547,8 @@
                 <div
                     class="text-3xl
                            font-extrabold
-                           text-primary-900 mb-1"
+                           mb-1"
+                    style="color: var(--app-primary-900);"
                 >
                     —
                 </div>
@@ -481,7 +571,8 @@
                 <div
                     class="text-3xl
                            font-extrabold
-                           text-primary-900 mb-1"
+                           mb-1"
+                    style="color: var(--app-primary-900);"
                 >
                     —
                 </div>
@@ -502,7 +593,8 @@
                 <div
                     class="text-3xl
                            font-extrabold
-                           text-primary-900 mb-1"
+                           mb-1"
+                    style="color: var(--app-primary-900);"
                 >
                     —
                 </div>
@@ -519,7 +611,8 @@
                 <div
                     class="text-3xl
                            font-extrabold
-                           text-primary-900 mb-1"
+                           mb-1"
+                    style="color: var(--app-primary-900);"
                 >
                     4+
                 </div>
@@ -538,9 +631,9 @@
 
 
 
-<!-- =========================================================
-     SERVICES
-========================================================= -->
+{{-- =========================================================
+    SERVICES
+========================================================= --}}
 
 <section
     id="services"
@@ -549,7 +642,7 @@
 
     <div class="max-w-7xl mx-auto px-6">
 
-        <!-- العنوان -->
+        {{-- العنوان --}}
 
         <div
             class="text-center
@@ -559,9 +652,8 @@
         >
 
             <span
-                class="text-gold-600
-                       font-bold
-                       text-sm"
+                class="font-bold text-sm"
+                style="color: var(--app-primary-600);"
             >
                 خدمات المنظومة
             </span>
@@ -570,8 +662,8 @@
                 class="text-3xl
                        md:text-4xl
                        font-extrabold
-                       text-primary-900
                        mt-3 mb-5"
+                style="color: var(--app-primary-900);"
             >
                 منظومة متكاملة لإدارة السجل المدني
             </h2>
@@ -587,7 +679,7 @@
         </div>
 
 
-        <!-- الخدمات -->
+        {{-- الخدمات --}}
 
         <div
             class="grid
@@ -598,7 +690,7 @@
         >
 
 
-            <!-- المواطنون -->
+            {{-- المواطنون --}}
 
             <div
                 class="bg-white
@@ -614,11 +706,13 @@
                 <div
                     class="w-12 h-12
                            rounded-xl
-                           bg-blue-50
-                           text-blue-700
                            flex items-center
                            justify-center
                            mb-6"
+                    style="
+                        background-color: var(--app-primary-50);
+                        color: var(--app-primary-700);
+                    "
                 >
 
                     <svg
@@ -640,8 +734,8 @@
                 <h3
                     class="text-lg
                            font-bold
-                           text-primary-900
                            mb-3"
+                    style="color: var(--app-primary-900);"
                 >
                     إدارة المواطنين
                 </h3>
@@ -658,7 +752,7 @@
             </div>
 
 
-            <!-- الفروع -->
+            {{-- الفروع --}}
 
             <div
                 class="bg-white
@@ -674,11 +768,13 @@
                 <div
                     class="w-12 h-12
                            rounded-xl
-                           bg-amber-50
-                           text-amber-600
                            flex items-center
                            justify-center
                            mb-6"
+                    style="
+                        background-color: var(--app-primary-50);
+                        color: var(--app-primary-700);
+                    "
                 >
 
                     <svg
@@ -700,8 +796,8 @@
                 <h3
                     class="text-lg
                            font-bold
-                           text-primary-900
                            mb-3"
+                    style="color: var(--app-primary-900);"
                 >
                     إدارة الفروع
                 </h3>
@@ -718,7 +814,7 @@
             </div>
 
 
-            <!-- الجوازات -->
+            {{-- الجوازات --}}
 
             <div
                 class="bg-white
@@ -734,11 +830,13 @@
                 <div
                     class="w-12 h-12
                            rounded-xl
-                           bg-emerald-50
-                           text-emerald-600
                            flex items-center
                            justify-center
                            mb-6"
+                    style="
+                        background-color: var(--app-primary-50);
+                        color: var(--app-primary-700);
+                    "
                 >
 
                     <svg
@@ -760,8 +858,8 @@
                 <h3
                     class="text-lg
                            font-bold
-                           text-primary-900
                            mb-3"
+                    style="color: var(--app-primary-900);"
                 >
                     الجوازات
                 </h3>
@@ -778,7 +876,7 @@
             </div>
 
 
-            <!-- الوثائق -->
+            {{-- الوثائق --}}
 
             <div
                 class="bg-white
@@ -794,11 +892,13 @@
                 <div
                     class="w-12 h-12
                            rounded-xl
-                           bg-purple-50
-                           text-purple-600
                            flex items-center
                            justify-center
                            mb-6"
+                    style="
+                        background-color: var(--app-primary-50);
+                        color: var(--app-primary-700);
+                    "
                 >
 
                     <svg
@@ -820,8 +920,8 @@
                 <h3
                     class="text-lg
                            font-bold
-                           text-primary-900
                            mb-3"
+                    style="color: var(--app-primary-900);"
                 >
                     الوثائق والسجلات
                 </h3>
@@ -845,9 +945,9 @@
 
 
 
-<!-- =========================================================
-     ABOUT
-========================================================= -->
+{{-- =========================================================
+    ABOUT
+========================================================= --}}
 
 <section class="py-24 bg-white">
 
@@ -859,14 +959,13 @@
                items-center"
     >
 
-        <!-- النص -->
+        {{-- النص --}}
 
         <div>
 
             <span
-                class="text-gold-600
-                       font-bold
-                       text-sm"
+                class="font-bold text-sm"
+                style="color: var(--app-primary-600);"
             >
                 عن المنظومة
             </span>
@@ -875,8 +974,8 @@
                 class="text-3xl
                        md:text-4xl
                        font-extrabold
-                       text-primary-900
                        mt-3 mb-6"
+                style="color: var(--app-primary-900);"
             >
                 إدارة حديثة للبيانات المدنية
             </h2>
@@ -903,7 +1002,7 @@
         </div>
 
 
-        <!-- المميزات -->
+        {{-- المميزات --}}
 
         <div
             class="grid
@@ -915,11 +1014,14 @@
             <div
                 class="p-6
                        rounded-2xl
-                       bg-slate-50
                        border border-slate-100"
+                style="background-color: var(--app-primary-50);"
             >
 
-                <div class="text-gold-600 mb-4">
+                <div
+                    class="mb-4"
+                    style="color: var(--app-primary-600);"
+                >
 
                     <svg
                         class="w-7 h-7"
@@ -938,9 +1040,8 @@
                 </div>
 
                 <h3
-                    class="font-bold
-                           text-primary-900
-                           mb-2"
+                    class="font-bold mb-2"
+                    style="color: var(--app-primary-900);"
                 >
                     أمان البيانات
                 </h3>
@@ -955,11 +1056,14 @@
             <div
                 class="p-6
                        rounded-2xl
-                       bg-slate-50
                        border border-slate-100"
+                style="background-color: var(--app-primary-50);"
             >
 
-                <div class="text-blue-600 mb-4">
+                <div
+                    class="mb-4"
+                    style="color: var(--app-primary-600);"
+                >
 
                     <svg
                         class="w-7 h-7"
@@ -978,9 +1082,8 @@
                 </div>
 
                 <h3
-                    class="font-bold
-                           text-primary-900
-                           mb-2"
+                    class="font-bold mb-2"
+                    style="color: var(--app-primary-900);"
                 >
                     سرعة الوصول
                 </h3>
@@ -995,11 +1098,14 @@
             <div
                 class="p-6
                        rounded-2xl
-                       bg-slate-50
                        border border-slate-100"
+                style="background-color: var(--app-primary-50);"
             >
 
-                <div class="text-emerald-600 mb-4">
+                <div
+                    class="mb-4"
+                    style="color: var(--app-primary-600);"
+                >
 
                     <svg
                         class="w-7 h-7"
@@ -1018,9 +1124,8 @@
                 </div>
 
                 <h3
-                    class="font-bold
-                           text-primary-900
-                           mb-2"
+                    class="font-bold mb-2"
+                    style="color: var(--app-primary-900);"
                 >
                     دقة البيانات
                 </h3>
@@ -1035,11 +1140,14 @@
             <div
                 class="p-6
                        rounded-2xl
-                       bg-slate-50
                        border border-slate-100"
+                style="background-color: var(--app-primary-50);"
             >
 
-                <div class="text-purple-600 mb-4">
+                <div
+                    class="mb-4"
+                    style="color: var(--app-primary-600);"
+                >
 
                     <svg
                         class="w-7 h-7"
@@ -1058,9 +1166,8 @@
                 </div>
 
                 <h3
-                    class="font-bold
-                           text-primary-900
-                           mb-2"
+                    class="font-bold mb-2"
+                    style="color: var(--app-primary-900);"
                 >
                     إدارة المستخدمين
                 </h3>
@@ -1079,11 +1186,14 @@
 
 
 
-<!-- =========================================================
-     LOGIN CTA
-========================================================= -->
+{{-- =========================================================
+    LOGIN CTA
+========================================================= --}}
 
-<section class="bg-primary-900 py-20">
+<section
+    class="py-20"
+    style="background-color: var(--app-dark);"
+>
 
     <div
         class="max-w-4xl
@@ -1118,13 +1228,13 @@
                 class="inline-flex
                        items-center
                        gap-2
-                       bg-gold-500
                        text-white
                        px-8 py-3.5
                        rounded-lg
                        font-bold
-                       hover:bg-gold-600
-                       transition"
+                       transition
+                       hover:opacity-90"
+                style="background-color: var(--app-primary);"
             >
                 فتح لوحة التحكم
             </a>
@@ -1136,13 +1246,13 @@
                 class="inline-flex
                        items-center
                        gap-2
-                       bg-gold-500
                        text-white
                        px-8 py-3.5
                        rounded-lg
                        font-bold
-                       hover:bg-gold-600
-                       transition"
+                       transition
+                       hover:opacity-90"
+                style="background-color: var(--app-primary);"
             >
 
                 تسجيل الدخول للنظام
@@ -1171,11 +1281,14 @@
 
 
 
-<!-- =========================================================
-     FOOTER
-========================================================= -->
+{{-- =========================================================
+    FOOTER
+========================================================= --}}
 
-<footer class="bg-slate-950 text-slate-400">
+<footer
+    class="text-slate-400"
+    style="background-color: #020617;"
+>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
 

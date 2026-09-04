@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class DeathCertificate extends Model
 {
@@ -25,12 +25,12 @@ class DeathCertificate extends Model
         'certificate_number',
         'issue_date',
         'status',
-        'approved_by',
-        'approved_at',
         'notes',
         'qr_code',
         'print_count',
         'issued_by',
+        'approved_by',
+        'approved_at',
     ];
 
     protected $casts = [

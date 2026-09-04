@@ -29,11 +29,18 @@ class DeathCertificatesTable
                     ->weight('bold')
                     ->icon('heroicon-o-document-text'),
 
-                TextColumn::make('deceased.full_name')
+                TextColumn::make('deceased')
                     ->label('المتوفى')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->deceased?->first_name} {$record->deceased?->father_name} {$record->deceased?->middle_name} {$record->deceased?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->deceased?->first_name,
+                            $record->deceased?->father_name,
+                            $record->deceased?->middle_name,
+                            $record->deceased?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('deceased', function ($query) use ($search) {
@@ -41,11 +48,18 @@ class DeathCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
                     ->sortable(),
+
+                TextColumn::make('deceased.national_id')
+                    ->label('الرقم الوطني')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('death_date')
                     ->label('تاريخ الوفاة')
@@ -66,7 +80,7 @@ class DeathCertificatesTable
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
-                            'approved' => 'معتمدة',
+                            'active' => 'سارية',
                             'cancelled' => 'ملغاة',
                             default => $state ?? 'غير محدد',
                         }
@@ -77,10 +91,11 @@ class DeathCertificatesTable
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('لم يتم الإصدار'),
 
                 TextColumn::make('issuedBy.name')
-                    ->label('تم الإصدار بواسطة')
+                    ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -114,6 +129,7 @@ class DeathCertificatesTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
 
             ->filters([
@@ -122,12 +138,13 @@ class DeathCertificatesTable
                     ->label('حالة الشهادة')
                     ->options([
                         'pending' => 'قيد الانتظار',
-                        'approved' => 'معتمدة',
+                        'active' => 'سارية',
                         'cancelled' => 'ملغاة',
                     ]),
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
 
             ->recordActions([
@@ -139,6 +156,7 @@ class DeathCertificatesTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
 
             ->toolbarActions([
@@ -174,6 +192,7 @@ class DeathCertificatesTable
 
                 ])
                     ->label('إجراءات جماعية'),
+
             ])
 
             ->defaultSort('created_at', 'desc');

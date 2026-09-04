@@ -17,14 +17,22 @@ class CreateDeathCertificate extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['issued_by'] = auth()->id();
+
         $data['status'] = 'pending';
+
         $data['print_count'] = 0;
+
+        $data['issue_date'] = null;
+
+        $data['approved_by'] = null;
+
+        $data['approved_at'] = null;
 
         return $data;
     }
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'تم إصدار شهادة الوفاة بنجاح';
+        return 'تم إنشاء طلب شهادة الوفاة بنجاح';
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Citizen;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -35,6 +37,7 @@ class BirthCertificate extends Model
     protected $casts = [
         'issue_date' => 'date',
         'approved_at' => 'datetime',
+        'print_count' => 'integer',
     ];
 
     public function getActivitylogOptions(): LogOptions

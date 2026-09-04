@@ -10,18 +10,26 @@ return new class extends Migration
     {
         Schema::create('birth_certificates', function (Blueprint $table) {
             $table->uuid('id')->primary();
+
             $table->uuid('child_id');
             $table->uuid('father_id');
             $table->uuid('mother_id');
+
             $table->string('certificate_number', 20)->unique();
-            $table->date('issue_date');
+
+            $table->date('issue_date')->nullable();
+
             $table->string('status')->default('pending');
+
             $table->text('notes')->nullable();
             $table->text('qr_code')->nullable();
+
             $table->unsignedInteger('print_count')->default(0);
+
             $table->uuid('issued_by');
             $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 
@@ -48,7 +56,7 @@ return new class extends Migration
             $table->foreign('approved_by')
                 ->references('id')
                 ->on('users')
-                ->onDelete('restrict');
+                ->onDelete('set null');
 
             $table->index('child_id');
             $table->index('father_id');

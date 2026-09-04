@@ -12,31 +12,45 @@ class FamilyMemberSeeder extends Seeder
 {
     public function run(): void
     {
-        $familyCard = FamilyCard::query()->first();
         $user = User::query()->first();
 
-        if (! $familyCard || ! $user) {
+        $familyCards = FamilyCard::query()
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        if (! $user || $familyCards->count() < 5) {
             return;
         }
 
         $citizens = Citizen::query()
-            ->where('id', '!=', $familyCard->head_id)
-            ->limit(3)
+            ->orderBy('created_at')
+            ->limit(20)
             ->get();
 
-        foreach ($citizens as $index => $citizen) {
-            FamilyMember::create([
-                'family_card_id' => $familyCard->id,
-                'citizen_id' => $citizen->id,
-                'relationship' => match ($index) {
-                    0 => 'spouse',
-                    1 => 'child',
-                    default => 'child',
-                },
-                'is_active' => true,
-                'notes' => null,
-                'added_by' => $user->id,
-            ]);
+        if ($citizens->count() < 20) {
+            return;
+        }
+
+        foreach ($familyCards as $cardIndex => $familyCard) {
+            $startIndex = ($cardIndex * 4) + 1;
+
+            for ($memberIndex = 0; $memberIndex < 3; $memberIndex++) {
+                $citizen = $citizens[$startIndex + $memberIndex];
+
+                FamilyMember::create([
+                    'family_card_id' => $familyCard->id,
+                    'citizen_id' => $citizen->id,
+                    'relationship' => match ($memberIndex) {
+                        0 => 'spouse',
+                        1 => 'child',
+                        default => 'child',
+                    },
+                    'is_active' => true,
+                    'notes' => null,
+                    'added_by' => $user->id,
+                ]);
+            }
         }
     }
 }

@@ -11,27 +11,28 @@ return new class extends Migration
         Schema::create('family_cards', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
-            // رب الأسرة
             $table->uuid('head_id');
 
-            // بيانات البطاقة
             $table->string('card_number', 20)->unique();
-            $table->date('issue_date');
-            $table->date('expiry_date');
 
-            // حالة البطاقة
             $table->enum('status', [
                 'pending',
+                'rejected',
                 'active',
                 'expired',
                 'cancelled',
+                'lost',
+                'damaged',
             ])->default('pending');
+
+            $table->date('issue_date')->nullable();
+            $table->date('expiry_date')->nullable();
 
             $table->text('notes')->nullable();
             $table->text('qr_code')->nullable();
+
             $table->integer('print_count')->default(0);
 
-            // الإصدار والاعتماد
             $table->uuid('issued_by');
             $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
@@ -39,7 +40,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Foreign Keys
             $table->foreign('head_id')
                 ->references('id')
                 ->on('citizens')
@@ -55,8 +55,9 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
-            // Indexes
             $table->index('status');
+            $table->index('issue_date');
+            $table->index('expiry_date');
             $table->index('head_id');
         });
     }

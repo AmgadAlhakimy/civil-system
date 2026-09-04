@@ -32,7 +32,7 @@ class DeathCertificateInfolist
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',
-                                            'approved' => 'معتمدة',
+                                            'active' => 'سارية',
                                             'cancelled' => 'ملغاة',
                                             default => 'غير محدد',
                                         }
@@ -44,13 +44,16 @@ class DeathCertificateInfolist
 
                                 TextEntry::make('issue_date')
                                     ->label('تاريخ الإصدار')
-                                    ->date('Y-m-d'),
+                                    ->date('Y-m-d')
+                                    ->placeholder('لم يتم الإصدار بعد'),
 
                                 TextEntry::make('place_of_death')
-                                    ->label('مكان الوفاة'),
+                                    ->label('مكان الوفاة')
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('cause_of_death')
-                                    ->label('سبب الوفاة'),
+                                    ->label('سبب الوفاة')
+                                    ->placeholder('غير محدد'),
 
                             ]),
                     ])
@@ -63,8 +66,18 @@ class DeathCertificateInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('deceased.full_name')
-                                    ->label('اسم المتوفى'),
+                                TextEntry::make('deceased')
+                                    ->label('اسم المتوفى')
+                                    ->formatStateUsing(
+                                        fn ($record): string => collect([
+                                            $record->deceased?->first_name,
+                                            $record->deceased?->father_name,
+                                            $record->deceased?->middle_name,
+                                            $record->deceased?->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ') ?: 'غير محدد'
+                                    ),
 
                                 TextEntry::make('deceased.national_id')
                                     ->label('الرقم الوطني')
@@ -72,7 +85,8 @@ class DeathCertificateInfolist
 
                                 TextEntry::make('deceased.birth_date')
                                     ->label('تاريخ الميلاد')
-                                    ->date('Y-m-d'),
+                                    ->date('Y-m-d')
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('deceased.birth_place')
                                     ->label('مكان الميلاد')
@@ -104,7 +118,7 @@ class DeathCertificateInfolist
                             ->schema([
 
                                 TextEntry::make('issuedBy.name')
-                                    ->label('تم الإصدار بواسطة')
+                                    ->label('تم إنشاء الطلب بواسطة')
                                     ->placeholder('غير محدد'),
 
                                 TextEntry::make('approvedBy.name')

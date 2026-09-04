@@ -29,11 +29,18 @@ class FamilyCardsTable
                     ->weight('bold')
                     ->icon('heroicon-o-rectangle-stack'),
 
-                TextColumn::make('head.full_name')
+                TextColumn::make('head')
                     ->label('رب الأسرة')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->head?->first_name} {$record->head?->father_name} {$record->head?->middle_name} {$record->head?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->head?->first_name,
+                            $record->head?->father_name,
+                            $record->head?->middle_name,
+                            $record->head?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('head', function ($query) use ($search) {
@@ -41,11 +48,19 @@ class FamilyCardsTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.head_id',
+                                $direction
+                            );
+                        }
+                    ),
 
                 TextColumn::make('members_count')
                     ->label('أفراد الأسرة')
@@ -58,6 +73,7 @@ class FamilyCardsTable
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
+                            'rejected' => 'مرفوضة',
                             'active' => 'سارية',
                             'expired' => 'منتهية',
                             'cancelled' => 'ملغاة',
@@ -72,15 +88,17 @@ class FamilyCardsTable
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم الإصدار')
                     ->sortable(),
 
                 TextColumn::make('expiry_date')
                     ->label('تاريخ الانتهاء')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم تحديده')
                     ->sortable(),
 
                 TextColumn::make('issuedBy.name')
-                    ->label('تم الإصدار بواسطة')
+                    ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -114,6 +132,7 @@ class FamilyCardsTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
 
             ->filters([
@@ -122,6 +141,7 @@ class FamilyCardsTable
                     ->label('حالة البطاقة')
                     ->options([
                         'pending' => 'قيد الانتظار',
+                        'rejected' => 'مرفوضة',
                         'active' => 'سارية',
                         'expired' => 'منتهية',
                         'cancelled' => 'ملغاة',
@@ -131,6 +151,7 @@ class FamilyCardsTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
 
             ->recordActions([
@@ -142,6 +163,7 @@ class FamilyCardsTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
 
             ->toolbarActions([
@@ -177,6 +199,7 @@ class FamilyCardsTable
 
                 ])
                     ->label('إجراءات جماعية'),
+
             ])
 
             ->defaultSort('created_at', 'desc');

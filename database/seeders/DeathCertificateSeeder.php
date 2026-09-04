@@ -13,30 +13,55 @@ class DeathCertificateSeeder extends Seeder
     {
         $citizens = Citizen::query()
             ->where('is_active', true)
-            ->take(3)
+            ->take(5)
             ->get();
 
         $user = User::first();
 
+        if (! $user) {
+            return;
+        }
+
         foreach ($citizens as $index => $citizen) {
             DeathCertificate::create([
                 'deceased_id' => $citizen->id,
-                'death_date' => now()->subYears($index + 1)->toDateString(),
+
+                'death_date' => now()
+                    ->subYears($index + 1)
+                    ->toDateString(),
+
                 'cause_of_death' => [
                     'وفاة طبيعية',
                     'مرض',
                     'حادث',
-                ][$index % 3],
+                    'أسباب مرضية',
+                    'سبب غير محدد',
+                ][$index],
+
                 'place_of_death' => 'صنعاء',
-                'certificate_number' => 'DC' . str_pad($index + 1, 8, '0', STR_PAD_LEFT),
-                'issue_date' => now()->subYears($index + 1)->addDays(5)->toDateString(),
+
+                'certificate_number' => 'DC' . str_pad(
+                        $index + 1,
+                        8,
+                        '0',
+                        STR_PAD_LEFT
+                    ),
+
+                'issue_date' => null,
+
                 'status' => 'pending',
+
                 'approved_by' => null,
+
                 'approved_at' => null,
+
                 'notes' => null,
+
                 'qr_code' => null,
+
                 'print_count' => 0,
-                'issued_by' => $user?->id,
+
+                'issued_by' => $user->id,
             ]);
         }
     }

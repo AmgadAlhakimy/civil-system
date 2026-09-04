@@ -130,14 +130,71 @@
 | Buttons
 |--------------------------------------------------------------------------
 */
+/*
+|--------------------------------------------------------------------------
+| Buttons
+|--------------------------------------------------------------------------
+*/
 
+/* جميع أزرار النظام */
 .fi-btn {
-    transition:
-        background-color 150ms ease,
-        border-color 150ms ease,
-        color 150ms ease;
+    background-color: var(--app-primary) !important;
+    border-color: var(--app-primary) !important;
+    color: #ffffff !important;
+
+    transition: none !important;
 }
 
+/* النص داخل الأزرار */
+.fi-btn span {
+    color: #ffffff !important;
+}
+
+/* الأيقونات داخل الأزرار */
+.fi-btn svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+/* منع تغيير شكل الزر عند Hover */
+.fi-btn:hover,
+.fi-btn:focus,
+.fi-btn:focus-visible,
+.fi-btn:active {
+    background-color: var(--app-primary) !important;
+    border-color: var(--app-primary) !important;
+    color: #ffffff !important;
+}
+
+/* منع تغيير لون النص والأيقونة عند Hover */
+.fi-btn:hover span,
+.fi-btn:focus span,
+.fi-btn:focus-visible span,
+.fi-btn:active span {
+    color: #ffffff !important;
+}
+
+.fi-btn:hover svg,
+.fi-btn:focus svg,
+.fi-btn:focus-visible svg,
+.fi-btn:active svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+/* الأزرار المعطلة */
+.fi-btn:disabled {
+    background-color: var(--app-primary) !important;
+    border-color: var(--app-primary) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.fi-btn:disabled span,
+.fi-btn:disabled svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
 /*
 |--------------------------------------------------------------------------
 | Inputs

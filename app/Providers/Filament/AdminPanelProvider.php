@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
     {
         $settings = app(SettingService::class);
 
-        $themeName = $settings->get('theme', 'gold');
+        $themeName = $settings->get('theme', 'cyan');
 
         $theme = Themes::get($themeName);
 
@@ -46,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
                     'theme' => Themes::get(
                         app(SettingService::class)->get(
                             'theme',
-                            'gold'
+                            'cyan'
                         )
                     ),
                 ])->render(),

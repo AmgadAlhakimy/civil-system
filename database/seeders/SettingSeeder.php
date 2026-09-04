@@ -20,6 +20,7 @@ class SettingSeeder extends Seeder
                 'description' => 'اسم النظام',
                 'is_public' => true,
             ],
+
             [
                 'key' => 'organization_name',
                 'value' => 'مصلحة الأحوال المدنية',
@@ -27,6 +28,7 @@ class SettingSeeder extends Seeder
                 'description' => 'اسم الجهة',
                 'is_public' => true,
             ],
+
             [
                 'key' => 'timezone',
                 'value' => 'Asia/Aden',
@@ -34,6 +36,7 @@ class SettingSeeder extends Seeder
                 'description' => 'المنطقة الزمنية للنظام',
                 'is_public' => false,
             ],
+
             [
                 'key' => 'locale',
                 'value' => 'ar',
@@ -50,6 +53,7 @@ class SettingSeeder extends Seeder
                 'description' => 'عدد أرقام الرقم الوطني',
                 'is_public' => false,
             ],
+
             [
                 'key' => 'family_card_number_length',
                 'value' => 11,
@@ -75,6 +79,8 @@ class SettingSeeder extends Seeder
                 'description' => 'تفعيل النسخ الاحتياطي التلقائي',
                 'is_public' => false,
             ],
+
+            // Appearance
             [
                 'key' => 'theme_mode',
                 'value' => 'system',
@@ -85,7 +91,7 @@ class SettingSeeder extends Seeder
 
             [
                 'key' => 'primary_color',
-                'value' => 'amber',
+                'value' => 'cyan',
                 'group' => 'appearance',
                 'description' => 'اللون الرئيسي للواجهة',
                 'is_public' => true,
@@ -106,9 +112,10 @@ class SettingSeeder extends Seeder
                 'description' => 'شعار النظام',
                 'is_public' => true,
             ],
+
             [
                 'key' => 'theme',
-                'value' => 'government',
+                'value' => 'cyan',
                 'group' => 'appearance',
                 'description' => 'ثيم واجهة النظام',
                 'is_public' => true,

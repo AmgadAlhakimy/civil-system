@@ -29,11 +29,18 @@ class BirthCertificatesTable
                     ->weight('bold')
                     ->icon('heroicon-o-document-text'),
 
-                TextColumn::make('child.full_name')
+                TextColumn::make('child')
                     ->label('الطفل')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->child?->first_name} {$record->child?->father_name} {$record->child?->middle_name} {$record->child?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->child?->first_name,
+                            $record->child?->father_name,
+                            $record->child?->middle_name,
+                            $record->child?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('child', function ($query) use ($search) {
@@ -41,17 +48,32 @@ class BirthCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.child_id',
+                                $direction
+                            );
+                        }
+                    ),
 
-                TextColumn::make('father.full_name')
+                TextColumn::make('father')
                     ->label('الأب')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->father?->first_name} {$record->father?->father_name} {$record->father?->middle_name} {$record->father?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->father?->first_name,
+                            $record->father?->father_name,
+                            $record->father?->middle_name,
+                            $record->father?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('father', function ($query) use ($search) {
@@ -59,17 +81,32 @@ class BirthCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.father_id',
+                                $direction
+                            );
+                        }
+                    ),
 
-                TextColumn::make('mother.full_name')
+                TextColumn::make('mother')
                     ->label('الأم')
-                    ->getStateUsing(fn ($record) => trim(
-                        "{$record->mother?->first_name} {$record->mother?->father_name} {$record->mother?->middle_name} {$record->mother?->last_name}"
-                    ))
+                    ->getStateUsing(
+                        fn ($record): string => collect([
+                            $record->mother?->first_name,
+                            $record->mother?->father_name,
+                            $record->mother?->middle_name,
+                            $record->mother?->last_name,
+                        ])
+                            ->filter()
+                            ->join(' ')
+                    )
                     ->searchable(
                         query: function ($query, string $search): void {
                             $query->whereHas('mother', function ($query) use ($search) {
@@ -77,11 +114,19 @@ class BirthCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
                             });
                         }
                     )
-                    ->sortable(),
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+                            $query->orderBy(
+                                $query->getModel()->getTable() . '.mother_id',
+                                $direction
+                            );
+                        }
+                    ),
 
                 TextColumn::make('status')
                     ->label('الحالة')
@@ -99,10 +144,11 @@ class BirthCertificatesTable
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
+                    ->placeholder('لم يتم الإصدار')
                     ->sortable(),
 
                 TextColumn::make('issuedBy.name')
-                    ->label('تم الإصدار بواسطة')
+                    ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -136,6 +182,7 @@ class BirthCertificatesTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
 
             ->filters([
@@ -150,6 +197,7 @@ class BirthCertificatesTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
 
             ->recordActions([
@@ -161,6 +209,7 @@ class BirthCertificatesTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
 
             ->toolbarActions([
@@ -196,6 +245,7 @@ class BirthCertificatesTable
 
                 ])
                     ->label('إجراءات جماعية'),
+
             ])
 
             ->defaultSort('created_at', 'desc');

@@ -63,12 +63,7 @@ class Settings extends Page
 
             'theme' => $settings->get(
                 'theme',
-                'gold'
-            ),
-
-            'activity_log_enabled' => $settings->get(
-                'activity_log_enabled',
-                true
+                'cyan'
             ),
 
             'automatic_backup_enabled' => $settings->get(
@@ -82,14 +77,12 @@ class Settings extends Page
     {
         return $schema
             ->components([
-
                 Section::make('الإعدادات العامة')
                     ->description('المعلومات الأساسية والإعدادات العامة للنظام')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextInput::make('system_name')
                                     ->label('اسم النظام')
                                     ->placeholder('مثال: السجل المدني')
@@ -137,9 +130,14 @@ class Settings extends Page
                                     ->options(
                                         collect(Themes::all())
                                             ->mapWithKeys(
-                                                function (array $theme, string $key): array {
+                                                function (
+                                                    array $theme,
+                                                    string $key
+                                                ): array {
                                                     $name = $theme['name'] ?? $key;
-                                                    $primary = $theme['css']['primary'] ?? '#d97706';
+
+                                                    $primary = $theme['css']['primary']
+                                                        ?? '#0891b2';
 
                                                     return [
                                                         $key => "
@@ -158,37 +156,16 @@ class Settings extends Page
                                     )
                                     ->allowHtml()
                                     ->prefixIcon('heroicon-o-swatch')
-                                    ->default('gold')
+                                    ->default('cyan')
                                     ->required()
                                     ->native(false)
-                                    ->live()
-                                    ->afterStateUpdated(function (?string $state): void {
-                                        if ($state) {
-                                            $this->js(
-                                                'window.applyCivilTheme(' . json_encode($state) . ');'
-                                            );
-                                        }
-                                    })
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار لون النظام',
                                     ])
                                     ->helperText(
-                                        'يتم تطبيق اللون مباشرة على واجهة النظام عند اختياره.'
+                                        'يتم تطبيق اللون بعد الضغط على حفظ الإعدادات.'
                                     ),
-
                             ]),
-                    ])
-                    ->columnSpanFull(),
-
-                Section::make('إعدادات الأمان')
-                    ->description('إعدادات حماية ومراقبة النظام')
-                    ->icon('heroicon-o-shield-check')
-                    ->schema([
-                        Toggle::make('activity_log_enabled')
-                            ->label('تفعيل سجل الأنشطة')
-                            ->helperText('تسجيل عمليات المستخدمين وتغييرات بيانات النظام لأغراض المراجعة والمتابعة.')
-                            ->default(true)
-                            ->inline(false),
                     ])
                     ->columnSpanFull(),
 
@@ -196,15 +173,14 @@ class Settings extends Page
                     ->description('إعدادات النسخ الاحتياطي للنظام')
                     ->icon('heroicon-o-server-stack')
                     ->schema([
-
                         Toggle::make('automatic_backup_enabled')
                             ->label('تفعيل النسخ الاحتياطي التلقائي')
-                            ->helperText('السماح للنظام بتنفيذ النسخ الاحتياطي التلقائي')
+                            ->helperText(
+                                'السماح للنظام بتنفيذ النسخ الاحتياطي التلقائي'
+                            )
                             ->default(true),
-
                     ])
                     ->columnSpanFull(),
-
             ])
             ->statePath('data');
     }
@@ -247,13 +223,6 @@ class Settings extends Page
         );
 
         $settings->set(
-            'activity_log_enabled',
-            (bool) $data['activity_log_enabled'],
-            'security',
-            'تفعيل سجل الأنشطة'
-        );
-
-        $settings->set(
             'automatic_backup_enabled',
             (bool) $data['automatic_backup_enabled'],
             'backup',
@@ -261,7 +230,9 @@ class Settings extends Page
         );
 
         $this->js(
-            'window.applyCivilTheme(' . json_encode($data['theme']) . ');'
+            'window.applyCivilTheme(' .
+            json_encode($data['theme']) .
+            ');'
         );
 
         Notification::make()
@@ -269,5 +240,9 @@ class Settings extends Page
             ->body('تم تطبيق الإعدادات الجديدة بنجاح.')
             ->success()
             ->send();
+
+//        $this->js(
+//            'setTimeout(() => window.location.reload(), 500);'
+//        );
     }
 }

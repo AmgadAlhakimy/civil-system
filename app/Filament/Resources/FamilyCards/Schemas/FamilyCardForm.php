@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\FamilyCards\Schemas;
 
 use App\Models\Citizen;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -29,12 +28,35 @@ class FamilyCardForm
 
                                 Select::make('head_id')
                                     ->label('رب الأسرة')
-                                    ->relationship('head', 'full_name')
-                                    ->searchable()
+                                    ->relationship(
+                                        name: 'head',
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: fn ($query) => $query
+                                            ->orderBy('first_name')
+                                            ->orderBy('father_name')
+                                            ->orderBy('middle_name')
+                                            ->orderBy('last_name')
+                                    )
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                            $record->first_name,
+                                            $record->father_name,
+                                            $record->middle_name,
+                                            $record->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
-                                    ->live()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار رب الأسرة',
                                     ]),
@@ -42,11 +64,8 @@ class FamilyCardForm
                                 TextInput::make('card_number')
                                     ->label('رقم البطاقة العائلية')
                                     ->required()
-                                    ->numeric()
                                     ->maxLength(11)
-                                    ->rules([
-                                        'digits:11',
-                                    ])
+                                    ->rule('regex:/^[0-9]{11}$/')
                                     ->unique(
                                         table: 'family_cards',
                                         column: 'card_number',
@@ -54,33 +73,10 @@ class FamilyCardForm
                                     )
                                     ->validationMessages([
                                         'required' => 'رقم البطاقة العائلية مطلوب',
-                                        'digits' => 'يجب أن يتكون رقم البطاقة العائلية من 11 رقمًا بالضبط',
-                                        'numeric' => 'رقم البطاقة يجب أن يحتوي على أرقام فقط',
+                                        'regex' => 'رقم البطاقة العائلية يجب أن يتكون من 11 رقمًا بالضبط',
                                         'unique' => 'رقم البطاقة العائلية مسجل مسبقًا',
                                     ]),
 
-                                DatePicker::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->default(now())
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->maxDate(now())
-                                    ->disabled()
-                                    ->dehydrated(),
-
-                                DatePicker::make('expiry_date')
-                                    ->label('تاريخ الانتهاء')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->minDate(fn ($get) => $get('issue_date'))
-                                    ->closeOnDateSelection()
-                                    ->validationMessages([
-                                        'required' => 'يرجى تحديد تاريخ انتهاء البطاقة',
-                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -102,7 +98,7 @@ class FamilyCardForm
                                             ->label('المواطن')
                                             ->relationship(
                                                 name: 'citizen',
-                                                titleAttribute: 'full_name',
+                                                titleAttribute: 'first_name',
                                                 modifyQueryUsing: function ($query, $get) {
                                                     $headId = $get('../../head_id');
 
@@ -111,7 +107,23 @@ class FamilyCardForm
                                                     }
                                                 },
                                             )
-                                            ->searchable()
+                                            ->getOptionLabelFromRecordUsing(
+                                                fn ($record) => collect([
+                                                    $record->first_name,
+                                                    $record->father_name,
+                                                    $record->middle_name,
+                                                    $record->last_name,
+                                                ])
+                                                    ->filter()
+                                                    ->join(' ')
+                                            )
+                                            ->searchable([
+                                                'first_name',
+                                                'father_name',
+                                                'middle_name',
+                                                'last_name',
+                                                'national_id',
+                                            ])
                                             ->preload()
                                             ->required()
                                             ->native(false)
@@ -153,14 +165,17 @@ class FamilyCardForm
                                             ->rows(2)
                                             ->maxLength(500)
                                             ->columnSpanFull(),
+
                                     ]),
                             ])
-                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
-                                $data['added_by'] = auth()->id();
-                                $data['is_active'] = true;
+                            ->mutateRelationshipDataBeforeCreateUsing(
+                                function (array $data): array {
+                                    $data['added_by'] = auth()->id();
+                                    $data['is_active'] = true;
 
-                                return $data;
-                            })
+                                    return $data;
+                                }
+                            )
                             ->addActionLabel('إضافة فرد')
                             ->defaultItems(0)
                             ->reorderable(false)
@@ -170,8 +185,22 @@ class FamilyCardForm
                                     return 'فرد جديد';
                                 }
 
-                                return Citizen::find($state['citizen_id'])?->full_name ?? 'فرد جديد';
+                                $citizen = Citizen::find($state['citizen_id']);
+
+                                if (! $citizen) {
+                                    return 'فرد جديد';
+                                }
+
+                                return collect([
+                                    $citizen->first_name,
+                                    $citizen->father_name,
+                                    $citizen->middle_name,
+                                    $citizen->last_name,
+                                ])
+                                    ->filter()
+                                    ->join(' ');
                             }),
+
                     ])
                     ->columnSpanFull(),
 

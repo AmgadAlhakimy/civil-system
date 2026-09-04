@@ -29,8 +29,8 @@ class DeathCertificateForm
                                     ->label('المتوفى')
                                     ->relationship(
                                         name: 'deceased',
-                                        titleAttribute: 'full_name',
-                                        modifyQueryUsing: function ($query, $get, $record) {
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: function ($query, $record) {
                                             $query->where(function ($query) use ($record) {
                                                 $query->whereDoesntHave('deathCertificates');
 
@@ -41,9 +41,31 @@ class DeathCertificateForm
                                                     );
                                                 }
                                             });
+
+                                            $query
+                                                ->orderBy('first_name')
+                                                ->orderBy('father_name')
+                                                ->orderBy('middle_name')
+                                                ->orderBy('last_name');
                                         },
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                            $record->first_name,
+                                            $record->father_name,
+                                            $record->middle_name,
+                                            $record->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
@@ -56,7 +78,7 @@ class DeathCertificateForm
                                 TextInput::make('certificate_number')
                                     ->label('رقم شهادة الوفاة')
                                     ->required()
-                                    ->numeric()
+                                    ->maxLength(11)
                                     ->rules([
                                         'digits:11',
                                     ])
@@ -101,36 +123,6 @@ class DeathCertificateForm
                                         'max' => 'سبب الوفاة طويل جدًا',
                                     ]),
 
-                                DatePicker::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->default(now())
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->maxDate(now())
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->validationMessages([
-                                        'required' => 'تاريخ الإصدار مطلوب',
-                                    ]),
-
-                                Select::make('status')
-                                    ->label('حالة الشهادة')
-                                    ->options([
-                                        'pending' => 'قيد الانتظار',
-                                        'approved' => 'معتمدة',
-                                        'cancelled' => 'ملغاة',
-                                    ])
-                                    ->default('pending')
-                                    ->required()
-                                    ->native(false)
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->columnSpanFull()
-                                    ->validationMessages([
-                                        'required' => 'حالة الشهادة مطلوبة',
-                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),

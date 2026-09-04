@@ -11,33 +11,61 @@ class BirthCertificateSeeder extends Seeder
 {
     public function run(): void
     {
-        $child = Citizen::where('gender', 'male')
-            ->whereNotNull('birth_date')
-            ->first();
+        $user = User::query()->first();
 
-        $father = Citizen::where('gender', 'male')
-            ->where('id', '!=', $child?->id)
-            ->first();
-
-        $mother = Citizen::where('gender', 'female')
-            ->where('id', '!=', $child?->id)
-            ->first();
-
-        $user = User::first();
-
-        if (!$child || !$father || !$mother || !$user) {
+        if (! $user) {
             return;
         }
 
-        BirthCertificate::create([
-            'child_id' => $child->id,
-            'father_id' => $father->id,
-            'mother_id' => $mother->id,
-            'certificate_number' => '10000000001',
-            'issue_date' => now()->toDateString(),
-            'status' => 'pending',
-            'print_count' => 0,
-            'issued_by' => $user->id,
-        ]);
+        $children = Citizen::query()
+            ->whereNotNull('birth_date')
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        $fathers = Citizen::query()
+            ->where('gender', 'male')
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        $mothers = Citizen::query()
+            ->where('gender', 'female')
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        if (
+            $children->count() < 5 ||
+            $fathers->count() < 5 ||
+            $mothers->count() < 5
+        ) {
+            return;
+        }
+
+        for ($i = 0; $i < 5; $i++) {
+            $child = $children[$i];
+            $father = $fathers->firstWhere('id', '!=', $child->id);
+            $mother = $mothers->firstWhere('id', '!=', $child->id);
+
+            if (! $father || ! $mother) {
+                continue;
+            }
+
+            BirthCertificate::create([
+                'child_id' => $child->id,
+                'father_id' => $father->id,
+                'mother_id' => $mother->id,
+                'certificate_number' => '1000000000' . ($i + 1),
+                'issue_date' => null,
+                'status' => 'pending',
+                'notes' => null,
+                'qr_code' => null,
+                'print_count' => 0,
+                'issued_by' => $user->id,
+                'approved_by' => null,
+                'approved_at' => null,
+            ]);
+        }
     }
 }

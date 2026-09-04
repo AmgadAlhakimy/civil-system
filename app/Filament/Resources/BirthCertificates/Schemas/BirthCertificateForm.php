@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\BirthCertificates\Schemas;
 
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,9 +28,30 @@ class BirthCertificateForm
                                     ->label('الطفل')
                                     ->relationship(
                                         name: 'child',
-                                        titleAttribute: 'full_name',
+                                        titleAttribute: 'first_name',
+                                        modifyQueryUsing: fn ($query) => $query
+                                            ->orderBy('first_name')
+                                            ->orderBy('father_name')
+                                            ->orderBy('middle_name')
+                                            ->orderBy('last_name')
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                            $record->first_name,
+                                            $record->father_name,
+                                            $record->middle_name,
+                                            $record->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
@@ -44,6 +64,7 @@ class BirthCertificateForm
                                 TextInput::make('certificate_number')
                                     ->label('رقم شهادة الميلاد')
                                     ->required()
+                                    ->maxLength(11)
                                     ->rules([
                                         'digits:11',
                                     ])
@@ -57,35 +78,7 @@ class BirthCertificateForm
                                         'digits' => 'يجب أن يتكون رقم شهادة الميلاد من 11 رقمًا بالضبط',
                                         'unique' => 'رقم شهادة الميلاد مسجل مسبقًا',
                                     ]),
-                                DatePicker::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->default(now())
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->format('Y-m-d')
-                                    ->maxDate(now())
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->validationMessages([
-                                        'required' => 'تاريخ الإصدار مطلوب',
-                                    ]),
 
-                                Select::make('status')
-                                    ->label('حالة الشهادة')
-                                    ->options([
-                                        'pending' => 'قيد الانتظار',
-                                        'active' => 'سارية',
-                                        'cancelled' => 'ملغاة',
-                                    ])
-                                    ->default('pending')
-                                    ->required()
-                                    ->native(false)
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->validationMessages([
-                                        'required' => 'حالة الشهادة مطلوبة',
-                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -102,7 +95,7 @@ class BirthCertificateForm
                                     ->label('الأب')
                                     ->relationship(
                                         name: 'father',
-                                        titleAttribute: 'full_name',
+                                        titleAttribute: 'first_name',
                                         modifyQueryUsing: function ($query, $get) {
                                             $childId = $get('child_id');
 
@@ -111,9 +104,31 @@ class BirthCertificateForm
                                             if ($childId) {
                                                 $query->where('id', '!=', $childId);
                                             }
+
+                                            $query
+                                                ->orderBy('first_name')
+                                                ->orderBy('father_name')
+                                                ->orderBy('middle_name')
+                                                ->orderBy('last_name');
                                         },
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                            $record->first_name,
+                                            $record->father_name,
+                                            $record->middle_name,
+                                            $record->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
@@ -127,7 +142,7 @@ class BirthCertificateForm
                                     ->label('الأم')
                                     ->relationship(
                                         name: 'mother',
-                                        titleAttribute: 'full_name',
+                                        titleAttribute: 'first_name',
                                         modifyQueryUsing: function ($query, $get) {
                                             $childId = $get('child_id');
 
@@ -136,9 +151,31 @@ class BirthCertificateForm
                                             if ($childId) {
                                                 $query->where('id', '!=', $childId);
                                             }
+
+                                            $query
+                                                ->orderBy('first_name')
+                                                ->orderBy('father_name')
+                                                ->orderBy('middle_name')
+                                                ->orderBy('last_name');
                                         },
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn ($record) => collect([
+                                            $record->first_name,
+                                            $record->father_name,
+                                            $record->middle_name,
+                                            $record->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->searchable([
+                                        'first_name',
+                                        'father_name',
+                                        'middle_name',
+                                        'last_name',
+                                        'national_id',
+                                    ])
                                     ->preload()
                                     ->required()
                                     ->native(false)
@@ -147,6 +184,7 @@ class BirthCertificateForm
                                         'required' => 'يرجى اختيار الأم',
                                         'exists' => 'لا يمكن اختيار الطفل نفسه كأم',
                                     ]),
+
                             ]),
                     ])
                     ->columnSpanFull(),

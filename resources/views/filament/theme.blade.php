@@ -1,6 +1,6 @@
 @php
-    $themeName = app(\App\Services\SettingService::class)->get('theme', 'gold');
-    $theme = \App\Support\Themes::get($themeName);
+    $themeName = app(\App\Services\SettingService::class)->get('theme', 'cyan');
+    $theme = \App\Support\Themes::get($themeName) ?? \App\Support\Themes::get('cyan');
     $css = $theme['css'];
 @endphp
 
@@ -19,15 +19,11 @@
         --app-border: {{ $css['border'] }};
     }
 
-    /* الصفحة */
-
     .fi-body,
     .fi-main,
     .fi-main-ctn {
         background-color: var(--app-background) !important;
     }
-
-    /* Sidebar */
 
     .fi-sidebar {
         background-color: var(--app-sidebar) !important;
@@ -67,33 +63,64 @@
         color: #ffffff !important;
     }
 
-    /* Header */
-
     .fi-header {
         border-bottom-color: var(--app-border) !important;
     }
-
-    /* Sections */
 
     .fi-section {
         border-color: var(--app-border) !important;
     }
 
-    /* Tables */
-
     .fi-ta-outer {
         border-color: var(--app-border) !important;
     }
 
-    /* Primary */
-
-    .fi-btn-color-primary {
-        --c-400: var(--app-primary);
-        --c-500: var(--app-primary);
-        --c-600: var(--app-primary-dark);
+    .fi-btn-color-primary,
+    .fi-btn-color-primary:hover,
+    .fi-btn-color-primary:focus,
+    .fi-btn-color-primary:focus-visible,
+    .fi-btn-color-primary:active,
+    .fi-btn-color-primary:disabled {
+        color: #ffffff !important;
     }
 
-    /* Inputs */
+    .fi-btn-color-primary span,
+    .fi-btn-color-primary svg,
+    .fi-btn-color-primary:hover span,
+    .fi-btn-color-primary:hover svg,
+    .fi-btn-color-primary:focus span,
+    .fi-btn-color-primary:focus svg,
+    .fi-btn-color-primary:focus-visible span,
+    .fi-btn-color-primary:focus-visible svg,
+    .fi-btn-color-primary:active span,
+    .fi-btn-color-primary:active svg,
+    .fi-btn-color-primary:disabled span,
+    .fi-btn-color-primary:disabled svg {
+        color: #ffffff !important;
+    }
+
+    .civil-save-button,
+    .civil-save-button:hover,
+    .civil-save-button:focus,
+    .civil-save-button:focus-visible,
+    .civil-save-button:active,
+    .civil-save-button:disabled {
+        color: #ffffff !important;
+    }
+
+    .civil-save-button span,
+    .civil-save-button svg,
+    .civil-save-button:hover span,
+    .civil-save-button:hover svg,
+    .civil-save-button:focus span,
+    .civil-save-button:focus svg,
+    .civil-save-button:focus-visible span,
+    .civil-save-button:active span,
+    .civil-save-button:active svg,
+    .civil-save-button:disabled span,
+    .civil-save-button:disabled svg {
+        color: #ffffff !important;
+    }
 
     .fi-input:focus,
     .fi-select:focus,
@@ -102,13 +129,9 @@
         --tw-ring-color: var(--app-primary) !important;
     }
 
-    /* Tabs */
-
     .fi-tabs-tab.fi-active {
         color: var(--app-primary) !important;
     }
-
-    /* Pagination */
 
     .fi-pagination-item.fi-active {
         background-color: var(--app-primary) !important;
@@ -121,15 +144,9 @@
 
         const themes = @json(\App\Support\Themes::all());
 
-        /*
-        |--------------------------------------------------------------------------
-        | Apply Theme
-        |--------------------------------------------------------------------------
-        */
-
         function applyTheme(themeName) {
 
-            const theme = themes[themeName] ?? themes.gold;
+            const theme = themes[themeName];
 
             if (!theme || !theme.css) {
                 return;
@@ -137,12 +154,6 @@
 
             const css = theme.css;
             const root = document.documentElement;
-
-            /*
-            |--------------------------------------------------------------------------
-            | Application Variables
-            |--------------------------------------------------------------------------
-            */
 
             root.style.setProperty(
                 '--app-primary',
@@ -184,15 +195,6 @@
                 css.border
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Filament Primary Colors
-            |--------------------------------------------------------------------------
-            |
-            | هذه مهمة حتى لا يرجع Filament إلى اللون الافتراضي
-            |
-            */
-
             root.style.setProperty(
                 '--primary-50',
                 css['primary-light']
@@ -204,13 +206,28 @@
             );
 
             root.style.setProperty(
+                '--primary-200',
+                css['primary-light']
+            );
+
+            root.style.setProperty(
+                '--primary-300',
+                css['primary-light']
+            );
+
+            root.style.setProperty(
+                '--primary-400',
+                css.primary
+            );
+
+            root.style.setProperty(
                 '--primary-500',
                 css.primary
             );
 
             root.style.setProperty(
                 '--primary-600',
-                css.primary
+                css['primary-dark']
             );
 
             root.style.setProperty(
@@ -218,50 +235,20 @@
                 css['primary-dark']
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Save
-            |--------------------------------------------------------------------------
-            */
+            root.style.setProperty(
+                '--primary-800',
+                css['primary-dark']
+            );
 
-            localStorage.setItem(
-                'civil-system-theme',
-                themeName
+            root.style.setProperty(
+                '--primary-900',
+                css['primary-dark']
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Global Function
-        |--------------------------------------------------------------------------
-        */
-
         window.applyCivilTheme = applyTheme;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Apply Saved Theme Immediately
-        |--------------------------------------------------------------------------
-        */
-
-        const savedTheme =
-            localStorage.getItem('civil-system-theme');
-
-        if (savedTheme && themes[savedTheme]) {
-
-            applyTheme(savedTheme);
-
-        } else {
-
-            applyTheme('{{ $themeName }}');
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Livewire Init
-        |--------------------------------------------------------------------------
-        */
+        applyTheme('{{ $themeName }}');
 
         document.addEventListener(
             'livewire:init',
@@ -271,7 +258,12 @@
                     'theme-updated',
                     (event) => {
 
-                        applyTheme(event.theme);
+                        const themeName =
+                            typeof event === 'string'
+                                ? event
+                                : event.theme;
+
+                        applyTheme(themeName);
 
                     }
                 );
@@ -279,33 +271,11 @@
             }
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Livewire SPA Navigation
-        |--------------------------------------------------------------------------
-        |
-        | هذه النقطة تحل المشكلة التي تحدث عند الانتقال
-        | من Settings إلى Citizens / Passports / Dashboard...
-        |
-        */
-
         document.addEventListener(
             'livewire:navigated',
             () => {
 
-                const theme =
-                    localStorage.getItem(
-                        'civil-system-theme'
-                    );
-
-                if (
-                    theme &&
-                    themes[theme]
-                ) {
-
-                    applyTheme(theme);
-
-                }
+                applyTheme('{{ $themeName }}');
 
             }
         );

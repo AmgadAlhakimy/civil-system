@@ -14,17 +14,21 @@ class CreateFamilyCard extends CreateRecord
         return 'إصدار بطاقة عائلية';
     }
 
-    protected function getCreatedNotificationTitle(): ?string
-    {
-        return 'تم إصدار البطاقة العائلية بنجاح';
-    }
-
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['issued_by'] = auth()->id();
         $data['status'] = 'pending';
         $data['print_count'] = 0;
+        $data['issue_date'] = null;
+        $data['expiry_date'] = null;
+        $data['approved_by'] = null;
+        $data['approved_at'] = null;
 
         return $data;
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'تم إنشاء طلب إصدار البطاقة العائلية بنجاح';
     }
 }
