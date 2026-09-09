@@ -14,6 +14,7 @@
             direction: rtl;
             text-align: right;
             font-size: 10px;
+            unicode-bidi: embed;
         }
 
         .header {
@@ -37,6 +38,7 @@
             width: 100%;
             margin-bottom: 15px;
             direction: rtl;
+            unicode-bidi: embed;
             border-collapse: separate;
             border-spacing: 8px;
         }
@@ -65,6 +67,20 @@
             width: 100%;
             border-collapse: collapse;
             direction: rtl;
+            unicode-bidi: embed;
+            table-layout: auto;
+        }
+
+        table.report thead {
+            display: table-header-group;
+        }
+
+        table.report tbody {
+            direction: rtl;
+        }
+
+        table.report tr {
+            direction: rtl;
         }
 
         table.report th,
@@ -72,6 +88,8 @@
             border: 1px solid #999;
             padding: 5px;
             vertical-align: middle;
+            direction: rtl;
+            unicode-bidi: embed;
         }
 
         table.report th {
@@ -111,27 +129,17 @@
 
 </div>
 
-<table class="info">
+<table class="info" dir="rtl">
 
     <tr>
 
         <td class="info-item">
             <div class="label">
-                {{ $labels['report_name'] }}
+                {{ $labels['format'] }}
             </div>
 
             <div class="value">
-                {{ $reportName }}
-            </div>
-        </td>
-
-        <td class="info-item">
-            <div class="label">
-                {{ $labels['report_type'] }}
-            </div>
-
-            <div class="value">
-                {{ $title }}
+                PDF
             </div>
         </td>
 
@@ -147,11 +155,21 @@
 
         <td class="info-item">
             <div class="label">
-                {{ $labels['format'] }}
+                {{ $labels['report_type'] }}
             </div>
 
             <div class="value">
-                PDF
+                {{ $title }}
+            </div>
+        </td>
+
+        <td class="info-item">
+            <div class="label">
+                {{ $labels['report_name'] }}
+            </div>
+
+            <div class="value">
+                {{ $reportName }}
             </div>
         </td>
 
@@ -159,13 +177,13 @@
 
 </table>
 
-<table class="report">
+<table class="report" dir="rtl">
 
     <thead>
 
     <tr>
 
-        @foreach($headers as $header)
+        @foreach(array_reverse($headers) as $header)
 
             <th>
                 {{ $header }}
@@ -183,7 +201,7 @@
 
         <tr>
 
-            @foreach($row as $value)
+            @foreach(array_reverse($row) as $value)
 
                 <td>
                     {{ $value ?? '-' }}

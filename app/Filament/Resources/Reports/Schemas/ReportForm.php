@@ -25,9 +25,12 @@ class ReportForm
                                     ->label('اسم التقرير')
                                     ->placeholder('مثال: تقرير المواطنين')
                                     ->required()
+                                    ->minLength(3)
                                     ->maxLength(150)
+                                    ->trim()
                                     ->validationMessages([
                                         'required' => 'اسم التقرير مطلوب',
+                                        'min' => 'اسم التقرير يجب أن يحتوي على 3 أحرف على الأقل',
                                         'max' => 'اسم التقرير لا يمكن أن يتجاوز 150 حرف',
                                     ]),
 
@@ -43,6 +46,14 @@ class ReportForm
                                     ])
                                     ->required()
                                     ->native(false)
+                                    ->in([
+                                        'citizens',
+                                        'birth_certificates',
+                                        'identity_cards',
+                                        'family_cards',
+                                        'passports',
+                                        'appointments',
+                                    ])
                                     ->live()
                                     ->afterStateUpdated(function ($set) {
                                         $set('gender', null);
@@ -53,6 +64,7 @@ class ReportForm
                                     })
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار نوع التقرير',
+                                        'in' => 'نوع التقرير المحدد غير صالح',
                                     ]),
 
                                 Select::make('format')
@@ -64,8 +76,13 @@ class ReportForm
                                     ->default('pdf')
                                     ->required()
                                     ->native(false)
+                                    ->in([
+                                        'pdf',
+                                        'excel',
+                                    ])
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار صيغة التقرير',
+                                        'in' => 'صيغة التقرير المحددة غير صالحة',
                                     ]),
                             ]),
                     ])
@@ -84,7 +101,14 @@ class ReportForm
                                         'female' => 'أنثى',
                                     ])
                                     ->placeholder('جميع المواطنين')
-                                    ->native(false),
+                                    ->native(false)
+                                    ->in([
+                                        'male',
+                                        'female',
+                                    ])
+                                    ->validationMessages([
+                                        'in' => 'قيمة الجنس المحددة غير صالحة',
+                                    ]),
 
                                 Select::make('marital_status')
                                     ->label('الحالة الاجتماعية')
@@ -95,7 +119,16 @@ class ReportForm
                                         'widowed' => 'أرمل',
                                     ])
                                     ->placeholder('جميع الحالات')
-                                    ->native(false),
+                                    ->native(false)
+                                    ->in([
+                                        'single',
+                                        'married',
+                                        'divorced',
+                                        'widowed',
+                                    ])
+                                    ->validationMessages([
+                                        'in' => 'الحالة الاجتماعية المحددة غير صالحة',
+                                    ]),
                             ])
                             ->visible(fn ($get) => $get('report_type') === 'citizens'),
 
@@ -105,13 +138,136 @@ class ReportForm
                                     ->label('من تاريخ')
                                     ->placeholder('اختر تاريخ البداية')
                                     ->native(false)
-                                    ->maxDate(fn ($get) => $get('to_date')),
+                                    ->displayFormat('d/m/Y')
+                                    ->format('Y-m-d')
+                                    ->prefixIcon('heroicon-o-calendar-days')
+
+                                    // لا يسمح بتاريخ مستقبلي
+                                    ->maxDate(
+                                        fn ($get) => $get('report_type') === 'appointments'
+                                            ? null
+                                            : now()->toDateString()
+                                    )
+
+                                    // عند اختيار تاريخ البداية،
+                                    // يتم وضع اليوم الحالي تلقائيًا في تاريخ النهاية
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        if (
+                                            blank($state) ||
+                                            $get('report_type') === 'appointments'
+                                        ) {
+                                            return;
+                                        }
+
+                                        $currentToDate = $get('to_date');
+                                        $today = now()->toDateString();
+
+                                        // إذا لم يتم اختيار تاريخ نهاية،
+                                        // نضع اليوم الحالي تلقائيًا.
+                                        if (blank($currentToDate)) {
+                                            $set('to_date', $today);
+
+                                            return;
+                                        }
+
+                                        // إذا كان تاريخ النهاية الحالي
+                                        // قبل تاريخ البداية، نصححه إلى اليوم الحالي.
+                                        if ($currentToDate < $state) {
+                                            $set(
+                                                'to_date',
+                                                $state > $today
+                                                    ? $today
+                                                    : $today
+                                            );
+                                        }
+                                    })
+                                    ->closeOnDateSelection()
+                                    ->rule(function ($get) {
+                                        return function (
+                                            string $attribute,
+                                                   $value,
+                                            \Closure $fail
+                                        ) use ($get) {
+                                            if (
+                                                filled($value) &&
+                                                filled($get('to_date')) &&
+                                                $value > $get('to_date')
+                                            ) {
+                                                $fail(
+                                                    'تاريخ البداية يجب أن يكون قبل أو مساويًا لتاريخ النهاية.'
+                                                );
+                                            }
+
+                                            if (
+                                                $get('report_type') !== 'appointments' &&
+                                                filled($value) &&
+                                                $value > now()->toDateString()
+                                            ) {
+                                                $fail(
+                                                    'لا يمكن اختيار تاريخ مستقبلي لهذا النوع من التقارير.'
+                                                );
+                                            }
+                                        };
+                                    })
+                                    ->validationMessages([
+                                        'date' => 'يرجى إدخال تاريخ بداية صحيح',
+                                    ]),
 
                                 DatePicker::make('to_date')
                                     ->label('إلى تاريخ')
                                     ->placeholder('اختر تاريخ النهاية')
                                     ->native(false)
-                                    ->minDate(fn ($get) => $get('from_date')),
+                                    ->displayFormat('d/m/Y')
+                                    ->format('Y-m-d')
+                                    ->prefixIcon('heroicon-o-calendar-days')
+
+                                    // يجب ألا يكون تاريخ النهاية قبل تاريخ البداية
+                                    ->minDate(
+                                        fn ($get) => $get('from_date')
+                                    )
+
+                                    // اليوم الحالي هو آخر تاريخ مسموح
+                                    // للتقارير العادية.
+                                    // المواعيد يمكن أن تحتوي على تاريخ مستقبلي.
+                                    ->maxDate(
+                                        fn ($get) => $get('report_type') === 'appointments'
+                                            ? null
+                                            : now()->toDateString()
+                                    )
+
+                                    ->live()
+                                    ->closeOnDateSelection()
+                                    ->rule(function ($get) {
+                                        return function (
+                                            string $attribute,
+                                                   $value,
+                                            \Closure $fail
+                                        ) use ($get) {
+                                            if (
+                                                filled($value) &&
+                                                filled($get('from_date')) &&
+                                                $value < $get('from_date')
+                                            ) {
+                                                $fail(
+                                                    'تاريخ النهاية يجب أن يكون بعد أو مساويًا لتاريخ البداية.'
+                                                );
+                                            }
+
+                                            if (
+                                                $get('report_type') !== 'appointments' &&
+                                                filled($value) &&
+                                                $value > now()->toDateString()
+                                            ) {
+                                                $fail(
+                                                    'لا يمكن اختيار تاريخ مستقبلي لهذا النوع من التقارير.'
+                                                );
+                                            }
+                                        };
+                                    })
+                                    ->validationMessages([
+                                        'date' => 'يرجى إدخال تاريخ نهاية صحيح',
+                                    ]),
                             ])
                             ->visible(fn ($get) => in_array(
                                 $get('report_type'),
@@ -122,7 +278,8 @@ class ReportForm
                                     'family_cards',
                                     'passports',
                                     'appointments',
-                                ]
+                                ],
+                                true
                             )),
 
                         Select::make('status_filter')
@@ -136,25 +293,19 @@ class ReportForm
                             ])
                             ->placeholder('جميع الحالات')
                             ->native(false)
-                            ->visible(fn ($get) => $get('report_type') === 'appointments'),
-                    ])
-                    ->columnSpanFull(),
-
-                Section::make('حالة التقرير')
-                    ->description('الحالة الحالية للتقرير')
-                    ->icon('heroicon-o-information-circle')
-                    ->schema([
-                        Select::make('status')
-                            ->label('حالة التقرير')
-                            ->options([
-                                'pending' => 'قيد الانتظار',
-                                'completed' => 'مكتمل',
-                                'failed' => 'فشل',
+                            ->in([
+                                'pending',
+                                'confirmed',
+                                'attended',
+                                'cancelled',
+                                'no_show',
                             ])
-                            ->default('pending')
-                            ->disabled()
-                            ->dehydrated()
-                            ->native(false),
+                            ->visible(
+                                fn ($get) => $get('report_type') === 'appointments'
+                            )
+                            ->validationMessages([
+                                'in' => 'حالة الموعد المحددة غير صالحة',
+                            ]),
                     ])
                     ->columnSpanFull(),
             ]);

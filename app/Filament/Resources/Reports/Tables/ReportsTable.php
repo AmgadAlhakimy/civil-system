@@ -22,7 +22,8 @@ class ReportsTable
                     ->label('اسم التقرير')
                     ->searchable()
                     ->sortable()
-                    ->limit(50),
+                    ->limit(50)
+                    ->tooltip(fn ($state): ?string => $state),
 
                 TextColumn::make('report_type')
                     ->label('نوع التقرير')
@@ -38,6 +39,17 @@ class ReportsTable
                         }
                     )
                     ->badge()
+                    ->color(
+                        fn (?string $state): string => match ($state) {
+                            'citizens' => 'info',
+                            'birth_certificates' => 'success',
+                            'identity_cards' => 'warning',
+                            'family_cards' => 'primary',
+                            'passports' => 'danger',
+                            'appointments' => 'gray',
+                            default => 'gray',
+                        }
+                    )
                     ->sortable(),
 
                 TextColumn::make('format')
@@ -50,6 +62,13 @@ class ReportsTable
                         }
                     )
                     ->badge()
+                    ->color(
+                        fn (?string $state): string => match ($state) {
+                            'pdf' => 'danger',
+                            'xlsx', 'excel' => 'success',
+                            default => 'gray',
+                        }
+                    )
                     ->sortable(),
 
                 TextColumn::make('user.name')
@@ -82,30 +101,36 @@ class ReportsTable
                 TextColumn::make('size')
                     ->label('حجم الملف')
                     ->formatStateUsing(function ($state): string {
-                        if (!$state) {
+                        if (!filled($state) || $state <= 0) {
                             return 'غير متوفر';
                         }
 
                         if ($state < 1024) {
-                            return $state . ' بايت';
+                            return number_format($state) . ' بايت';
                         }
 
                         if ($state < 1024 * 1024) {
-                            return round($state / 1024, 2) . ' KB';
+                            return number_format($state / 1024, 2) . ' KB';
                         }
 
                         if ($state < 1024 * 1024 * 1024) {
-                            return round($state / (1024 * 1024), 2) . ' MB';
+                            return number_format(
+                                    $state / (1024 * 1024),
+                                    2
+                                ) . ' MB';
                         }
 
-                        return round($state / (1024 * 1024 * 1024), 2) . ' GB';
+                        return number_format(
+                                $state / (1024 * 1024 * 1024),
+                                2
+                            ) . ' GB';
                     })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('generated_at')
                     ->label('تاريخ التوليد')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->placeholder('لم يتم التوليد')
                     ->toggleable(),
@@ -113,18 +138,22 @@ class ReportsTable
                 TextColumn::make('path')
                     ->label('مسار الملف')
                     ->limit(40)
+                    ->tooltip(fn ($state): ?string => $state)
+                    ->copyable()
+                    ->copyMessage('تم نسخ مسار الملف')
+                    ->copyMessageDuration(1500)
                     ->placeholder('لا يوجد ملف')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
                     ->label('آخر تحديث')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -138,7 +167,8 @@ class ReportsTable
                         'family_cards' => 'تقرير البطاقات العائلية',
                         'passports' => 'تقرير الجوازات',
                         'appointments' => 'تقرير المواعيد',
-                    ]),
+                    ])
+                    ->native(false),
 
                 SelectFilter::make('format')
                     ->label('صيغة التقرير')
@@ -146,7 +176,8 @@ class ReportsTable
                         'pdf' => 'PDF',
                         'xlsx' => 'Excel',
                         'excel' => 'Excel',
-                    ]),
+                    ])
+                    ->native(false),
 
                 SelectFilter::make('status')
                     ->label('حالة التقرير')
@@ -154,7 +185,8 @@ class ReportsTable
                         'pending' => 'قيد الانتظار',
                         'completed' => 'مكتمل',
                         'failed' => 'فشل',
-                    ]),
+                    ])
+                    ->native(false),
             ])
             ->recordActions([
                 ViewAction::make()

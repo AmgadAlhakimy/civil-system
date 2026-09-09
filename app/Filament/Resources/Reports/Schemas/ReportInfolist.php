@@ -21,7 +21,8 @@ class ReportInfolist
                             ->schema([
                                 TextEntry::make('name')
                                     ->label('اسم التقرير')
-                                    ->placeholder('غير محدد'),
+                                    ->placeholder('غير محدد')
+                                    ->weight('bold'),
 
                                 TextEntry::make('report_type')
                                     ->label('نوع التقرير')
@@ -45,6 +46,13 @@ class ReportInfolist
                                             'pdf' => 'PDF',
                                             'excel' => 'Excel',
                                             default => 'غير محدد',
+                                        }
+                                    )
+                                    ->color(
+                                        fn (?string $state): string => match ($state) {
+                                            'pdf' => 'danger',
+                                            'excel' => 'success',
+                                            default => 'gray',
                                         }
                                     ),
 
@@ -103,12 +111,12 @@ class ReportInfolist
 
                                 TextEntry::make('filters.from_date')
                                     ->label('من تاريخ')
-                                    ->date('Y-m-d')
+                                    ->date('d/m/Y')
                                     ->placeholder('غير محدد'),
 
                                 TextEntry::make('filters.to_date')
                                     ->label('إلى تاريخ')
-                                    ->date('Y-m-d')
+                                    ->date('d/m/Y')
                                     ->placeholder('غير محدد'),
 
                                 TextEntry::make('filters.status')
@@ -117,7 +125,7 @@ class ReportInfolist
                                         fn ($state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',
                                             'confirmed' => 'مؤكد',
-                                            'attended' => 'حضر',
+                                            'attended' => 'تم الحضور',
                                             'cancelled' => 'ملغي',
                                             'no_show' => 'لم يحضر',
                                             default => 'جميع الحالات',
@@ -138,6 +146,8 @@ class ReportInfolist
                                     ->label('مسار الملف')
                                     ->placeholder('لم يتم إنشاء الملف')
                                     ->copyable()
+                                    ->copyMessage('تم نسخ مسار الملف')
+                                    ->copyMessageDuration(1500)
                                     ->columnSpanFull(),
 
                                 TextEntry::make('size')
@@ -148,24 +158,30 @@ class ReportInfolist
                                         }
 
                                         if ($state < 1024) {
-                                            return $state . ' بايت';
+                                            return number_format($state) . ' بايت';
                                         }
 
                                         if ($state < 1024 * 1024) {
-                                            return round($state / 1024, 2) . ' KB';
+                                            return number_format($state / 1024, 2) . ' KB';
                                         }
 
                                         if ($state < 1024 * 1024 * 1024) {
-                                            return round($state / (1024 * 1024), 2) . ' MB';
+                                            return number_format(
+                                                    $state / (1024 * 1024),
+                                                    2
+                                                ) . ' MB';
                                         }
 
-                                        return round($state / (1024 * 1024 * 1024), 2) . ' GB';
+                                        return number_format(
+                                                $state / (1024 * 1024 * 1024),
+                                                2
+                                            ) . ' GB';
                                     })
                                     ->placeholder('غير متوفر'),
 
                                 TextEntry::make('generated_at')
                                     ->label('تاريخ التوليد')
-                                    ->dateTime('Y-m-d H:i')
+                                    ->dateTime('d/m/Y H:i')
                                     ->placeholder('لم يتم التوليد'),
                             ]),
                     ])
@@ -177,7 +193,8 @@ class ReportInfolist
                     ->schema([
                         TextEntry::make('user.name')
                             ->label('أنشأ التقرير')
-                            ->placeholder('غير محدد'),
+                            ->placeholder('غير محدد')
+                            ->weight('bold'),
                     ])
                     ->columnSpanFull(),
 
@@ -189,11 +206,13 @@ class ReportInfolist
                             ->schema([
                                 TextEntry::make('created_at')
                                     ->label('تاريخ إنشاء التقرير')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('d/m/Y H:i')
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('d/m/Y H:i')
+                                    ->placeholder('غير محدد'),
                             ]),
                     ])
                     ->columnSpanFull(),

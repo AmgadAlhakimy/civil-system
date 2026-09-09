@@ -4,14 +4,20 @@ namespace App\Filament\Resources\Reports\Pages;
 
 use App\Filament\Resources\Reports\ReportResource;
 use App\Services\ReportService;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateReport extends CreateRecord
 {
     protected static string $resource = ReportResource::class;
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function getCreatedNotification(): ?Notification
+    {
+        return null;
+    }
+
+    protected function handleRecordCreation(array $data): Model
     {
         $filters = [
             'gender' => $data['gender'] ?? null,
@@ -26,15 +32,16 @@ class CreateReport extends CreateRecord
             fn ($value) => $value !== null && $value !== ''
         );
 
-        $format = $data['format'] === 'excel'
-            ? 'xlsx'
-            : $data['format'];
+        $format = match ($data['format'] ?? null) {
+            'excel' => 'xlsx',
+            default => $data['format'] ?? 'pdf',
+        };
 
         try {
             $report = app(ReportService::class)->generate(
                 reportType: $data['report_type'],
                 format: $format,
-                filters: $filters
+                filters: $filters,
             );
 
             Notification::make()

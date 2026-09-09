@@ -2,15 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\Report;
 use App\Models\Appointment;
 use App\Models\BirthCertificate;
 use App\Models\Citizen;
 use App\Models\FamilyCard;
 use App\Models\IdentityCard;
 use App\Models\Passport;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Report;
 use ArPHP\I18N\Arabic;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -19,6 +20,9 @@ use Throwable;
 
 class ReportService
 {
+    /**
+     * Generate a report.
+     */
     public function generate(
         string $reportType,
         string $format,
@@ -56,7 +60,6 @@ class ReportService
             ]);
 
             return $report->fresh();
-
         } catch (Throwable $e) {
             $report->update([
                 'status' => 'failed',
@@ -66,6 +69,9 @@ class ReportService
         }
     }
 
+    /**
+     * Get report data.
+     */
     protected function getData(
         string $reportType,
         array $filters
@@ -165,12 +171,71 @@ class ReportService
         };
     }
 
+    /**
+     * Apply date range filters to a query.
+     *
+     * The filter is inclusive:
+     * from_date >= selected start date
+     * to_date   <= selected end date
+     */
+    protected function applyDateRange(
+        Builder $query,
+        array $filters,
+        string $column
+    ): Builder {
+        if (
+            !empty($filters['from_date']) &&
+            !empty($filters['to_date'])
+        ) {
+            $query
+                ->whereDate(
+                    $column,
+                    '>=',
+                    $filters['from_date']
+                )
+                ->whereDate(
+                    $column,
+                    '<=',
+                    $filters['to_date']
+                );
+
+            return $query;
+        }
+
+        if (!empty($filters['from_date'])) {
+            $query->whereDate(
+                $column,
+                '>=',
+                $filters['from_date']
+            );
+        }
+
+        if (!empty($filters['to_date'])) {
+            $query->whereDate(
+                $column,
+                '<=',
+                $filters['to_date']
+            );
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get citizens.
+     *
+     * Date filter uses created_at because the report
+     * should show citizens created in the selected period.
+     */
     protected function citizens(array $filters): array
     {
         $query = Citizen::query();
 
         if (!empty($filters['gender'])) {
-            $query->where('gender', $filters['gender']);
+            $query->where(
+                'gender',
+                $filters['gender']
+            );
         }
 
         if (!empty($filters['marital_status'])) {
@@ -180,46 +245,75 @@ class ReportService
             );
         }
 
-        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+        if (
+            isset($filters['is_active']) &&
+            $filters['is_active'] !== ''
+        ) {
             $query->where(
                 'is_active',
                 (bool) $filters['is_active']
             );
         }
 
+        // Filter citizens by the date their records were created.
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'created_at'
+        );
+
         return $query
             ->orderBy('first_name')
+            ->orderBy('father_name')
+            ->orderBy('middle_name')
+            ->orderBy('last_name')
             ->get()
             ->map(function ($citizen) {
                 return [
                     $citizen->national_id,
-                    $citizen->full_name,
-                    $citizen->father_name,
-                    $citizen->mother_name,
-                    optional($citizen->birth_date)->format('Y-m-d'),
-                    $citizen->birth_place,
+                    $this->citizenFullName($citizen),
+                    $citizen->father_name ?? '-',
+                    $citizen->mother_name ?? '-',
+                    $citizen->birth_date?->format('Y-m-d'),
+                    $citizen->birth_place ?? '-',
                     $this->gender($citizen->gender),
                     $this->maritalStatus($citizen->marital_status),
                     $citizen->occupation ?? '-',
-                    $citizen->phone,
-                    $citizen->address,
+                    $citizen->phone ?? '-',
+                    $citizen->address ?? '-',
                     $citizen->is_active ? 'نشط' : 'غير نشط',
                 ];
             })
             ->toArray();
     }
 
+    /**
+     * Get passports.
+     */
     protected function passports(array $filters): array
     {
-        $query = Passport::query()->with('citizen');
+        $query = Passport::query()
+            ->with('citizen');
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
 
         if (!empty($filters['type'])) {
-            $query->where('type', $filters['type']);
+            $query->where(
+                'type',
+                $filters['type']
+            );
         }
+
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'issue_date'
+        );
 
         return $query
             ->latest()
@@ -228,7 +322,7 @@ class ReportService
                 return [
                     $passport->passport_number,
                     $passport->citizen?->national_id ?? '-',
-                    $passport->citizen?->full_name ?? '-',
+                    $this->citizenFullName($passport->citizen),
                     $this->passportType($passport->type),
                     $passport->issue_date?->format('Y-m-d'),
                     $passport->expiry_date?->format('Y-m-d'),
@@ -238,13 +332,26 @@ class ReportService
             ->toArray();
     }
 
+    /**
+     * Get identity cards.
+     */
     protected function identityCards(array $filters): array
     {
-        $query = IdentityCard::query()->with('citizen');
+        $query = IdentityCard::query()
+            ->with('citizen');
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
+
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'issue_date'
+        );
 
         return $query
             ->latest()
@@ -253,7 +360,7 @@ class ReportService
                 return [
                     $card->id_number,
                     $card->citizen?->national_id ?? '-',
-                    $card->citizen?->full_name ?? '-',
+                    $this->citizenFullName($card->citizen),
                     $card->issue_date?->format('Y-m-d'),
                     $card->expiry_date?->format('Y-m-d'),
                     $this->identityCardStatus($card->status),
@@ -262,13 +369,26 @@ class ReportService
             ->toArray();
     }
 
+    /**
+     * Get family cards.
+     */
     protected function familyCards(array $filters): array
     {
-        $query = FamilyCard::query()->with('head');
+        $query = FamilyCard::query()
+            ->with('head');
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
+
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'issue_date'
+        );
 
         return $query
             ->latest()
@@ -277,7 +397,7 @@ class ReportService
                 return [
                     $card->card_number,
                     $card->head?->national_id ?? '-',
-                    $card->head?->full_name ?? '-',
+                    $this->citizenFullName($card->head),
                     $card->issue_date?->format('Y-m-d'),
                     $card->expiry_date?->format('Y-m-d'),
                     $this->familyCardStatus($card->status),
@@ -286,17 +406,30 @@ class ReportService
             ->toArray();
     }
 
+    /**
+     * Get birth certificates.
+     */
     protected function birthCertificates(array $filters): array
     {
-        $query = BirthCertificate::query()->with([
-            'child',
-            'father',
-            'mother',
-        ]);
+        $query = BirthCertificate::query()
+            ->with([
+                'child',
+                'father',
+                'mother',
+            ]);
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
+
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'issue_date'
+        );
 
         return $query
             ->latest()
@@ -304,10 +437,10 @@ class ReportService
             ->map(function ($certificate) {
                 return [
                     $certificate->certificate_number,
-                    $certificate->child?->full_name ?? '-',
+                    $this->citizenFullName($certificate->child),
                     $certificate->child?->national_id ?? '-',
-                    $certificate->father?->full_name ?? '-',
-                    $certificate->mother?->full_name ?? '-',
+                    $this->citizenFullName($certificate->father),
+                    $this->citizenFullName($certificate->mother),
                     $certificate->issue_date?->format('Y-m-d'),
                     $this->certificateStatus($certificate->status),
                 ];
@@ -315,40 +448,84 @@ class ReportService
             ->toArray();
     }
 
+    /**
+     * Get appointments.
+     */
     protected function appointments(array $filters): array
     {
-        $query = Appointment::query()->with([
-            'citizen',
-            'branch',
-            'user',
-        ]);
+        $query = Appointment::query()
+            ->with([
+                'citizen',
+                'branch',
+                'user',
+            ]);
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
 
         if (!empty($filters['service_type'])) {
-            $query->where('service_type', $filters['service_type']);
+            $query->where(
+                'service_type',
+                $filters['service_type']
+            );
         }
+
+        $this->applyDateRange(
+            $query,
+            $filters,
+            'appointment_date'
+        );
 
         return $query
             ->orderByDesc('appointment_date')
+            ->orderByDesc('appointment_time')
             ->get()
             ->map(function ($appointment) {
                 return [
-                    $appointment->citizen?->full_name ?? '-',
+                    $this->citizenFullName($appointment->citizen),
                     $appointment->citizen?->national_id ?? '-',
                     $this->serviceType($appointment->service_type),
                     $appointment->branch?->name ?? '-',
                     $appointment->user?->name ?? '-',
                     $appointment->appointment_date?->format('Y-m-d'),
-                    $appointment->appointment_time,
+                    $appointment->appointment_time ?? '-',
                     $this->appointmentStatus($appointment->status),
                 ];
             })
             ->toArray();
     }
 
+    /**
+     * Build citizen full name.
+     *
+     * Citizen does not have a full_name column.
+     */
+    protected function citizenFullName($citizen): string
+    {
+        if (!$citizen) {
+            return '-';
+        }
+
+        return trim(
+            implode(
+                ' ',
+                array_filter([
+                    $citizen->first_name,
+                    $citizen->father_name,
+                    $citizen->middle_name,
+                    $citizen->last_name,
+                ])
+            )
+        ) ?: '-';
+    }
+
+    /**
+     * Prepare Arabic text for PDF.
+     */
     protected function arabicText(mixed $text): string
     {
         if ($text === null || $text === '') {
@@ -366,6 +543,9 @@ class ReportService
         return $arabic->utf8Glyphs($text);
     }
 
+    /**
+     * Generate PDF report.
+     */
     protected function generatePdf(
         Report $report,
         array $data
@@ -394,18 +574,35 @@ class ReportService
 
         $title = $this->arabicText($data['title']);
 
-        $reportName = $this->arabicText($report->name);
+        $reportName = $this->arabicText(
+            $report->name
+        );
 
-        /*
-         * النصوص الثابتة في التقرير
-         */
         $labels = [
-            'report_date' => $this->arabicText('تاريخ إنشاء التقرير'),
-            'report_name' => $this->arabicText('اسم التقرير'),
-            'report_type' => $this->arabicText('نوع التقرير'),
-            'records_count' => $this->arabicText('عدد السجلات'),
-            'format' => $this->arabicText('الصيغة'),
-            'total_records' => $this->arabicText('إجمالي السجلات'),
+            'report_date' => $this->arabicText(
+                'تاريخ إنشاء التقرير'
+            ),
+
+            'report_name' => $this->arabicText(
+                'اسم التقرير'
+            ),
+
+            'report_type' => $this->arabicText(
+                'نوع التقرير'
+            ),
+
+            'records_count' => $this->arabicText(
+                'عدد السجلات'
+            ),
+
+            'format' => $this->arabicText(
+                'الصيغة'
+            ),
+
+            'total_records' => $this->arabicText(
+                'إجمالي السجلات'
+            ),
+
             'no_data' => $this->arabicText(
                 'لا توجد بيانات مطابقة للمعايير المحددة'
             ),
@@ -423,7 +620,10 @@ class ReportService
             ]
         );
 
-        $pdf->setPaper('a4', 'landscape');
+        $pdf->setPaper(
+            'a4',
+            'landscape'
+        );
 
         Storage::disk('local')->put(
             $filename,
@@ -433,6 +633,9 @@ class ReportService
         return $filename;
     }
 
+    /**
+     * Generate Excel report.
+     */
     protected function generateExcel(
         Report $report,
         array $data
@@ -445,26 +648,35 @@ class ReportService
 
         $sheet->setRightToLeft(true);
 
+        $lastColumn = $this->columnLetter(
+            count($data['headers'])
+        );
+
         $sheet->setCellValue(
             'A1',
             $data['title']
         );
 
         $sheet->mergeCells(
-            'A1:' .
-            $this->columnLetter(
-                count($data['headers'])
-            ) .
-            '1'
+            'A1:' . $lastColumn . '1'
         );
 
-        $sheet->getStyle('A1')->getFont()->setBold(true);
-        $sheet->getStyle('A1')->getFont()->setSize(16);
+        $sheet
+            ->getStyle('A1')
+            ->getFont()
+            ->setBold(true);
+
+        $sheet
+            ->getStyle('A1')
+            ->getFont()
+            ->setSize(16);
 
         $headerRow = 3;
 
         foreach ($data['headers'] as $index => $header) {
-            $column = $this->columnLetter($index + 1);
+            $column = $this->columnLetter(
+                $index + 1
+            );
 
             $sheet->setCellValue(
                 $column . $headerRow,
@@ -481,7 +693,9 @@ class ReportService
 
         foreach ($data['rows'] as $row) {
             foreach ($row as $index => $value) {
-                $column = $this->columnLetter($index + 1);
+                $column = $this->columnLetter(
+                    $index + 1
+                );
 
                 $sheet->setCellValue(
                     $column . $rowNumber,
@@ -498,7 +712,9 @@ class ReportService
                 count($data['headers'])
             ) as $columnIndex
         ) {
-            $column = $this->columnLetter($columnIndex);
+            $column = $this->columnLetter(
+                $columnIndex
+            );
 
             $sheet
                 ->getColumnDimension($column)
@@ -514,10 +730,9 @@ class ReportService
             now()->format('Ymd_His') .
             '.xlsx';
 
-        $temporaryPath =
-            storage_path(
-                'app/private/' . $filename
-            );
+        $temporaryPath = storage_path(
+            'app/private/' . $filename
+        );
 
         if (!is_dir(dirname($temporaryPath))) {
             mkdir(
@@ -527,9 +742,13 @@ class ReportService
             );
         }
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new Xlsx(
+            $spreadsheet
+        );
 
-        $writer->save($temporaryPath);
+        $writer->save(
+            $temporaryPath
+        );
 
         $spreadsheet->disconnectWorksheets();
 
@@ -538,6 +757,9 @@ class ReportService
         return $filename;
     }
 
+    /**
+     * Convert column number to Excel column letter.
+     */
     protected function columnLetter(int $number): string
     {
         $letter = '';
@@ -556,6 +778,9 @@ class ReportService
         return $letter;
     }
 
+    /**
+     * Get report name.
+     */
     protected function getReportName(
         string $type
     ): string {
@@ -570,8 +795,12 @@ class ReportService
         };
     }
 
-    protected function gender(?string $value): string
-    {
+    /**
+     * Translate gender.
+     */
+    protected function gender(
+        ?string $value
+    ): string {
         return match ($value) {
             'male' => 'ذكر',
             'female' => 'أنثى',
@@ -579,8 +808,12 @@ class ReportService
         };
     }
 
-    protected function maritalStatus(?string $value): string
-    {
+    /**
+     * Translate marital status.
+     */
+    protected function maritalStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'single' => 'أعزب',
             'married' => 'متزوج',
@@ -590,8 +823,12 @@ class ReportService
         };
     }
 
-    protected function passportType(?string $value): string
-    {
+    /**
+     * Translate passport type.
+     */
+    protected function passportType(
+        ?string $value
+    ): string {
         return match ($value) {
             'ordinary' => 'عادي',
             'diplomatic' => 'دبلوماسي',
@@ -600,8 +837,12 @@ class ReportService
         };
     }
 
-    protected function passportStatus(?string $value): string
-    {
+    /**
+     * Translate passport status.
+     */
+    protected function passportStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'pending' => 'قيد الانتظار',
             'approved' => 'معتمد',
@@ -615,10 +856,16 @@ class ReportService
         };
     }
 
-    protected function identityCardStatus(?string $value): string
-    {
+    /**
+     * Translate identity card status.
+     */
+    protected function identityCardStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'pending' => 'قيد الانتظار',
+            'approved' => 'معتمدة',
+            'rejected' => 'مرفوضة',
             'active' => 'نشطة',
             'expired' => 'منتهية',
             'cancelled' => 'ملغاة',
@@ -628,19 +875,31 @@ class ReportService
         };
     }
 
-    protected function familyCardStatus(?string $value): string
-    {
+    /**
+     * Translate family card status.
+     */
+    protected function familyCardStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'pending' => 'قيد الانتظار',
+            'approved' => 'معتمدة',
+            'rejected' => 'مرفوضة',
             'active' => 'نشطة',
             'expired' => 'منتهية',
             'cancelled' => 'ملغاة',
+            'lost' => 'مفقودة',
+            'damaged' => 'تالفة',
             default => 'غير محدد',
         };
     }
 
-    protected function certificateStatus(?string $value): string
-    {
+    /**
+     * Translate birth certificate status.
+     */
+    protected function certificateStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'pending' => 'قيد الانتظار',
             'approved' => 'معتمدة',
@@ -649,8 +908,12 @@ class ReportService
         };
     }
 
-    protected function appointmentStatus(?string $value): string
-    {
+    /**
+     * Translate appointment status.
+     */
+    protected function appointmentStatus(
+        ?string $value
+    ): string {
         return match ($value) {
             'pending' => 'قيد الانتظار',
             'confirmed' => 'مؤكد',
@@ -661,21 +924,29 @@ class ReportService
         };
     }
 
-    protected function serviceType(?string $value): string
-    {
+    /**
+     * Translate service type.
+     */
+    protected function serviceType(
+        ?string $value
+    ): string {
         return match ($value) {
             'passport_new' => 'إصدار جواز سفر',
             'passport_renew' => 'تجديد جواز سفر',
             'passport_lost' => 'بدل فاقد لجواز السفر',
             'passport_damaged' => 'بدل تالف لجواز السفر',
+
             'national_id_new' => 'إصدار بطاقة شخصية',
             'national_id_renew' => 'تجديد بطاقة شخصية',
             'national_id_lost' => 'بدل فاقد للبطاقة الشخصية',
             'national_id_damaged' => 'بدل تالف للبطاقة الشخصية',
+
             'family_card_new' => 'إصدار بطاقة عائلية',
             'family_card_renew' => 'تجديد بطاقة عائلية',
+
             'birth_certificate' => 'إصدار شهادة ميلاد',
             'death_certificate' => 'إصدار شهادة وفاة',
+
             default => 'غير محدد',
         };
     }
