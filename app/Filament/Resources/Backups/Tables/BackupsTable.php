@@ -4,8 +4,8 @@ namespace App\Filament\Resources\Backups\Tables;
 
 use App\Models\Backup;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -121,17 +121,58 @@ class BackupsTable
                             basename($record->file_path)
                         );
                     }),
+
+                Action::make('delete')
+                    ->label('حذف')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('حذف النسخة الاحتياطية')
+                    ->modalDescription(
+                        'هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ سيتم حذف ملف النسخة وسجلها من النظام.'
+                    )
+                    ->modalSubmitActionLabel('نعم، حذف')
+                    ->modalCancelActionLabel('إلغاء')
+                    ->action(function (Backup $record): void {
+                        $disk = Storage::disk('local');
+
+                        if (
+                            filled($record->file_path) &&
+                            $disk->exists($record->file_path)
+                        ) {
+                            $disk->delete($record->file_path);
+                        }
+
+                        $record->delete();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
+                    BulkAction::make('delete')
                         ->label('حذف المحدد')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('حذف النسخ الاحتياطية')
                         ->modalDescription(
-                            'هل أنت متأكد من حذف النسخ الاحتياطية المحددة؟'
+                            'هل أنت متأكد من حذف النسخ الاحتياطية المحددة؟ سيتم حذف ملفات النسخ وسجلاتها من النظام.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف'),
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->modalCancelActionLabel('إلغاء')
+                        ->action(function ($records): void {
+                            $disk = Storage::disk('local');
+
+                            foreach ($records as $record) {
+                                if (
+                                    filled($record->file_path) &&
+                                    $disk->exists($record->file_path)
+                                ) {
+                                    $disk->delete($record->file_path);
+                                }
+
+                                $record->delete();
+                            }
+                        }),
                 ])
                     ->label('إجراءات جماعية'),
             ])
