@@ -35,12 +35,10 @@ class AuditLogInfolist
                                 TextEntry::make('user_role')
                                     ->label('دور المستخدم')
                                     ->placeholder('غير محدد')
-                                    ->badge()
                                     ->icon('heroicon-o-shield-check'),
 
                                 TextEntry::make('event')
                                     ->label('العملية')
-                                    ->badge()
                                     ->color(
                                         fn (?string $state): string => match ($state) {
                                             'created' => 'success',
@@ -59,7 +57,16 @@ class AuditLogInfolist
                                             default => $state ?? 'غير محدد',
                                         }
                                     )
-                                    ->icon('heroicon-o-bolt'),
+                                    ->icon('heroicon-o-bolt')
+                                    ->iconColor(
+                                        fn (?string $state): string => match ($state) {
+                                            'created' => 'success',
+                                            'updated' => 'warning',
+                                            'deleted' => 'danger',
+                                            'restored' => 'info',
+                                            default => 'gray',
+                                        }
+                                    ),
 
                                 TextEntry::make('created_at')
                                     ->label('تاريخ العملية')
@@ -101,7 +108,6 @@ class AuditLogInfolist
                                                 : 'غير محدد',
                                         }
                                     )
-                                    ->badge()
                                     ->icon('heroicon-o-tag'),
 
                                 TextEntry::make('subject_id')
@@ -228,7 +234,6 @@ class AuditLogInfolist
                                             default => $state ?? 'غير محدد',
                                         }
                                     )
-                                    ->badge()
                                     ->icon('heroicon-o-device-phone-mobile'),
 
                                 TextEntry::make('browser')

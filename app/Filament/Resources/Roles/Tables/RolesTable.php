@@ -28,7 +28,6 @@ class RolesTable
                 TextColumn::make('permissions_count')
                     ->label('عدد الصلاحيات')
                     ->counts('permissions')
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('created_at')

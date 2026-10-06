@@ -79,14 +79,6 @@ class CitizenInfolist
                                                     'female' => 'أنثى',
                                                     default => $state ?? 'غير محدد',
                                                 }
-                                            )
-                                            ->badge()
-                                            ->color(
-                                                fn (?string $state): string => match ($state) {
-                                                    'male' => 'info',
-                                                    'female' => 'danger',
-                                                    default => 'gray',
-                                                }
                                             ),
 
                                         TextEntry::make('birth_date')
@@ -168,8 +160,7 @@ class CitizenInfolist
                                                             'widowed' => 'أرمل',
                                                             default => $state ?? 'غير محدد',
                                                         }
-                                                    )
-                                                    ->badge(),
+                                                    ),
 
 
 
@@ -276,7 +267,6 @@ class CitizenInfolist
                                                             ->falseIcon('heroicon-o-x-circle')
                                                             ->trueColor('success')
                                                             ->falseColor('danger'),
-
                                                         TextEntry::make('photo_status')
                                                             ->label('الصورة الشخصية')
                                                             ->state(
@@ -284,16 +274,16 @@ class CitizenInfolist
                                                                     ? 'مسجلة'
                                                                     : 'غير مسجلة'
                                                             )
-                                                            ->badge()
-                                                            ->color(
-                                                                fn ($state): string => $state === 'مسجلة'
-                                                                    ? 'success'
-                                                                    : 'gray'
-                                                            )
+                                                            ->color('gray')
                                                             ->icon(
                                                                 fn ($state): string => $state === 'مسجلة'
                                                                     ? 'heroicon-o-check-circle'
                                                                     : 'heroicon-o-minus-circle'
+                                                            )
+                                                            ->iconColor(
+                                                                fn ($state): string => $state === 'مسجلة'
+                                                                    ? 'success'
+                                                                    : 'gray'
                                                             ),
 
                                                         TextEntry::make('face_data_status')
@@ -303,16 +293,16 @@ class CitizenInfolist
                                                                     ? 'مسجلة'
                                                                     : 'غير مسجلة'
                                                             )
-                                                            ->badge()
-                                                            ->color(
-                                                                fn ($state): string => $state === 'مسجلة'
-                                                                    ? 'success'
-                                                                    : 'gray'
-                                                            )
+                                                            ->color('gray')
                                                             ->icon(
                                                                 fn ($state): string => $state === 'مسجلة'
                                                                     ? 'heroicon-o-check-circle'
                                                                     : 'heroicon-o-minus-circle'
+                                                            )
+                                                            ->iconColor(
+                                                                fn ($state): string => $state === 'مسجلة'
+                                                                    ? 'success'
+                                                                    : 'gray'
                                                             ),
 
                                                     ])
@@ -347,7 +337,6 @@ class CitizenInfolist
                                                             ? 'تم التحقق'
                                                             : 'لم يتم التحقق'
                                                     )
-                                                    ->badge()
                                                     ->color(
                                                         fn ($record): string => $record->verified_by
                                                             ? 'success'

@@ -24,7 +24,6 @@ class BranchInfolist
                                 TextEntry::make('code')
                                     ->label('رمز الفرع')
                                     ->icon('heroicon-o-hashtag')
-                                    ->badge()
                                     ->copyable()
                                     ->copyMessage('تم نسخ رمز الفرع'),
 
@@ -72,18 +71,22 @@ class BranchInfolist
 
                                 TextEntry::make('is_active')
                                     ->label('حالة الفرع')
-                                    ->icon('heroicon-o-check-circle')
-                                    ->badge()
+                                    ->icon(
+                                        fn (bool $state): string => $state
+                                            ? 'heroicon-o-check-circle'
+                                            : 'heroicon-o-x-circle'
+                                    )
+                                    ->iconColor(
+                                        fn (bool $state): string => $state
+                                            ? 'success'
+                                            : 'danger'
+                                    )
                                     ->formatStateUsing(
                                         fn (bool $state): string => $state
                                             ? 'نشط'
                                             : 'غير نشط'
                                     )
-                                    ->color(
-                                        fn (bool $state): string => $state
-                                            ? 'success'
-                                            : 'danger'
-                                    ),
+                                    ->color('gray'),
 
                             ]),
                     ])

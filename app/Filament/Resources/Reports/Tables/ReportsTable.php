@@ -38,18 +38,6 @@ class ReportsTable
                             default => 'غير محدد',
                         }
                     )
-                    ->badge()
-                    ->color(
-                        fn (?string $state): string => match ($state) {
-                            'citizens' => 'info',
-                            'birth_certificates' => 'success',
-                            'identity_cards' => 'warning',
-                            'family_cards' => 'primary',
-                            'passports' => 'danger',
-                            'appointments' => 'gray',
-                            default => 'gray',
-                        }
-                    )
                     ->sortable(),
 
                 TextColumn::make('format')
@@ -59,14 +47,6 @@ class ReportsTable
                             'pdf' => 'PDF',
                             'xlsx', 'excel' => 'Excel',
                             default => 'غير محدد',
-                        }
-                    )
-                    ->badge()
-                    ->color(
-                        fn (?string $state): string => match ($state) {
-                            'pdf' => 'danger',
-                            'xlsx', 'excel' => 'success',
-                            default => 'gray',
                         }
                     )
                     ->sortable(),
@@ -87,7 +67,6 @@ class ReportsTable
                             default => 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->color(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'warning',

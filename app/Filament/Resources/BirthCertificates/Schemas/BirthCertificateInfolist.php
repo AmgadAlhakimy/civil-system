@@ -28,7 +28,6 @@ class BirthCertificateInfolist
 
                                 TextEntry::make('status')
                                     ->label('حالة الشهادة')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',

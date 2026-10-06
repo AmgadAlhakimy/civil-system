@@ -52,12 +52,10 @@ class PassportInfolist
                                             'official' => 'رسمي',
                                             default => 'غير محدد',
                                         }
-                                    )
-                                    ->badge(),
+                                    ),
 
                                 TextEntry::make('status')
                                     ->label('حالة الجواز')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',

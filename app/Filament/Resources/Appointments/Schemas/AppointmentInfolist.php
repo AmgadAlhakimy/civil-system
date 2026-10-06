@@ -47,7 +47,6 @@ class AppointmentInfolist
 
                                 TextEntry::make('status')
                                     ->label('حالة الموعد')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',

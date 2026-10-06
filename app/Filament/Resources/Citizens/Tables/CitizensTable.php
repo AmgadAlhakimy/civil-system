@@ -83,14 +83,6 @@ class CitizensTable
                             'female' => 'أنثى',
                             default => $state ?? 'غير محدد',
                         }
-                    )
-                    ->badge()
-                    ->color(
-                        fn (?string $state): string => match ($state) {
-                            'male' => 'info',
-                            'female' => 'danger',
-                            default => 'gray',
-                        }
                     ),
 
                 TextColumn::make('phone')
@@ -111,7 +103,6 @@ class CitizensTable
                             default => $state ?? 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 IconColumn::make('is_active')
@@ -190,7 +181,8 @@ class CitizensTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')

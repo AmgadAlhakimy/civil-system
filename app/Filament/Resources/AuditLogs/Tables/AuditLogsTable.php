@@ -23,13 +23,11 @@ class AuditLogsTable
                 TextColumn::make('user_role')
                     ->label('دور المستخدم')
                     ->default('غير محدد')
-                    ->badge()
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('event')
                     ->label('العملية')
-                    ->badge()
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'created' => 'إضافة',
@@ -66,7 +64,6 @@ class AuditLogsTable
                                 : 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->searchable()
                     ->sortable(),
 
@@ -132,7 +129,8 @@ class AuditLogsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض التفاصيل')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->color('primary'),
             ])
             ->toolbarActions([])
             ->defaultSort('created_at', 'desc');

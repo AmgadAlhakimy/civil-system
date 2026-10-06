@@ -76,7 +76,6 @@ class IdentityCardsTable
                             default => $state ?? 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('issue_date')
@@ -148,7 +147,8 @@ class IdentityCardsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')

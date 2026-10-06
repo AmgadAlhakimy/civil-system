@@ -65,7 +65,6 @@ class FamilyCardsTable
                 TextColumn::make('members_count')
                     ->label('أفراد الأسرة')
                     ->counts('members')
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('status')
@@ -82,7 +81,6 @@ class FamilyCardsTable
                             default => $state ?? 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('issue_date')
@@ -158,7 +156,8 @@ class FamilyCardsTable
 
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')

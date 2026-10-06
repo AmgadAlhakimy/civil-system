@@ -44,7 +44,6 @@ class FamilyCardInfolist
 
                                 TextEntry::make('status')
                                     ->label('حالة البطاقة')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',
@@ -115,7 +114,6 @@ class FamilyCardInfolist
 
                                         TextEntry::make('is_active')
                                             ->label('الحالة')
-                                            ->badge()
                                             ->formatStateUsing(
                                                 fn ($state): string =>
                                                 $state ? 'فعال' : 'غير فعال'

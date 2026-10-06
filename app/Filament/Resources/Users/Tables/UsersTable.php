@@ -68,18 +68,15 @@ class UsersTable
                 TextColumn::make('branch.name')
                     ->label('الفرع')
                     ->searchable()
-                    ->sortable()
-                    ->badge(),
+                    ->sortable(),
 
                 TextColumn::make('roles.name')
                     ->label('الدور')
-                    ->badge()
                     ->searchable()
                     ->placeholder('بدون دور'),
 
                 TextColumn::make('status')
                     ->label('الحالة')
-                    ->badge()
                     ->formatStateUsing(
                         fn (string $state): string => match ($state) {
                             'active' => 'نشط',
@@ -147,7 +144,8 @@ class UsersTable
 
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+            ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')

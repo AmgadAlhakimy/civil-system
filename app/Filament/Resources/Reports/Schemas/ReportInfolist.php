@@ -40,25 +40,16 @@ class ReportInfolist
 
                                 TextEntry::make('format')
                                     ->label('صيغة التقرير')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pdf' => 'PDF',
                                             'excel' => 'Excel',
                                             default => 'غير محدد',
                                         }
-                                    )
-                                    ->color(
-                                        fn (?string $state): string => match ($state) {
-                                            'pdf' => 'danger',
-                                            'excel' => 'success',
-                                            default => 'gray',
-                                        }
                                     ),
 
                                 TextEntry::make('status')
                                     ->label('حالة التقرير')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',

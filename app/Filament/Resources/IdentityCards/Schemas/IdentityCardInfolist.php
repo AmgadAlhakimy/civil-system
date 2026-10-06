@@ -40,7 +40,6 @@ class IdentityCardInfolist
 
                                 TextEntry::make('status')
                                     ->label('حالة البطاقة')
-                                    ->badge()
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',

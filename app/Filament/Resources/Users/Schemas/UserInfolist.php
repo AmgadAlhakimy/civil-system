@@ -84,13 +84,22 @@ class UserInfolist
                                 TextEntry::make('branch.name')
                                     ->label('الفرع')
                                     ->icon('heroicon-o-building-office')
-                                    ->badge()
                                     ->placeholder('غير محدد'),
 
                                 TextEntry::make('status')
                                     ->label('حالة المستخدم')
-                                    ->icon('heroicon-o-check-circle')
-                                    ->badge()
+                                    ->icon(fn (?string $state): string => match ($state) {
+                                        'active' => 'heroicon-o-check-circle',
+                                        'inactive' => 'heroicon-o-minus-circle',
+                                        'blocked' => 'heroicon-o-no-symbol',
+                                        default => 'heroicon-o-question-mark-circle',
+                                    })
+                                    ->iconColor(fn (?string $state): string => match ($state) {
+                                        'active' => 'success',
+                                        'inactive' => 'warning',
+                                        'blocked' => 'danger',
+                                        default => 'gray',
+                                    })
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'active' => 'نشط',
@@ -103,7 +112,6 @@ class UserInfolist
                                 TextEntry::make('roles.name')
                                     ->label('الدور')
                                     ->icon('heroicon-o-shield-check')
-                                    ->badge()
                                     ->placeholder('بدون دور'),
                             ]),
                     ])
