@@ -16,14 +16,14 @@ return new class extends Migration
             $table->enum('type', ['manual', 'automatic'])->default('manual');
             $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
             $table->text('notes')->nullable();
-            $table->uuid('created_by');
+            $table->uuid('created_by')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
             $table->foreign('created_by')
                 ->references('id')
                 ->on('users')
-                ->onDelete('restrict');
+                ->onDelete('set null');
 
             $table->index('type');
             $table->index('status');

@@ -32,7 +32,6 @@ class BackupsTable
                             default => $state ?? 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('status')
@@ -45,7 +44,6 @@ class BackupsTable
                             default => $state ?? 'غير محدد',
                         }
                     )
-                    ->badge()
                     ->sortable(),
 
                 TextColumn::make('file_size')
@@ -116,7 +114,11 @@ class BackupsTable
                             Storage::disk('local')->exists($record->file_path)
                     )
                     ->action(function (Backup $record) {
-                        return Storage::disk('local')->download(
+                        $disk = Storage::disk(
+                            config('backup.backup.destination.disks.0', 'local')
+                        );
+
+                        return $disk->download(
                             $record->file_path,
                             basename($record->file_path)
                         );
@@ -134,7 +136,9 @@ class BackupsTable
                     ->modalSubmitActionLabel('نعم، حذف')
                     ->modalCancelActionLabel('إلغاء')
                     ->action(function (Backup $record): void {
-                        $disk = Storage::disk('local');
+                        $disk = Storage::disk(
+                            config('backup.backup.destination.disks.0', 'local')
+                        );
 
                         if (
                             filled($record->file_path) &&
@@ -160,7 +164,9 @@ class BackupsTable
                         ->modalSubmitActionLabel('نعم، حذف')
                         ->modalCancelActionLabel('إلغاء')
                         ->action(function ($records): void {
-                            $disk = Storage::disk('local');
+                            $disk = Storage::disk(
+                                config('backup.backup.destination.disks.0', 'local')
+                            );
 
                             foreach ($records as $record) {
                                 if (

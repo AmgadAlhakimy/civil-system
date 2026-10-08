@@ -31,8 +31,7 @@ class BackupInfolist
                                             'automatic' => 'تلقائية',
                                             default => $state ?? 'غير محدد',
                                         }
-                                    )
-                                    ->badge(),
+                                    ),
 
                                 TextEntry::make('status')
                                     ->label('الحالة')
@@ -43,8 +42,7 @@ class BackupInfolist
                                             'failed' => 'فشلت',
                                             default => $state ?? 'غير محدد',
                                         }
-                                    )
-                                    ->badge(),
+                                    ),
 
                                 TextEntry::make('file_size')
                                     ->label('حجم النسخة')

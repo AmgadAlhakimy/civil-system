@@ -1,16 +1,18 @@
 <?php
 
-$output = [];
-$code = 0;
-
-$backupPath = 'C:\\xampp\\htdocs\\CivilSystem\\storage\\app\\private\\test_backup.sql';
-
-$command = 'mysqldump -h 127.0.0.1 -P 3306 -u root civil_registry > "' . $backupPath . '" 2>&1';
-
-exec($command, $output, $code);
+$paths = [
+    'C:\\xampp\\mysql\\bin\\mysqldump.exe',
+    'C:\\xampp\\mysql\\bin\\mysqldump',
+];
 
 echo '<pre>';
-echo 'Exit code: ' . $code . PHP_EOL;
-echo 'Output:' . PHP_EOL;
-echo implode(PHP_EOL, $output);
+
+foreach ($paths as $path) {
+    echo "Path: {$path}\n";
+    echo 'Exists: ' . (file_exists($path) ? 'YES' : 'NO') . "\n";
+}
+
+echo "\nPATH:\n";
+echo getenv('PATH') ?: 'PATH غير متاح';
+
 echo '</pre>';

@@ -46,6 +46,25 @@ class AgeDistributionChart extends ChartWidget
                 [
                     'label' => 'عدد المواطنين',
                     'data' => array_values($groups),
+
+                    'backgroundColor' => [
+                        '#5B9BD5',
+                        '#D6A84F',
+                        '#7FA65A',
+                        '#D98B5F',
+                        '#8C7355',
+                    ],
+
+                    'borderColor' => [
+                        '#467FAF',
+                        '#B98D35',
+                        '#668744',
+                        '#B96F48',
+                        '#6F5A43',
+                    ],
+
+                    'borderWidth' => 2,
+                    'borderRadius' => 5,
                 ],
             ],
         ];

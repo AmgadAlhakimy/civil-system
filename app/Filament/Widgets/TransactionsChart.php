@@ -48,28 +48,69 @@ class TransactionsChart extends ChartWidget
                     'label' => 'المواطنون',
                     'data' => $citizens,
                     'tension' => 0.4,
+                    'borderColor' => '#2563EB',
+                    'backgroundColor' => '#2563EB',
+                    'pointBackgroundColor' => '#2563EB',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
                 ],
                 [
                     'label' => 'الجوازات',
                     'data' => $passports,
                     'tension' => 0.4,
+                    'borderColor' => '#D97706',
+                    'backgroundColor' => '#D97706',
+                    'pointBackgroundColor' => '#D97706',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
                 ],
                 [
                     'label' => 'بطاقات الأسرة',
                     'data' => $familyCards,
                     'tension' => 0.4,
+                    'borderColor' => '#16A34A',
+                    'backgroundColor' => '#16A34A',
+                    'pointBackgroundColor' => '#16A34A',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
                 ],
                 [
                     'label' => 'شهادات الميلاد',
                     'data' => $birthCertificates,
                     'tension' => 0.4,
+                    'borderColor' => '#9333EA',
+                    'backgroundColor' => '#9333EA',
+                    'pointBackgroundColor' => '#9333EA',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
                 ],
                 [
                     'label' => 'شهادات الوفاة',
                     'data' => $deathCertificates,
                     'tension' => 0.4,
+                    'borderColor' => '#DC2626',
+                    'backgroundColor' => '#DC2626',
+                    'pointBackgroundColor' => '#DC2626',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
                 ],
             ],
+
             'labels' => $labels,
         ];
     }
@@ -83,12 +124,15 @@ class TransactionsChart extends ChartWidget
     {
         return [
             'responsive' => true,
+
             'maintainAspectRatio' => false,
+
             'plugins' => [
                 'legend' => [
                     'position' => 'bottom',
                 ],
             ],
+
             'scales' => [
                 'y' => [
                     'beginAtZero' => true,
