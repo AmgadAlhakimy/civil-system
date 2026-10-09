@@ -8,11 +8,13 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class UsersTable
 {
@@ -55,15 +57,14 @@ class UsersTable
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->copyMessage('تم نسخ البريد الإلكتروني')
-                    ->icon('heroicon-o-envelope'),
+                    ->copyMessage('تم نسخ البريد الإلكتروني'),
 
                 TextColumn::make('phone')
                     ->label('رقم الهاتف')
                     ->searchable()
                     ->copyable()
-                    ->copyMessage('تم نسخ رقم الهاتف')
-                    ->icon('heroicon-o-phone'),
+                    ->sortable()
+                    ->copyMessage('تم نسخ رقم الهاتف'),
 
                 TextColumn::make('branch.name')
                     ->label('الفرع')
@@ -112,6 +113,7 @@ class UsersTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
 
             ->filters([
@@ -138,6 +140,7 @@ class UsersTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
 
             ->recordActions([
@@ -145,11 +148,12 @@ class UsersTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-            ->color('primary'),
+                    ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
 
             ->toolbarActions([
@@ -161,9 +165,44 @@ class UsersTable
                         ->requiresConfirmation()
                         ->modalHeading('حذف المستخدمين المحددين')
                         ->modalDescription(
-                            'هل أنت متأكد من حذف المستخدمين المحددين؟ يمكن استعادتها من سلة المحذوفات.'
+                            'سيتم حذف المستخدمين المسموح بحذفهم، وسيتم تجاوز أي مستخدم هو مدير لفرع.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف'),
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+                            $skippedCount = 0;
+
+                            foreach ($records as $record) {
+                                if (! $record->canBeDeleted()) {
+                                    $skippedCount++;
+
+                                    continue;
+                                }
+
+                                $record->delete();
+                                $deletedCount++;
+                            }
+
+                            if ($skippedCount > 0) {
+                                Notification::make()
+                                    ->title('تمت عملية الحذف')
+                                    ->body(
+                                        "تم حذف {$deletedCount} مستخدم، بينما تم تجاوز {$skippedCount} مستخدم لأنهم مديرو فروع."
+                                    )
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            Notification::make()
+                                ->title('تم حذف المستخدمين')
+                                ->body(
+                                    "تم حذف {$deletedCount} مستخدم بنجاح."
+                                )
+                                ->success()
+                                ->send();
+                        }),
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
@@ -179,12 +218,48 @@ class UsersTable
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
-                            'تحذير: سيتم حذف المستخدمين نهائيًا ولا يمكن استعادتها.'
+                            'سيتم حذف المستخدمين المسموح بحذفهم نهائيًا، وسيتم تجاوز أي مستخدم هو مدير لفرع.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف نهائي'),
+                        ->modalSubmitActionLabel('نعم، حذف نهائي')
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+                            $skippedCount = 0;
+
+                            foreach ($records as $record) {
+                                if (! $record->canBeDeleted()) {
+                                    $skippedCount++;
+
+                                    continue;
+                                }
+
+                                $record->forceDelete();
+                                $deletedCount++;
+                            }
+
+                            if ($skippedCount > 0) {
+                                Notification::make()
+                                    ->title('تمت عملية الحذف النهائي')
+                                    ->body(
+                                        "تم حذف {$deletedCount} مستخدم نهائيًا، بينما تم تجاوز {$skippedCount} مستخدم لأنهم مديرو فروع."
+                                    )
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            Notification::make()
+                                ->title('تم الحذف النهائي')
+                                ->body(
+                                    "تم حذف {$deletedCount} مستخدم نهائيًا بنجاح."
+                                )
+                                ->success()
+                                ->send();
+                        }),
 
                 ])
                     ->label('إجراءات جماعية'),
+
             ])
 
             ->defaultSort('created_at', 'desc');

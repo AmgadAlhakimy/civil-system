@@ -130,13 +130,9 @@
 | Buttons
 |--------------------------------------------------------------------------
 */
-/*
-|--------------------------------------------------------------------------
-| Buttons
-|--------------------------------------------------------------------------
-*/
 
 /* جميع أزرار النظام */
+
 .fi-btn {
     background-color: var(--app-primary) !important;
     border-color: var(--app-primary) !important;
@@ -146,17 +142,20 @@
 }
 
 /* النص داخل الأزرار */
+
 .fi-btn span {
     color: #ffffff !important;
 }
 
 /* الأيقونات داخل الأزرار */
+
 .fi-btn svg {
     color: #ffffff !important;
     stroke: #ffffff !important;
 }
 
 /* منع تغيير شكل الزر عند Hover */
+
 .fi-btn:hover,
 .fi-btn:focus,
 .fi-btn:focus-visible,
@@ -167,6 +166,7 @@
 }
 
 /* منع تغيير لون النص والأيقونة عند Hover */
+
 .fi-btn:hover span,
 .fi-btn:focus span,
 .fi-btn:focus-visible span,
@@ -182,7 +182,46 @@
     stroke: #ffffff !important;
 }
 
+/* أزرار الحذف */
+
+.fi-btn.fi-color-danger {
+    background-color: rgb(220 38 38) !important;
+    border-color: rgb(220 38 38) !important;
+    color: #ffffff !important;
+}
+
+.fi-btn.fi-color-danger span,
+.fi-btn.fi-color-danger svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+.fi-btn.fi-color-danger:hover,
+.fi-btn.fi-color-danger:focus,
+.fi-btn.fi-color-danger:focus-visible,
+.fi-btn.fi-color-danger:active {
+    background-color: rgb(185 28 28) !important;
+    border-color: rgb(185 28 28) !important;
+    color: #ffffff !important;
+}
+
+.fi-btn.fi-color-danger:hover span,
+.fi-btn.fi-color-danger:focus span,
+.fi-btn.fi-color-danger:focus-visible span,
+.fi-btn.fi-color-danger:active span {
+    color: #ffffff !important;
+}
+
+.fi-btn.fi-color-danger:hover svg,
+.fi-btn.fi-color-danger:focus svg,
+.fi-btn.fi-color-danger:focus-visible svg,
+.fi-btn.fi-color-danger:active svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
 /* الأزرار المعطلة */
+
 .fi-btn:disabled {
     background-color: var(--app-primary) !important;
     border-color: var(--app-primary) !important;
@@ -195,6 +234,7 @@
     color: #ffffff !important;
     stroke: #ffffff !important;
 }
+
 /*
 |--------------------------------------------------------------------------
 | Inputs

@@ -16,10 +16,29 @@ class EditUser extends EditRecord
     {
         return [
             ViewAction::make()
-                ->label('عرض المستخدم'),
+                ->label('عرض المستخدم')
+                ->icon('heroicon-o-eye')
+                ->color('primary'),
 
             DeleteAction::make()
-                ->label('حذف المستخدم'),
+                ->label('حذف المستخدم')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('حذف المستخدم')
+                ->modalDescription('هل أنت متأكد من حذف هذا المستخدم؟ يمكن استعادته من سلة المحذوفات.')
+                ->modalSubmitActionLabel('نعم، حذف')
+                ->before(function (DeleteAction $action): void {
+                    if (! $this->record->canBeDeleted()) {
+                        Notification::make()
+                            ->title('لا يمكن حذف المستخدم')
+                            ->body('هذا المستخدم هو مدير لفرع. يجب تعيين مدير آخر للفرع أولًا ثم محاولة حذف المستخدم مرة أخرى.')
+                            ->danger()
+                            ->send();
+
+                        $action->cancel();
+                    }
+                }),
         ];
     }
 
@@ -39,5 +58,12 @@ class EditUser extends EditRecord
                 UserResource::getUrl('index')
             );
         }
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return UserResource::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
     }
 }

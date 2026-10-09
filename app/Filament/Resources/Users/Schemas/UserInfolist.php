@@ -88,18 +88,22 @@ class UserInfolist
 
                                 TextEntry::make('status')
                                     ->label('حالة المستخدم')
-                                    ->icon(fn (?string $state): string => match ($state) {
-                                        'active' => 'heroicon-o-check-circle',
-                                        'inactive' => 'heroicon-o-minus-circle',
-                                        'blocked' => 'heroicon-o-no-symbol',
-                                        default => 'heroicon-o-question-mark-circle',
-                                    })
-                                    ->iconColor(fn (?string $state): string => match ($state) {
-                                        'active' => 'success',
-                                        'inactive' => 'warning',
-                                        'blocked' => 'danger',
-                                        default => 'gray',
-                                    })
+                                    ->icon(
+                                        fn (?string $state): string => match ($state) {
+                                            'active' => 'heroicon-o-check-circle',
+                                            'inactive' => 'heroicon-o-minus-circle',
+                                            'blocked' => 'heroicon-o-no-symbol',
+                                            default => 'heroicon-o-question-mark-circle',
+                                        }
+                                    )
+                                    ->iconColor(
+                                        fn (?string $state): string => match ($state) {
+                                            'active' => 'success',
+                                            'inactive' => 'warning',
+                                            'blocked' => 'danger',
+                                            default => 'gray',
+                                        }
+                                    )
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'active' => 'نشط',
@@ -117,9 +121,9 @@ class UserInfolist
                     ])
                     ->columnSpanFull(),
 
-                Section::make('معلومات تسجيل الدخول')
-                    ->description('آخر معلومات متعلقة بتسجيل دخول المستخدم')
-                    ->icon('heroicon-o-arrow-right-on-rectangle')
+                Section::make('معلومات النظام وتسجيل الدخول')
+                    ->description('معلومات تسجيل الدخول وإنشاء وتحديث وحذف حساب المستخدم')
+                    ->icon('heroicon-o-cog-6-tooth')
                     ->schema([
                         Grid::make(2)
                             ->schema([
@@ -135,16 +139,7 @@ class UserInfolist
                                     ->copyable()
                                     ->copyMessage('تم نسخ عنوان IP')
                                     ->placeholder('غير متوفر'),
-                            ]),
-                    ])
-                    ->columnSpanFull(),
 
-                Section::make('معلومات النظام')
-                    ->description('معلومات إنشاء وتحديث وحذف حساب المستخدم')
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
                                 TextEntry::make('created_at')
                                     ->label('تاريخ إنشاء الحساب')
                                     ->icon('heroicon-o-calendar-days')
@@ -154,12 +149,6 @@ class UserInfolist
                                     ->label('آخر تحديث')
                                     ->icon('heroicon-o-arrow-path')
                                     ->dateTime('Y-m-d H:i'),
-
-                                TextEntry::make('deleted_at')
-                                    ->label('تاريخ الحذف')
-                                    ->icon('heroicon-o-trash')
-                                    ->dateTime('Y-m-d H:i')
-                                    ->placeholder('غير محذوف'),
                             ]),
                     ])
                     ->columnSpanFull(),

@@ -29,7 +29,7 @@ class BranchResource extends Resource
         return 'النظام';
     }
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
 

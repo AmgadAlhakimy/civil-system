@@ -56,14 +56,14 @@ class BranchInfolist
                     ])
                     ->columnSpanFull(),
 
-                Section::make('إدارة الفرع والحالة')
-                    ->description('معلومات مدير الفرع وحالة التشغيل')
+                Section::make('إدارة الفرع ومعلومات النظام')
+                    ->description('معلومات مدير الفرع وحالة التشغيل وتفاصيل النظام')
                     ->icon('heroicon-o-user-group')
                     ->schema([
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('manager_name')
+                                TextEntry::make('manager.full_name')
                                     ->label('مدير الفرع')
                                     ->icon('heroicon-o-user')
                                     ->weight('bold')
@@ -88,16 +88,6 @@ class BranchInfolist
                                     )
                                     ->color('gray'),
 
-                            ]),
-                    ])
-                    ->columnSpanFull(),
-
-                Section::make('معلومات النظام')
-                    ->description('معلومات إنشاء وتحديث وحذف الفرع')
-                    ->icon('heroicon-o-clock')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
                                 TextEntry::make('created_at')
                                     ->label('تاريخ إنشاء الفرع')
                                     ->icon('heroicon-o-calendar-days')
@@ -108,11 +98,6 @@ class BranchInfolist
                                     ->icon('heroicon-o-arrow-path')
                                     ->dateTime('Y-m-d H:i'),
 
-                                TextEntry::make('deleted_at')
-                                    ->label('تاريخ الحذف')
-                                    ->icon('heroicon-o-trash')
-                                    ->dateTime('Y-m-d H:i')
-                                    ->placeholder('غير محذوف'),
                             ]),
                     ])
                     ->columnSpanFull(),

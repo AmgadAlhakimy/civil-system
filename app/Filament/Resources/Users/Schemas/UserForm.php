@@ -24,20 +24,25 @@ class UserForm
                                 TextInput::make('name')
                                     ->label('اسم المستخدم')
                                     ->required()
+                                    ->minLength(3)
+                                    ->maxLength(50)
+                                    ->regex('/^[A-Za-z][A-Za-z0-9_]*$/')
                                     ->unique(
-                                        table: 'users',
-                                        column: 'name',
                                         ignoreRecord: true,
                                     )
+                                    ->autocomplete('username')
                                     ->validationMessages([
                                         'required' => 'حقل اسم المستخدم مطلوب',
+                                        'min' => 'يجب ألا يقل اسم المستخدم عن 3 أحرف',
+                                        'max' => 'يجب ألا يزيد اسم المستخدم عن 50 حرفًا',
+                                        'regex' => 'اسم المستخدم يجب أن يبدأ بحرف إنجليزي ويحتوي على أحرف إنجليزية وأرقام وشرطة سفلية (_) فقط مثل (Amjad_Hakimi)',
                                         'unique' => 'اسم المستخدم مستخدم مسبقاً',
                                     ]),
 
                                 TextInput::make('full_name')
                                     ->label('الاسم الكامل')
                                     ->required()
-                                    ->minLength(3)
+                                    ->minLength(10)
                                     ->maxLength(255)
                                     ->rules([
                                         'string',
@@ -45,43 +50,47 @@ class UserForm
                                     ])
                                     ->validationMessages([
                                         'required' => 'حقل الاسم الكامل مطلوب',
-                                        'min' => 'يجب ألا يقل الاسم الكامل عن 3 أحرف',
-                                        'regex' => 'يجب أن يحتوي الاسم الكامل على حروف عربية فقط',
+                                        'min' => 'يجب ألا يقل الاسم الكامل عن 10 أحرف',
+                                        'max' => 'يجب ألا يزيد الاسم الكامل عن 255 حرفًا',
+                                        'regex' => 'يجب أن يحتوي الاسم الكامل على حروف عربية ومسافات فقط',
                                     ]),
 
                                 TextInput::make('email')
                                     ->label('البريد الإلكتروني')
+                                    ->placeholder('ahmed@example.com')
                                     ->email()
                                     ->required()
+                                    ->default(null)
+                                    ->autocomplete('off')
+                                    ->maxLength(255)
                                     ->unique(
-                                        table: 'users',
-                                        column: 'email',
                                         ignoreRecord: true,
                                     )
-                                    ->maxLength(255)
                                     ->validationMessages([
                                         'required' => 'حقل البريد الإلكتروني مطلوب',
                                         'email' => 'صيغة البريد الإلكتروني غير صحيحة',
+                                        'max' => 'يجب ألا يزيد البريد الإلكتروني عن 255 حرفًا',
                                         'unique' => 'البريد الإلكتروني مستخدم مسبقاً',
                                     ]),
-
                                 TextInput::make('phone')
                                     ->label('رقم الهاتف')
-                                    ->tel()
                                     ->required()
+                                    ->minLength(9)
+                                    ->maxLength(9)
                                     ->unique(
-                                        table: 'users',
-                                        column: 'phone',
                                         ignoreRecord: true,
                                     )
                                     ->rules([
                                         'digits:9',
                                         'regex:/^7[0-9]{8}$/',
                                     ])
+                                    ->inputMode('numeric')
                                     ->validationMessages([
                                         'required' => 'حقل رقم الهاتف مطلوب',
                                         'digits' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
-                                        'regex' => 'رقم الهاتف غير صالح (يجب أن يبدأ بـ 7 ويتكون من 9 أرقام)',
+                                        'regex' => 'رقم الهاتف غير صالح، يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
+                                        'min' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
+                                        'max' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
                                         'unique' => 'رقم الهاتف هذا مستخدم مسبقاً',
                                     ]),
                             ]),
@@ -96,6 +105,7 @@ class UserForm
                             ->schema([
                                 Select::make('branch_id')
                                     ->label('الفرع')
+                                    ->placeholder('اختر الفرع')
                                     ->relationship('branch', 'name')
                                     ->searchable()
                                     ->preload()
@@ -107,12 +117,12 @@ class UserForm
 
                                 Select::make('status')
                                     ->label('حالة المستخدم')
+                                    ->placeholder('اختر حالة المستخدم')
                                     ->options([
                                         'active' => 'نشط',
                                         'inactive' => 'غير نشط',
                                         'blocked' => 'محظور',
                                     ])
-                                    ->default('active')
                                     ->required()
                                     ->native(false)
                                     ->validationMessages([
@@ -121,6 +131,7 @@ class UserForm
 
                                 Select::make('roles')
                                     ->label('الدور')
+                                    ->placeholder('اختر صلاحية المستخدم')
                                     ->relationship('roles', 'name')
                                     ->multiple()
                                     ->preload()
@@ -143,17 +154,18 @@ class UserForm
                             ->schema([
                                 TextInput::make('password')
                                     ->label('كلمة المرور')
+                                    ->placeholder('أدخل كلمة المرور')
                                     ->password()
                                     ->revealable()
+                                    ->default(null)
+                                    ->autocomplete('new-password')
                                     ->required(
                                         fn (string $operation): bool => $operation === 'create'
                                     )
                                     ->dehydrated(
                                         fn (?string $state): bool => filled($state)
                                     )
-                                    ->rules([
-                                        'min:8',
-                                    ])
+                                    ->minLength(8)
                                     ->same('password_confirmation')
                                     ->validationMessages([
                                         'required' => 'حقل كلمة المرور مطلوب',
@@ -163,8 +175,11 @@ class UserForm
 
                                 TextInput::make('password_confirmation')
                                     ->label('تأكيد كلمة المرور')
+                                    ->placeholder('أعد إدخال كلمة المرور')
                                     ->password()
                                     ->revealable()
+                                    ->default(null)
+                                    ->autocomplete('new-password')
                                     ->required(
                                         fn (string $operation): bool => $operation === 'create'
                                     )
@@ -184,10 +199,21 @@ class UserForm
                     ->schema([
                         FileUpload::make('profile_photo')
                             ->label('الصورة الشخصية')
+                            ->placeholder('اختر صورة شخصية')
                             ->image()
                             ->disk('local')
                             ->directory('users/profile-photos')
                             ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '1:1',
+                            ])
+                            ->imagePreviewHeight('200')
+                            ->maxSize(2048)
+                            ->acceptedFileTypes([
+                                'image/jpeg',
+                                'image/png',
+                                'image/webp',
+                            ])
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),

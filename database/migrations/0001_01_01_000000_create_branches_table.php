@@ -21,8 +21,6 @@ return new class extends Migration
             $table->string('phone', 20);
             $table->string('email', 100)->nullable();
 
-            $table->string('manager_name', 100)->nullable();
-
             $table->boolean('is_active')->default(true);
 
             $table->timestamps();

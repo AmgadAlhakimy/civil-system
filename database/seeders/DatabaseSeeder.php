@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,7 +29,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Amjad',
             'full_name' => 'مدير النظام',
             'email' => 'admin@civil.gov',
-            'password' => 'password',
+            'phone' => '777100002',
+            'password' => Hash::make('Pa$$w0rd'),
             'branch_id' => Branch::where('code', 'SNA-01')->value('id'),
             'status' => 'active',
         ]);
@@ -37,6 +39,7 @@ class DatabaseSeeder extends Seeder
 
         // بيانات النظام التجريبية
         $this->call([
+            UserSeeder::class,
             CitizenSeeder::class,
             PassportSeeder::class,
             IdentityCardSeeder::class,

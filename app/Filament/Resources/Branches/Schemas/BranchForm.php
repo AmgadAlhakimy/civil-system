@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\Schemas;
 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -26,21 +27,22 @@ class BranchForm
                                 TextInput::make('code')
                                     ->label('رمز الفرع')
                                     ->required()
+                                    ->placeholder('SNA-01')
                                     ->unique(
-                                        table: 'branches',
-                                        column: 'code',
                                         ignoreRecord: true,
                                     )
-                                    ->minLength(2)
+                                    ->minLength(3)
                                     ->maxLength(20)
-                                    ->rules([
-                                        'string',
-                                        'regex:/^[A-Za-z0-9_-]+$/',
-                                    ])
+                                    ->regex('/^[A-Za-z0-9-]+$/')
+                                    ->dehydrateStateUsing(
+                                        fn (?string $state): ?string => $state
+                                            ? strtoupper(trim($state))
+                                            : null
+                                    )
                                     ->validationMessages([
                                         'required' => 'حقل رمز الفرع مطلوب',
                                         'unique' => 'رمز الفرع مستخدم مسبقاً',
-                                        'min' => 'يجب ألا يقل رمز الفرع عن حرفين',
+                                        'min' => 'يجب ألا يقل رمز الفرع عن 3 أحرف أو أرقام',
                                         'max' => 'يجب ألا يتجاوز رمز الفرع 20 حرفاً',
                                         'regex' => 'رمز الفرع يجب أن يحتوي على أحرف إنجليزية أو أرقام أو شرطة فقط',
                                     ]),
@@ -54,6 +56,11 @@ class BranchForm
                                         'string',
                                         'regex:/^[\p{Arabic}\s]+$/u',
                                     ])
+                                    ->dehydrateStateUsing(
+                                        fn (?string $state): ?string => $state
+                                            ? trim(preg_replace('/\s+/u', ' ', $state))
+                                            : null
+                                    )
                                     ->validationMessages([
                                         'required' => 'حقل اسم الفرع مطلوب',
                                         'min' => 'يجب ألا يقل اسم الفرع عن 3 أحرف',
@@ -68,6 +75,11 @@ class BranchForm
                                     ->maxLength(500)
                                     ->rows(3)
                                     ->columnSpanFull()
+                                    ->dehydrateStateUsing(
+                                        fn (?string $state): ?string => $state
+                                            ? trim(preg_replace('/\s+/u', ' ', $state))
+                                            : null
+                                    )
                                     ->validationMessages([
                                         'required' => 'حقل عنوان الفرع مطلوب',
                                         'min' => 'يجب ألا يقل عنوان الفرع عن 5 أحرف',
@@ -76,22 +88,24 @@ class BranchForm
 
                                 TextInput::make('phone')
                                     ->label('رقم الهاتف')
-                                    ->tel()
                                     ->required()
+                                    ->minLength(9)
+                                    ->maxLength(9)
                                     ->unique(
-                                        table: 'branches',
-                                        column: 'phone',
                                         ignoreRecord: true,
                                     )
                                     ->rules([
                                         'digits:9',
                                         'regex:/^7[0-9]{8}$/',
                                     ])
+                                    ->inputMode('numeric')
                                     ->validationMessages([
                                         'required' => 'حقل رقم الهاتف مطلوب',
-                                        'unique' => 'رقم الهاتف هذا مستخدم مسبقاً',
                                         'digits' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
-                                        'regex' => 'رقم الهاتف غير صالح (يجب أن يبدأ بـ 7 ويتكون من 9 أرقام)',
+                                        'regex' => 'رقم الهاتف غير صالح، يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
+                                        'min' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
+                                        'max' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
+                                        'unique' => 'رقم الهاتف هذا مستخدم مسبقاً',
                                     ]),
 
                                 TextInput::make('email')
@@ -99,8 +113,6 @@ class BranchForm
                                     ->email()
                                     ->nullable()
                                     ->unique(
-                                        table: 'branches',
-                                        column: 'email',
                                         ignoreRecord: true,
                                     )
                                     ->maxLength(100)
@@ -118,24 +130,8 @@ class BranchForm
                     ->description('معلومات مدير الفرع وحالة الفرع')
                     ->icon('heroicon-o-user-group')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(3)
                             ->schema([
-
-                                TextInput::make('manager_name')
-                                    ->label('اسم مدير الفرع')
-                                    ->nullable()
-                                    ->minLength(3)
-                                    ->maxLength(100)
-                                    ->rules([
-                                        'string',
-                                        'regex:/^[\p{Arabic}\s]+$/u',
-                                    ])
-                                    ->validationMessages([
-                                        'min' => 'يجب ألا يقل اسم مدير الفرع عن 3 أحرف',
-                                        'max' => 'يجب ألا يتجاوز اسم مدير الفرع 100 حرف',
-                                        'regex' => 'يجب أن يحتوي اسم مدير الفرع على حروف عربية فقط',
-                                    ])
-                                    ->columnSpanFull(),
 
                                 Toggle::make('is_active')
                                     ->label('الفرع نشط')
@@ -144,7 +140,32 @@ class BranchForm
                                     ->inline(false)
                                     ->validationMessages([
                                         'required' => 'يرجى تحديد حالة الفرع',
-                                    ]),
+                                    ])
+                                    ->columnSpan(1),
+
+                                Select::make('manager_id')
+                                    ->label('مدير الفرع')
+                                    ->placeholder('اختر مدير الفرع')
+                                    ->relationship(
+                                        name: 'manager',
+                                        titleAttribute: 'full_name',
+                                        modifyQueryUsing: function ($query, $livewire) {
+                                            $branch = $livewire->getRecord();
+
+                                            if (! $branch) {
+                                                return $query->whereRaw('1 = 0');
+                                            }
+
+                                            return $query->where('branch_id', $branch->id);
+                                        },
+                                    )
+                                    ->searchable()
+                                    ->preload()
+                                    ->nullable()
+                                    ->validationMessages([
+                                        'exists' => 'مدير الفرع المحدد غير موجود',
+                                    ])
+                                    ->columnSpan(2),
 
                             ]),
                     ])

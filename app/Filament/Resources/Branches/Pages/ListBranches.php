@@ -13,7 +13,9 @@ class ListBranches extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label('إضافة فرع')
+                ->icon('heroicon-o-building-office-2'),
         ];
     }
 }

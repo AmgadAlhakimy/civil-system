@@ -8,11 +8,13 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class BranchesTable
 {
@@ -44,17 +46,17 @@ class BranchesTable
                     ->label('رقم الهاتف')
                     ->searchable()
                     ->copyable()
-                    ->copyMessage('تم نسخ رقم الهاتف')
-                    ->icon('heroicon-o-phone'),
+                    ->sortable()
+                    ->copyMessage('تم نسخ رقم الهاتف'),
 
                 TextColumn::make('email')
                     ->label('البريد الإلكتروني')
                     ->searchable()
                     ->copyable()
-                    ->copyMessage('تم نسخ البريد الإلكتروني')
-                    ->icon('heroicon-o-envelope'),
+                    ->sortable()
+                    ->copyMessage('تم نسخ البريد الإلكتروني'),
 
-                TextColumn::make('manager_name')
+                TextColumn::make('manager.full_name')
                     ->label('مدير الفرع')
                     ->searchable()
                     ->sortable()
@@ -63,6 +65,7 @@ class BranchesTable
                 IconColumn::make('is_active')
                     ->label('الحالة')
                     ->boolean()
+                    ->sortable()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle'),
 
@@ -78,11 +81,6 @@ class BranchesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('deleted_at')
-                    ->label('تاريخ الحذف')
-                    ->dateTime('Y-m-d H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
 
             ->filters([
@@ -96,6 +94,7 @@ class BranchesTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
 
             ->recordActions([
@@ -103,11 +102,12 @@ class BranchesTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-            ->color('primary'),
+                    ->color('primary'),
 
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
 
             ->toolbarActions([
@@ -117,11 +117,47 @@ class BranchesTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->requiresConfirmation()
+                        ->successNotification(null)
                         ->modalHeading('حذف الفروع المحددة')
                         ->modalDescription(
-                            'هل أنت متأكد من حذف الفروع المحددة؟ يمكن استعادتها من سلة المحذوفات.'
+                            'سيتم حذف الفروع المسموح بحذفها، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف'),
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+                            $skippedCount = 0;
+
+                            foreach ($records as $record) {
+                                if ($record->users()->exists()) {
+                                    $skippedCount++;
+
+                                    continue;
+                                }
+
+                                $record->delete();
+                                $deletedCount++;
+                            }
+
+                            if ($skippedCount > 0) {
+                                Notification::make()
+                                    ->title('تمت عملية الحذف')
+                                    ->body(
+                                        "تم حذف {$deletedCount} فرع، بينما تم تجاوز {$skippedCount} فرع لأن لديها مستخدمين مرتبطين بها."
+                                    )
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            Notification::make()
+                                ->title('تم حذف الفروع')
+                                ->body(
+                                    "تم حذف {$deletedCount} فرع بنجاح."
+                                )
+                                ->success()
+                                ->send();
+                        }),
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
@@ -135,14 +171,51 @@ class BranchesTable
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
                         ->requiresConfirmation()
+                        ->successNotification(null)
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
-                            'تحذير: سيتم حذف الفروع نهائيًا ولا يمكن استعادتها.'
+                            'سيتم حذف الفروع المسموح بحذفها نهائيًا، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف نهائي'),
+                        ->modalSubmitActionLabel('نعم، حذف نهائي')
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+                            $skippedCount = 0;
+
+                            foreach ($records as $record) {
+                                if ($record->users()->exists()) {
+                                    $skippedCount++;
+
+                                    continue;
+                                }
+
+                                $record->forceDelete();
+                                $deletedCount++;
+                            }
+
+                            if ($skippedCount > 0) {
+                                Notification::make()
+                                    ->title('تمت عملية الحذف النهائي')
+                                    ->body(
+                                        "تم حذف {$deletedCount} فرع نهائيًا، بينما تم تجاوز {$skippedCount} فرع لأن لديها مستخدمين مرتبطين بها."
+                                    )
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            Notification::make()
+                                ->title('تم الحذف النهائي')
+                                ->body(
+                                    "تم حذف {$deletedCount} فرع نهائيًا بنجاح."
+                                )
+                                ->success()
+                                ->send();
+                        }),
 
                 ])
                     ->label('إجراءات جماعية'),
+
             ])
 
             ->defaultSort('created_at', 'desc');

@@ -17,22 +17,13 @@ class UserSeeder extends Seeder
 
         $taiz = Branch::where('code', 'TIZ-01')->first();
 
-        User::create([
-            'name' => 'admin',
-            'full_name' => 'مدير النظام',
-            'email' => 'admin@civil.gov',
-            'phone' => '777100001',
-            'password' => Hash::make('password'),
-            'branch_id' => $sanaa?->id,
-            'status' => 'active',
-        ]);
 
         User::create([
             'name' => 'employee01',
             'full_name' => 'موظف فرع عدن',
             'email' => 'employee01@civil.gov',
             'phone' => '777100002',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Pa$$w0rd'),
             'branch_id' => $aden?->id,
             'status' => 'active',
         ]);
@@ -42,7 +33,7 @@ class UserSeeder extends Seeder
             'full_name' => 'موظف فرع تعز',
             'email' => 'employee02@civil.gov',
             'phone' => '777100003',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Pa$$w0rd'),
             'branch_id' => $taiz?->id,
             'status' => 'active',
         ]);
