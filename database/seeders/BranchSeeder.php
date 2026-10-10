@@ -15,7 +15,6 @@ class BranchSeeder extends Seeder
             'address' => 'صنعاء',
             'phone' => '777000001',
             'email' => 'sanaa@civil.gov',
-            'manager_name' => 'مدير فرع صنعاء',
             'is_active' => true,
         ]);
 
@@ -25,7 +24,6 @@ class BranchSeeder extends Seeder
             'address' => 'عدن',
             'phone' => '777000002',
             'email' => 'aden@civil.gov',
-            'manager_name' => 'مدير فرع عدن',
             'is_active' => true,
         ]);
 
@@ -35,7 +33,6 @@ class BranchSeeder extends Seeder
             'address' => 'تعز',
             'phone' => '777000003',
             'email' => 'taiz@civil.gov',
-            'manager_name' => 'مدير فرع تعز',
             'is_active' => true,
         ]);
     }

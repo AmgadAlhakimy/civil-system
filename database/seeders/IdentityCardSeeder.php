@@ -12,7 +12,7 @@ class IdentityCardSeeder extends Seeder
     public function run(): void
     {
         $citizens = Citizen::query()
-            ->limit(10)
+            ->limit(30)
             ->get();
 
         $user = User::first();

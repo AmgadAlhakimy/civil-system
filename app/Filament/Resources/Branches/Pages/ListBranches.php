@@ -15,7 +15,8 @@ class ListBranches extends ListRecords
         return [
             CreateAction::make()
                 ->label('إضافة فرع')
-                ->icon('heroicon-o-building-office-2'),
+                ->icon('heroicon-o-building-office-2')
+                ->size('lg'),
         ];
     }
 }

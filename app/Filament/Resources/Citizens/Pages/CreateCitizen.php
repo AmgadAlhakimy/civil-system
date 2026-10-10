@@ -17,7 +17,16 @@ class CreateCitizen extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['is_active'] = false;
+        $data['verification_status'] = 'pending';
+        $data['rejection_reason'] = null;
+        $data['verified_by'] = null;
+        $data['verified_at'] = null;
 
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return CitizenResource::getUrl('index');
     }
 }

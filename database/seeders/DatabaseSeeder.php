@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Amjad',
             'full_name' => 'مدير النظام',
             'email' => 'admin@civil.gov',
-            'phone' => '777100002',
+            'phone' => '777100001',
             'password' => Hash::make('Pa$$w0rd'),
             'branch_id' => Branch::where('code', 'SNA-01')->value('id'),
             'status' => 'active',

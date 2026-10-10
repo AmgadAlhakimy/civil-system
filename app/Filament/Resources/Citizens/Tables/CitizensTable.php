@@ -28,8 +28,7 @@ class CitizensTable
                     ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ الرقم الوطني')
-                    ->weight('bold')
-                    ->icon('heroicon-o-identification'),
+                    ->weight('bold'),
 
                 ImageColumn::make('photo')
                     ->label('الصورة')
@@ -77,6 +76,7 @@ class CitizensTable
 
                 TextColumn::make('gender')
                     ->label('الجنس')
+                    ->sortable()
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'male' => 'ذكر',
@@ -88,12 +88,13 @@ class CitizensTable
                 TextColumn::make('phone')
                     ->label('رقم الهاتف')
                     ->searchable()
+                    ->sortable()
                     ->copyable()
-                    ->copyMessage('تم نسخ رقم الهاتف')
-                    ->icon('heroicon-o-device-phone-mobile'),
+                    ->copyMessage('تم نسخ رقم الهاتف'),
 
                 TextColumn::make('marital_status')
                     ->label('الحالة الاجتماعية')
+                    ->sortable()
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'single' => 'أعزب',
@@ -105,8 +106,43 @@ class CitizensTable
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('verification_status')
+                    ->label('حالة اعتماد المواطن')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'pending' => 'بانتظار الاعتماد',
+                            'approved' => 'معتمدة',
+                            'rejected' => 'مرفوضة',
+                            default => 'غير محددة',
+                        }
+                    )
+                    ->color(
+                        fn (?string $state): string => match ($state) {
+                            'pending' => 'warning',
+                            'approved' => 'success',
+                            'rejected' => 'danger',
+                            default => 'gray',
+                        }
+                    )
+                    ->icon(
+                        fn (?string $state): string => match ($state) {
+                            'pending' => 'heroicon-o-clock',
+                            'approved' => 'heroicon-o-check-circle',
+                            'rejected' => 'heroicon-o-x-circle',
+                            default => 'heroicon-o-question-mark-circle',
+                        }
+                    )
+                    ->sortable(),
+
+                TextColumn::make('rejection_reason')
+                    ->label('سبب الرفض')
+                    ->placeholder('—')
+                    ->wrap()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 IconColumn::make('is_active')
-                    ->label('الحالة')
+                    ->label('حالة المواطن')
+                    ->sortable()
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
@@ -121,17 +157,20 @@ class CitizensTable
 
                 TextColumn::make('birth_place')
                     ->label('مكان الميلاد')
+                    ->sortable()
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('occupation')
                     ->label('المهنة')
+                    ->sortable()
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('email')
                     ->label('البريد الإلكتروني')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('verifier.name')
@@ -150,8 +189,10 @@ class CitizensTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
             ->filters([
+
                 SelectFilter::make('gender')
                     ->label('الجنس')
                     ->options([
@@ -168,6 +209,14 @@ class CitizensTable
                         'widowed' => 'أرمل',
                     ]),
 
+                SelectFilter::make('verification_status')
+                    ->label('حالة اعتماد المواطن')
+                    ->options([
+                        'pending' => 'بانتظار الاعتماد',
+                        'approved' => 'معتمدة',
+                        'rejected' => 'مرفوضة',
+                    ]),
+
                 SelectFilter::make('is_active')
                     ->label('حالة المواطن')
                     ->options([
@@ -177,8 +226,10 @@ class CitizensTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
+
             ])
             ->recordActions([
+
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
@@ -187,6 +238,7 @@ class CitizensTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
+
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

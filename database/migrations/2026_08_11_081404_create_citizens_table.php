@@ -44,6 +44,14 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(false);
 
+            $table->enum('verification_status', [
+                'pending',
+                'approved',
+                'rejected',
+            ])->default('pending')->index();
+
+            $table->text('rejection_reason')->nullable();
+
             $table->timestamp('verified_at')->nullable();
 
             $table->uuid('verified_by')->nullable();

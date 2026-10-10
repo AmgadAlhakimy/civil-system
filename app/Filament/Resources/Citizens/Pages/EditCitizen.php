@@ -18,10 +18,12 @@ class EditCitizen extends EditRecord
     {
         return [
             ViewAction::make()
-                ->label('عرض المواطن'),
+                ->label('عرض المواطن')
+                ->icon('heroicon-o-eye'),
 
             DeleteAction::make()
-                ->label('حذف المواطن'),
+                ->label('حذف المواطن')
+                ->icon('heroicon-o-trash'),
 
             ForceDeleteAction::make()
                 ->label('حذف المواطن نهائياً'),
@@ -29,6 +31,13 @@ class EditCitizen extends EditRecord
             RestoreAction::make()
                 ->label('استعادة المواطن'),
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return CitizenResource::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
     }
 
     public function mount(int|string $record): void

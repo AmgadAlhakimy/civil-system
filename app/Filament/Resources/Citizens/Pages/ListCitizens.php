@@ -15,7 +15,8 @@ class ListCitizens extends ListRecords
         return [
             CreateAction::make()
                 ->label('إضافة مواطن')
-                ->icon('heroicon-o-plus'),
+                ->icon('heroicon-o-user-plus')
+                ->size('lg'),
         ];
     }
 }

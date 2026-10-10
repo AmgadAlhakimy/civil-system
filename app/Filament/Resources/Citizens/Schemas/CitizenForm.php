@@ -33,8 +33,9 @@ class CitizenForm
                                         ->schema([
                                             TextInput::make('national_id')
                                                 ->label('الرقم الوطني')
-                                                ->numeric()
                                                 ->required()
+                                                ->minLength(11)
+                                                ->maxLength(11)
                                                 ->unique(
                                                     table: 'citizens',
                                                     column: 'national_id',
@@ -42,18 +43,23 @@ class CitizenForm
                                                 )
                                                 ->rules([
                                                     'digits:11',
+                                                    'regex:/^[0-9]{11}$/',
                                                 ])
+                                                ->inputMode('numeric')
                                                 ->validationMessages([
                                                     'required' => 'حقل الرقم الوطني مطلوب',
                                                     'digits' => 'يجب أن يكون الرقم الوطني مكوناً من 11 رقماً',
+                                                    'regex' => 'يجب أن يحتوي الرقم الوطني على أرقام فقط',
                                                     'unique' => 'هذا الرقم الوطني مسجل مسبقاً لمواطن آخر',
+                                                    'min' => 'يجب أن يتكون الرقم الوطني من 11 رقماً',
+                                                    'max' => 'يجب أن يتكون الرقم الوطني من 11 رقماً',
                                                 ]),
 
                                             TextInput::make('first_name')
                                                 ->label('الاسم الأول')
                                                 ->required()
                                                 ->minLength(2)
-                                                ->maxLength(50)
+                                                ->maxLength(15)
                                                 ->rules([
                                                     'string',
                                                     'regex:/^(?=.*\p{Arabic})[\p{Arabic}\s]+$/u',
@@ -61,7 +67,7 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'حقل الاسم الأول مطلوب',
                                                     'min' => 'يجب ألا يقل الاسم الأول عن حرفين',
-                                                    'max' => 'يجب ألا يتجاوز الاسم الأول 50 حرفاً',
+                                                    'max' => 'يجب ألا يتجاوز الاسم الأول 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي الاسم الأول على حروف عربية فقط',
                                                 ]),
 
@@ -69,7 +75,7 @@ class CitizenForm
                                                 ->label('اسم الأب')
                                                 ->required()
                                                 ->minLength(2)
-                                                ->maxLength(50)
+                                                ->maxLength(15)
                                                 ->rules([
                                                     'string',
                                                     'regex:/^(?=.*\p{Arabic})[\p{Arabic}\s]+$/u',
@@ -77,7 +83,7 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'حقل اسم الأب مطلوب',
                                                     'min' => 'يجب ألا يقل اسم الأب عن حرفين',
-                                                    'max' => 'يجب ألا يتجاوز اسم الأب 50 حرفاً',
+                                                    'max' => 'يجب ألا يتجاوز اسم الأب 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اسم الأب على حروف عربية فقط',
                                                 ]),
 
@@ -85,7 +91,7 @@ class CitizenForm
                                                 ->label('اسم الجد')
                                                 ->required()
                                                 ->minLength(2)
-                                                ->maxLength(50)
+                                                ->maxLength(15)
                                                 ->rules([
                                                     'string',
                                                     'regex:/^(?=.*\p{Arabic})[\p{Arabic}\s]+$/u',
@@ -93,7 +99,7 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'حقل اسم الجد مطلوب',
                                                     'min' => 'يجب ألا يقل اسم الجد عن حرفين',
-                                                    'max' => 'يجب ألا يتجاوز اسم الجد 50 حرفاً',
+                                                    'max' => 'يجب ألا يتجاوز اسم الجد 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اسم الجد على حروف عربية فقط',
                                                 ]),
 
@@ -101,7 +107,7 @@ class CitizenForm
                                                 ->label('اللقب / العائلة')
                                                 ->required()
                                                 ->minLength(2)
-                                                ->maxLength(50)
+                                                ->maxLength(15)
                                                 ->rules([
                                                     'string',
                                                     'regex:/^(?=.*\p{Arabic})[\p{Arabic}\s]+$/u',
@@ -109,7 +115,7 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'حقل اللقب مطلوب',
                                                     'min' => 'يجب ألا يقل اللقب عن حرفين',
-                                                    'max' => 'يجب ألا يتجاوز اللقب 50 حرفاً',
+                                                    'max' => 'يجب ألا يتجاوز اللقب 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اللقب على حروف عربية فقط',
                                                 ]),
 
@@ -162,7 +168,7 @@ class CitizenForm
                                 ->description('بيانات الميلاد والجنس')
                                 ->icon('heroicon-o-calendar')
                                 ->schema([
-                                    Grid::make(3)
+                                    Grid::make(2)
                                         ->schema([
                                             DatePicker::make('birth_date')
                                                 ->label('تاريخ الميلاد')
@@ -204,11 +210,26 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'يرجى اختيار الجنس',
                                                 ]),
+                                            TextInput::make('occupation')
+                                                ->label('المهنة')
+                                                ->minLength(3)
+                                                ->maxLength(25)
+                                                ->dehydrateStateUsing(
+                                                    fn (?string $state): ?string => filled($state)
+                                                        ? trim($state)
+                                                        : null
+                                                )
+                                                ->validationMessages([
+                                                    'max' => 'يجب ألا تتجاوز المهنة 25 حرفًا.',
+                                                    'min' => 'يجب ألا تقل المهنة عن 3 أحرف.',
+                                                    'string' => 'يجب إدخال المهنة بصيغة نصية صحيحة.',
+                                                ]),
                                         ]),
                                 ])
                                 ->columnSpanFull(),
                         ]),
-                    Step::make('الحالة ')
+
+                    Step::make('الحالة')
                         ->icon('heroicon-o-shield-check')
                         ->visible(fn (string $operation): bool => $operation === 'edit')
                         ->schema([
@@ -237,22 +258,24 @@ class CitizenForm
                                         ->schema([
                                             TextInput::make('phone')
                                                 ->label('رقم الهاتف')
-                                                ->tel()
                                                 ->required()
+                                                ->minLength(9)
+                                                ->maxLength(9)
                                                 ->unique(
-                                                    table: 'citizens',
-                                                    column: 'phone',
                                                     ignoreRecord: true,
                                                 )
                                                 ->rules([
                                                     'digits:9',
                                                     'regex:/^7[0-9]{8}$/',
                                                 ])
+                                                ->inputMode('numeric')
                                                 ->validationMessages([
                                                     'required' => 'حقل رقم الهاتف مطلوب',
                                                     'digits' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
                                                     'regex' => 'رقم الهاتف غير صالح (يجب أن يبدأ بـ 7 ويتكون من 9 أرقام)',
                                                     'unique' => 'رقم الهاتف هذا مسجل مسبقاً لمواطن آخر',
+                                                    'min' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
+                                                    'max' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
                                                 ]),
 
                                             TextInput::make('email')
@@ -296,38 +319,12 @@ class CitizenForm
                                 ])
                                 ->columnSpanFull(),
                         ]),
-
-                    Step::make('البيانات الحيوية')
-                        ->description('اختياري')
-                        ->icon('heroicon-o-finger-print')
-                        ->schema([
-                            Section::make('البيانات الحيوية')
-                                ->description('البيانات الحيوية الخاصة بالمواطن')
-                                ->icon('heroicon-o-finger-print')
-                                ->schema([
-                                    FileUpload::make('face_data')
-                                        ->label('بصمة الوجه')
-                                        ->image()
-                                        ->imageEditor()
-                                        ->imagePreviewHeight('220')
-                                        ->maxSize(3072)
-                                        ->disk('local')
-                                        ->directory('citizens/faces')
-                                        ->helperText('رفع بصمة الوجه اختياري ويمكن إنهاء تسجيل المواطن بدون رفعها.')
-                                        ->validationMessages([
-                                            'image' => 'يجب أن يكون الملف صورة صحيحة',
-                                            'max' => 'يجب ألا يتجاوز حجم الصورة 3 ميجابايت',
-                                        ])
-                                        ->columnSpanFull(),
-                                ])
-                                ->columnSpanFull(),
-                        ]),
                 ])
                     ->submitAction(
                         new HtmlString(
                             '<button type="submit" class="fi-btn fi-btn-color-primary fi-btn-size-md" style="background-color: var(--app-primary) !important; color: #ffffff !important;">
-                                        إضافة المواطن
-                                     </button>'
+                                إضافة المواطن
+                            </button>'
                         )
                     )
                     ->columnSpanFull(),

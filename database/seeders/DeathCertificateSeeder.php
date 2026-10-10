@@ -13,7 +13,8 @@ class DeathCertificateSeeder extends Seeder
     {
         $citizens = Citizen::query()
             ->where('is_active', true)
-            ->take(5)
+            ->where('verification_status', 'approved')
+            ->take(10)
             ->get();
 
         $user = User::first();
@@ -36,7 +37,7 @@ class DeathCertificateSeeder extends Seeder
                     'حادث',
                     'أسباب مرضية',
                     'سبب غير محدد',
-                ][$index],
+                ][$index % 5],
 
                 'place_of_death' => 'صنعاء',
 

@@ -39,7 +39,9 @@ class CitizenFactory extends Factory
             'phone' => '7' . $this->faker->unique()->numerify('########'),
             'email' => $this->faker->unique()->safeEmail(),
             'is_active' => $this->faker->boolean(90),
-            'verified_at' => now(),
+            'verification_status' => 'pending',
+            'rejection_reason' => null,
+            'verified_at' => null,
             'verified_by' => null,
         ];
     }

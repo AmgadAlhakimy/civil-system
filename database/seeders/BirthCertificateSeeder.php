@@ -20,7 +20,7 @@ class BirthCertificateSeeder extends Seeder
         $children = Citizen::query()
             ->whereNotNull('birth_date')
             ->orderBy('created_at')
-            ->limit(5)
+            ->limit(20)
             ->get();
 
         $fathers = Citizen::query()
@@ -36,14 +36,14 @@ class BirthCertificateSeeder extends Seeder
             ->get();
 
         if (
-            $children->count() < 5 ||
-            $fathers->count() < 5 ||
-            $mothers->count() < 5
+            $children->count() < 20 ||
+            $fathers->count() < 20 ||
+            $mothers->count() < 20
         ) {
             return;
         }
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $child = $children[$i];
             $father = $fathers->firstWhere('id', '!=', $child->id);
             $mother = $mothers->firstWhere('id', '!=', $child->id);
