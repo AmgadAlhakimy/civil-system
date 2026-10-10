@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Passports\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -16,68 +18,97 @@ class PassportInfolist
 
                 Section::make('بيانات الجواز')
                     ->description('المعلومات الأساسية لجواز السفر')
-                    ->icon('heroicon-o-identification')
+                    ->icon('heroicon-o-book-open')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make([
+                            'default' => 1,
+                            'md' => 4,
+                        ])
                             ->schema([
 
-                                TextEntry::make('passport_number')
-                                    ->label('رقم الجواز')
-                                    ->weight('bold'),
-
-                                TextEntry::make('citizen')
-                                    ->label('المواطن')
-                                    ->formatStateUsing(
-                                        fn ($record): string => collect([
-                                                $record->citizen?->first_name,
-                                                $record->citizen?->father_name,
-                                                $record->citizen?->middle_name,
-                                                $record->citizen?->last_name,
-                                            ])
-                                                ->filter()
-                                                ->join(' ')
-                                            . (
-                                            $record->citizen?->national_id
-                                                ? ' — ' . $record->citizen->national_id
-                                                : ''
+                                Section::make()
+                                    ->schema([
+                                        ImageEntry::make('citizen.photo')
+                                            ->label('الصورة الشخصية')
+                                            ->getStateUsing(
+                                                fn ($record) => $record->citizen?->photo
+                                                    ? route(
+                                                        'citizens.photo',
+                                                        [
+                                                            'path' => basename($record->citizen->photo),
+                                                        ]
+                                                    )
+                                                    : null
                                             )
-                                    ),
+                                            ->circular()
+                                            ->imageSize(170)
+                                            ->defaultImageUrl(url('/images/default-avatar.png'))
+                                            ->extraImgAttributes([
+                                                'class' => 'object-cover shadow-lg ring-4 ring-white dark:ring-gray-800',
+                                            ])
+                                            ->alignCenter(),
+                                    ])
+                                    ->columnSpan(1),
 
-                                TextEntry::make('type')
-                                    ->label('نوع الجواز')
-                                    ->formatStateUsing(
-                                        fn (?string $state): string => match ($state) {
-                                            'ordinary' => 'عادي',
-                                            'diplomatic' => 'دبلوماسي',
-                                            'official' => 'رسمي',
-                                            default => 'غير محدد',
-                                        }
-                                    ),
+                                Grid::make(2)
+                                    ->schema([
 
-                                TextEntry::make('status')
-                                    ->label('حالة الجواز')
-                                    ->formatStateUsing(
-                                        fn (?string $state): string => match ($state) {
-                                            'pending' => 'قيد الانتظار',
-                                            'rejected' => 'مرفوض',
-                                            'active' => 'ساري',
-                                            'expired' => 'منتهي',
-                                            'cancelled' => 'ملغي',
-                                            'lost' => 'مفقود',
-                                            'damaged' => 'تالف',
-                                            default => 'غير محدد',
-                                        }
-                                    ),
+                                        TextEntry::make('passport_number')
+                                            ->label('رقم الجواز')
+                                            ->weight('bold'),
 
-                                TextEntry::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->date('d/m/Y')
-                                    ->placeholder('لم يتم الإصدار بعد'),
+                                        TextEntry::make('citizen')
+                                            ->label('المواطن')
+                                            ->formatStateUsing(
+                                                fn ($record): string => collect([
+                                                    $record->citizen?->first_name,
+                                                    $record->citizen?->father_name,
+                                                    $record->citizen?->middle_name,
+                                                    $record->citizen?->last_name,
+                                                ])
+                                                    ->filter()
+                                                    ->join(' ')
+                                            ),
 
-                                TextEntry::make('expiry_date')
-                                    ->label('تاريخ الانتهاء')
-                                    ->date('d/m/Y')
-                                    ->placeholder('لم يتم تحديده بعد'),
+                                        TextEntry::make('type')
+                                            ->label('نوع الجواز')
+                                            ->formatStateUsing(
+                                                fn (?string $state): string => match ($state) {
+                                                    'ordinary' => 'عادي',
+                                                    'diplomatic' => 'دبلوماسي',
+                                                    'official' => 'رسمي',
+                                                    default => 'غير محدد',
+                                                }
+                                            ),
+
+                                        TextEntry::make('status')
+                                            ->label('حالة الجواز')
+                                            ->formatStateUsing(
+                                                fn (?string $state): string => match ($state) {
+                                                    'pending' => 'قيد الانتظار',
+                                                    'rejected' => 'مرفوض',
+                                                    'active' => 'ساري',
+                                                    'expired' => 'منتهي',
+                                                    'cancelled' => 'ملغي',
+                                                    'lost' => 'مفقود',
+                                                    'damaged' => 'تالف',
+                                                    default => 'غير محدد',
+                                                }
+                                            ),
+
+                                        TextEntry::make('issue_date')
+                                            ->label('تاريخ الإصدار')
+                                            ->date('d/m/Y')
+                                            ->placeholder('لم يتم الإصدار بعد'),
+
+                                        TextEntry::make('expiry_date')
+                                            ->label('تاريخ الانتهاء')
+                                            ->date('d/m/Y')
+                                            ->placeholder('لم يتم تحديده بعد'),
+
+                                    ])
+                                    ->columnSpan(3),
+
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -105,12 +136,13 @@ class PassportInfolist
                                 TextEntry::make('print_count')
                                     ->label('عدد مرات الطباعة')
                                     ->numeric(),
+
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('معلومات إضافية')
-                    ->description('الملاحظات والبيانات الإضافية المرتبطة بالجواز')
+                    ->description('الملاحظات وسبب الرفض والبيانات الإضافية المرتبطة بالجواز')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Grid::make(2)
@@ -119,12 +151,18 @@ class PassportInfolist
                                 TextEntry::make('notes')
                                     ->label('ملاحظات')
                                     ->placeholder('لا توجد ملاحظات')
-                                    ->columnSpanFull(),
+                                    ->columnSpan(1),
 
-                                TextEntry::make('qr_code')
-                                    ->label('رمز QR')
-                                    ->placeholder('لا يوجد رمز QR')
-                                    ->columnSpanFull(),
+                                TextEntry::make('rejection_reason')
+                                    ->label('سبب الرفض')
+                                    ->icon('heroicon-o-exclamation-circle')
+                                    ->color('danger')
+                                    ->placeholder('لم يتم تسجيل سبب الرفض')
+                                    ->columnSpan(1)
+                                    ->visible(
+                                        fn ($record): bool => $record?->status === 'rejected'
+                                    ),
+
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -144,13 +182,29 @@ class PassportInfolist
                                     ->label('آخر تحديث')
                                     ->dateTime('d/m/Y H:i'),
 
-                                TextEntry::make('deleted_at')
-                                    ->label('تاريخ الحذف')
-                                    ->dateTime('d/m/Y H:i')
-                                    ->placeholder('غير محذوف'),
                             ]),
                     ])
                     ->columnSpanFull(),
+
+                Section::make('التحقق الإلكتروني')
+                    ->description('امسح رمز QR لفتح صفحة التحقق من حالة الجواز')
+                    ->icon('heroicon-o-qr-code')
+                    ->schema([
+                        ViewEntry::make('verification_qr')
+                            ->hiddenLabel()
+                            ->view('filament.infolists.passport-verification-qr')
+                            ->state(
+                                fn ($record): array => [
+                                    'url' => route(
+                                        'passports.verify',
+                                        ['passport' => $record->getKey()]
+                                    ),
+                                ]
+                            )
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
+
             ]);
     }
 }

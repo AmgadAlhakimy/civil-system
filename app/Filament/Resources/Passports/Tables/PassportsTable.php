@@ -26,8 +26,7 @@ class PassportsTable
                     ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ رقم الجواز')
-                    ->weight('bold')
-                    ->icon('heroicon-o-identification'),
+                    ->weight('bold'),
 
                 TextColumn::make('citizen')
                     ->label('المواطن')
@@ -169,7 +168,7 @@ class PassportsTable
                     ->color('primary'),
 
                 EditAction::make()
-                    ->label('تعديل الجواز')
+                    ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
             ])
 

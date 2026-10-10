@@ -15,13 +15,21 @@ class EditPassport extends EditRecord
 {
     protected static string $resource = PassportResource::class;
 
-    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): Passport
+    protected function getRedirectUrl(): string
     {
+        return $this->getResource()::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
+    }
+    protected function handleRecordUpdate(
+        \Illuminate\Database\Eloquent\Model $record,
+        array $data
+    ): Passport {
         $existingPassport = Passport::query()
             ->where('citizen_id', $data['citizen_id'])
             ->where('type', $data['type'])
             ->where('id', '!=', $record->id)
-            ->whereIn('status', ['pending', 'approved', 'active'])
+            ->whereIn('status', ['pending', 'active'])
             ->exists();
 
         if ($existingPassport) {
@@ -35,7 +43,14 @@ class EditPassport extends EditRecord
             $this->halt();
         }
 
-        $record->update($data);
+        $record->fill([
+            'citizen_id' => $data['citizen_id'],
+            'passport_number' => $data['passport_number'],
+            'type' => $data['type'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        $record->save();
 
         return $record;
     }
@@ -44,10 +59,12 @@ class EditPassport extends EditRecord
     {
         return [
             ViewAction::make()
-                ->label('عرض الجواز'),
+                ->label('عرض الجواز')
+                ->icon('heroicon-o-eye'),
 
             DeleteAction::make()
-                ->label('حذف الجواز'),
+                ->label('حذف الجواز')
+                ->icon('heroicon-o-trash'),
 
             ForceDeleteAction::make()
                 ->label('حذف نهائي'),

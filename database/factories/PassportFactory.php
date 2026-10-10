@@ -24,7 +24,7 @@ class PassportFactory extends Factory
             ]),
             'status' => 'pending',
             'notes' => fake()->optional()->sentence(),
-            'qr_code' => fake()->optional()->sha256(),
+            'rejection_reason' => null,
             'print_count' => 0,
             'issued_by' => User::inRandomOrder()->first()->id,
             'approved_by' => null,

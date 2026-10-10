@@ -22,7 +22,7 @@ class Passport extends Model
         'type',
         'status',
         'notes',
-        'qr_code',
+        'rejection_reason',
         'print_count',
         'issued_by',
         'approved_by',
@@ -67,7 +67,7 @@ class Passport extends Model
     public function isExpired(): bool
     {
         return $this->expiry_date !== null
-            && $this->expiry_date->isPast();
+            && $this->expiry_date->lt(today());
     }
 
     public function isActive(): bool

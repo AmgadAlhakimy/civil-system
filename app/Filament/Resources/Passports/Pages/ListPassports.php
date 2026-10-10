@@ -14,7 +14,9 @@ class ListPassports extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('تقديم طلب جواز'),
+                ->label('تقديم طلب جواز')
+                ->icon('heroicon-o-book-open')
+                ->size('lg'),
         ];
     }
 }

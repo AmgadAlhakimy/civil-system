@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PassportVerificationController;
 use App\Http\Controllers\ReportFileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -71,5 +72,10 @@ Route::middleware(['auth'])->group(function () {
         ->where('path', '.*')
         ->name('citizens.face');
 });
+
+Route::get(
+    '/passports/verify/{passport}',
+    [PassportVerificationController::class, 'show']
+)->name('passports.verify');
 
 require __DIR__.'/auth.php';

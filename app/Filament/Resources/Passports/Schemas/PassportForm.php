@@ -18,7 +18,7 @@ class PassportForm
 
                 Section::make('بيانات الجواز')
                     ->description('المعلومات الأساسية لجواز السفر')
-                    ->icon('heroicon-o-identification')
+                    ->icon('heroicon-o-book-open')
                     ->schema([
                         Grid::make(6)
                             ->schema([
@@ -29,6 +29,7 @@ class PassportForm
                                         name: 'citizen',
                                         titleAttribute: 'first_name',
                                         modifyQueryUsing: fn ($query) => $query
+                                            ->where('verification_status', 'approved')
                                             ->orderBy('first_name')
                                             ->orderBy('father_name')
                                             ->orderBy('middle_name')
@@ -52,7 +53,9 @@ class PassportForm
                                         'last_name',
                                         'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم المواطن أو رقمه الوطني')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->columnSpan(3)
@@ -71,11 +74,10 @@ class PassportForm
                                 TextInput::make('passport_number')
                                     ->label('رقم الجواز')
                                     ->required()
+                                    ->minLength(9)
                                     ->maxLength(9)
                                     ->rule('regex:/^[0-9]{9}$/')
                                     ->unique(
-                                        table: 'passports',
-                                        column: 'passport_number',
                                         ignoreRecord: true,
                                     )
                                     ->columnSpan(2)
@@ -89,7 +91,9 @@ class PassportForm
                                     ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'رقم الجواز مطلوب',
-                                        'regex' => 'رقم الجواز يجب أن يتكون من 9 أرقام بالضبط',
+                                        'min' => 'يجب أن يتكون رقم الجواز من 9 أرقام',
+                                        'max' => 'يجب أن يتكون رقم الجواز من 9 أرقام',
+                                        'regex' => 'رقم الجواز يجب أن يحتوي على أرقام فقط',
                                         'unique' => 'رقم الجواز مسجل مسبقاً',
                                     ]),
 
@@ -101,6 +105,11 @@ class PassportForm
                                         'official' => 'رسمي',
                                     ])
                                     ->required()
+                                    ->in([
+                                        'ordinary',
+                                        'diplomatic',
+                                        'official',
+                                    ])
                                     ->native(false)
                                     ->columnSpan(1)
                                     ->disabled(
@@ -113,6 +122,7 @@ class PassportForm
                                     ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار نوع الجواز',
+                                        'in' => 'نوع الجواز المحدد غير صالح',
                                     ]),
                             ]),
                     ])
@@ -122,7 +132,7 @@ class PassportForm
                     ->description('الملاحظات والبيانات الإضافية المرتبطة بالجواز')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(1)
                             ->schema([
 
                                 Textarea::make('notes')
@@ -130,9 +140,6 @@ class PassportForm
                                     ->rows(4)
                                     ->maxLength(1000),
 
-                                Textarea::make('qr_code')
-                                    ->label('رمز QR')
-                                    ->rows(4),
                             ]),
                     ])
                     ->columnSpanFull(),

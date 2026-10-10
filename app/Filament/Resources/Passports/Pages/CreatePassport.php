@@ -11,6 +11,11 @@ class CreatePassport extends CreateRecord
 {
     protected static string $resource = PassportResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function handleRecordCreation(array $data): Passport
     {
         $existingPassport = Passport::query()
@@ -24,7 +29,6 @@ class CreatePassport extends CreateRecord
                 ->danger()
                 ->title('لا يمكن إنشاء الجواز')
                 ->body('هذا المواطن لديه بالفعل طلب جواز من نفس النوع قيد المعالجة أو جواز ساري المفعول.')
-                ->persistent()
                 ->send();
 
             $this->halt();
@@ -34,7 +38,12 @@ class CreatePassport extends CreateRecord
 
         $passport = new Passport();
 
-        $passport->fill($data);
+        $passport->fill([
+            'citizen_id' => $data['citizen_id'],
+            'passport_number' => $data['passport_number'],
+            'type' => $data['type'],
+            'notes' => $data['notes'] ?? null,
+        ]);
 
         $passport->issued_by = auth()->id();
         $passport->status = 'pending';

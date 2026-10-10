@@ -15,3 +15,7 @@ Artisan::command('backup:automatic', function () {
 Schedule::command('backup:automatic')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('passports:update-expired')
+    ->everyMinute()
+    ->withoutOverlapping();

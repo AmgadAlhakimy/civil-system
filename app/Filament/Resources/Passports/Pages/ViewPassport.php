@@ -3,12 +3,16 @@
 namespace App\Filament\Resources\Passports\Pages;
 
 use App\Filament\Resources\Passports\PassportResource;
+use App\Models\Passport;
 use ArPHP\I18N\Arabic;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\DB;
 
 class ViewPassport extends ViewRecord
 {
@@ -47,7 +51,37 @@ class ViewPassport extends ViewRecord
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(fn (): bool => $this->record->status === 'pending')
                 ->action(function (): void {
-                    if ($this->record->status !== 'pending') {
+                    $issueDate = now();
+
+                    $approved = DB::transaction(function () use ($issueDate): bool {
+                        $passport = Passport::query()
+                            ->whereKey($this->record->getKey())
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (! $passport || $passport->status !== 'pending') {
+                            return false;
+                        }
+
+                        $passport->update([
+                            'status' => 'active',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => $issueDate,
+                            'issue_date' => $issueDate->toDateString(),
+                            'expiry_date' => $issueDate
+                                ->copy()
+                                ->addYears(5)
+                                ->toDateString(),
+                            'rejection_reason' => null,
+                            'verified_at' => null,
+                        ]);
+
+                        return true;
+                    });
+
+                    if (! $approved) {
+                        $this->record->refresh();
+
                         Notification::make()
                             ->title('لا يمكن اعتماد الجواز')
                             ->body('حالة الجواز تغيرت ولم يعد الطلب قيد الانتظار.')
@@ -57,25 +91,6 @@ class ViewPassport extends ViewRecord
                         return;
                     }
 
-                    $issueDate = now();
-
-                    $this->record->update([
-                        'status' => 'active',
-                        'approved_by' => auth()->id(),
-                        'approved_at' => $issueDate,
-                        'issue_date' => $issueDate->toDateString(),
-                        'expiry_date' => $issueDate
-                            ->copy()
-                            ->addYears(5)
-                            ->toDateString(),
-                    ]);
-
-                    Notification::make()
-                        ->title('تم اعتماد الجواز بنجاح')
-                        ->body('تم إصدار الجواز وأصبح ساريًا لمدة 5 سنوات.')
-                        ->success()
-                        ->send();
-
                     $this->record->refresh();
 
                     $this->refreshFormData([
@@ -84,7 +99,160 @@ class ViewPassport extends ViewRecord
                         'approved_at',
                         'issue_date',
                         'expiry_date',
+                        'rejection_reason',
+                        'verified_at',
                     ]);
+
+                    Notification::make()
+                        ->title('تم اعتماد الجواز بنجاح')
+                        ->body('تم إصدار الجواز وأصبح ساريًا لمدة 5 سنوات.')
+                        ->success()
+                        ->send();
+                }),
+
+            Action::make('reject')
+                ->label('رفض الجواز')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->modalHeading('رفض الجواز')
+                ->modalDescription('يرجى إدخال سبب رفض الجواز بوضوح.')
+                ->modalSubmitActionLabel('تأكيد الرفض')
+                ->modalCancelActionLabel('إلغاء')
+                ->schema([
+                    Textarea::make('rejection_reason')
+                        ->label('سبب الرفض')
+                        ->required()
+                        ->minLength(5)
+                        ->maxLength(2000)
+                        ->rows(4)
+                        ->placeholder('اكتب سبب رفض الجواز...')
+                        ->validationMessages([
+                            'required' => 'سبب الرفض مطلوب.',
+                            'min' => 'يجب ألا يقل سبب الرفض عن 5 أحرف.',
+                            'max' => 'يجب ألا يتجاوز سبب الرفض 2000 حرف.',
+                        ]),
+                ])
+                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->action(function (array $data): void {
+                    $rejected = DB::transaction(function () use ($data): bool {
+                        $passport = Passport::query()
+                            ->whereKey($this->record->getKey())
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (! $passport || $passport->status !== 'pending') {
+                            return false;
+                        }
+
+                        $passport->update([
+                            'status' => 'rejected',
+                            'rejection_reason' => $data['rejection_reason'],
+                            'verified_at' => now(),
+                            'approved_by' => null,
+                            'approved_at' => null,
+                            'issue_date' => null,
+                            'expiry_date' => null,
+                        ]);
+
+                        return true;
+                    });
+
+                    if (! $rejected) {
+                        $this->record->refresh();
+
+                        Notification::make()
+                            ->title('لا يمكن رفض الجواز')
+                            ->body('حالة الجواز تغيرت ولم يعد الطلب قيد الانتظار.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->record->refresh();
+
+                    $this->refreshFormData([
+                        'status',
+                        'rejection_reason',
+                        'verified_at',
+                        'approved_by',
+                        'approved_at',
+                        'issue_date',
+                        'expiry_date',
+                    ]);
+
+                    Notification::make()
+                        ->title('تم رفض الجواز')
+                        ->body('تم حفظ سبب الرفض بنجاح.')
+                        ->danger()
+                        ->send();
+                }),
+
+            Action::make('resubmit')
+                ->label('إعادة تقديم للمراجعة')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('إعادة تقديم الجواز')
+                ->modalDescription(
+                    'تأكد من تصحيح البيانات المطلوبة قبل إعادة تقديم الجواز للمراجعة.'
+                )
+                ->modalSubmitActionLabel('إعادة التقديم')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(fn (): bool => $this->record->status === 'rejected')
+                ->action(function (): void {
+                    $resubmitted = DB::transaction(function (): bool {
+                        $passport = Passport::query()
+                            ->whereKey($this->record->getKey())
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (! $passport || $passport->status !== 'rejected') {
+                            return false;
+                        }
+
+                        $passport->update([
+                            'status' => 'pending',
+                            'rejection_reason' => null,
+                            'verified_at' => null,
+                            'approved_by' => null,
+                            'approved_at' => null,
+                            'issue_date' => null,
+                            'expiry_date' => null,
+                        ]);
+
+                        return true;
+                    });
+
+                    if (! $resubmitted) {
+                        $this->record->refresh();
+
+                        Notification::make()
+                            ->title('تعذرت إعادة تقديم الجواز')
+                            ->body('حالة الجواز تغيرت، يرجى تحديث الصفحة والمحاولة مجددًا.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->record->refresh();
+
+                    $this->refreshFormData([
+                        'status',
+                        'rejection_reason',
+                        'verified_at',
+                        'approved_by',
+                        'approved_at',
+                        'issue_date',
+                        'expiry_date',
+                    ]);
+
+                    Notification::make()
+                        ->title('تمت إعادة تقديم الجواز')
+                        ->body('أصبح طلب الجواز بانتظار المراجعة.')
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('print')
@@ -110,10 +278,7 @@ class ViewPassport extends ViewRecord
                         return;
                     }
 
-                    if (
-                        ! $this->record->issue_date
-                        || ! $this->record->expiry_date
-                    ) {
+                    if (! $this->record->issue_date || ! $this->record->expiry_date) {
                         Notification::make()
                             ->title('لا يمكن طباعة الجواز')
                             ->body('تاريخ إصدار أو انتهاء الجواز غير موجود.')
@@ -236,57 +401,21 @@ class ViewPassport extends ViewRecord
                     );
                 }),
 
-            Action::make('reject')
-                ->label('رفض الجواز')
-                ->icon('heroicon-o-x-circle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('رفض الجواز')
-                ->modalDescription(
-                    'هل أنت متأكد من رفض هذا الجواز؟'
-                )
-                ->modalSubmitActionLabel('نعم، رفض')
-                ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
-                ->action(function (): void {
-                    if ($this->record->status !== 'pending') {
-                        Notification::make()
-                            ->title('لا يمكن رفض الجواز')
-                            ->body('حالة الجواز تغيرت ولم يعد الطلب قيد الانتظار.')
-                            ->warning()
-                            ->send();
-
-                        return;
-                    }
-
-                    $this->record->update([
-                        'status' => 'rejected',
-                        'approved_by' => null,
-                        'approved_at' => null,
-                        'issue_date' => null,
-                        'expiry_date' => null,
-                    ]);
-
-                    Notification::make()
-                        ->title('تم رفض الجواز')
-                        ->body('تم تغيير حالة الجواز إلى مرفوض.')
-                        ->danger()
-                        ->send();
-
-                    $this->record->refresh();
-
-                    $this->refreshFormData([
-                        'status',
-                        'approved_by',
-                        'approved_at',
-                        'issue_date',
-                        'expiry_date',
-                    ]);
-                }),
-
             EditAction::make()
                 ->label('تعديل الجواز')
                 ->icon('heroicon-o-pencil-square'),
+
+            DeleteAction::make()
+                ->label('حذف الجواز')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('حذف الجواز')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف هذا الجواز؟ سيتم نقله إلى سلة المهملات.'
+                )
+                ->modalSubmitActionLabel('نعم، حذف الجواز')
+                ->modalCancelActionLabel('إلغاء'),
         ];
     }
 }

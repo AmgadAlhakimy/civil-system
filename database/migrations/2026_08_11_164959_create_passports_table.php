@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->uuid('citizen_id');
 
-            $table->string('passport_number', 20)->unique();
+            $table->string('passport_number', 9)->unique();
 
             $table->enum('type', [
                 'ordinary',
@@ -35,8 +35,7 @@ return new class extends Migration
             $table->date('expiry_date')->nullable();
 
             $table->text('notes')->nullable();
-            $table->text('qr_code')->nullable();
-
+            $table->text('rejection_reason')->nullable();
             $table->integer('print_count')->default(0);
 
             $table->uuid('issued_by');

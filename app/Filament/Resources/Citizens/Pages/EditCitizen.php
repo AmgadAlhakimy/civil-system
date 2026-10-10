@@ -19,11 +19,13 @@ class EditCitizen extends EditRecord
         return [
             ViewAction::make()
                 ->label('عرض المواطن')
-                ->icon('heroicon-o-eye'),
+                ->icon('heroicon-o-eye')
+                ->size('lg'),
 
             DeleteAction::make()
                 ->label('حذف المواطن')
-                ->icon('heroicon-o-trash'),
+                ->icon('heroicon-o-trash')
+                ->size('lg'),
 
             ForceDeleteAction::make()
                 ->label('حذف المواطن نهائياً'),
