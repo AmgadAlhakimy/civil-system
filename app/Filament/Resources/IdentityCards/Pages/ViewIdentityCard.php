@@ -16,7 +16,7 @@ class ViewIdentityCard extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'بيانات البطاقة الشخصية: ' . $this->record->id_number;
+        return 'بيانات البطاقة الشخصية: ' . $this->record->national_id;
     }
 
     protected function arabicText(mixed $text): string
@@ -226,7 +226,7 @@ class ViewIdentityCard extends ViewRecord
 
                     return response()->streamDownload(
                         fn () => print($pdf->output()),
-                        'identity-card-' . $this->record->id_number . '.pdf'
+                        'identity-card-' . $this->record->national_id . '.pdf'
                     );
                 }),
 

@@ -19,11 +19,11 @@ class IdentityCardInfolist
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                TextEntry::make('id_number')
-                                    ->label('رقم البطاقة')
+                                TextEntry::make('national_id')
+                                    ->label('الرقم الوطني')
                                     ->weight('bold')
                                     ->copyable()
-                                    ->copyMessage('تم نسخ رقم البطاقة'),
+                                    ->copyMessage('تم نسخ الرقم الوطني'),
 
                                 TextEntry::make('citizen')
                                     ->label('المواطن')

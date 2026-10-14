@@ -62,14 +62,18 @@ class CitizenInfolist
                                             ->weight('bold')
                                             ->size('xl')
                                             ->icon('heroicon-o-user')
-                                            ->columnSpanFull(),
+                                        ->columnSpanFull(),
 
-                                        TextEntry::make('national_id')
-                                            ->label('الرقم الوطني')
-                                            ->copyable()
-                                            ->copyMessage('تم نسخ الرقم الوطني')
-                                            ->icon('heroicon-o-identification')
-                                            ->weight('bold'),
+
+                                        TextEntry::make('blood_type')
+                                            ->label('فصيلة الدم')
+                                            ->placeholder('غير مسجلة')
+                                            ->icon('heroicon-o-beaker')
+                                            ->weight('bold')
+                                            ->extraAttributes([
+                                                'dir' => 'ltr',
+                                                'class' => 'text-right',
+                                            ]),
 
                                         TextEntry::make('gender')
                                             ->label('الجنس')
@@ -79,7 +83,8 @@ class CitizenInfolist
                                                     'female' => 'أنثى',
                                                     default => $state ?? 'غير محدد',
                                                 }
-                                            ),
+                                            )
+                                            ->icon('heroicon-o-user'),
 
                                         TextEntry::make('birth_date')
                                             ->label('تاريخ الميلاد')
@@ -159,7 +164,8 @@ class CitizenInfolist
                                                             'widowed' => 'أرمل',
                                                             default => $state ?? 'غير محدد',
                                                         }
-                                                    ),
+                                                    )
+                                                    ->icon('heroicon-o-heart'),
 
                                             ]),
                                     ])
@@ -302,15 +308,9 @@ class CitizenInfolist
                                             ->schema([
 
                                                 TextEntry::make('verifier.name')
-                                                    ->label('الموظف الذي اتخذ القرار')
+                                                    ->label('تم الاعتماد بواسطة')
                                                     ->placeholder('لم يُتخذ قرار بعد')
                                                     ->icon('heroicon-o-user-circle'),
-
-                                                TextEntry::make('verified_at')
-                                                    ->label('تاريخ آخر قرار')
-                                                    ->dateTime('Y-m-d H:i')
-                                                    ->placeholder('لم يُتخذ قرار بعد')
-                                                    ->icon('heroicon-o-calendar-days'),
 
                                             ]),
 

@@ -19,42 +19,22 @@ class CitizenForm
 {
     public static function configure(Schema $schema): Schema
     {
+
         return $schema
             ->components([
                 Wizard::make([
                     Step::make('البيانات الشخصية')
                         ->icon('heroicon-o-user')
                         ->schema([
-                            Section::make('بيانات الهوية')
-                                ->description('المعلومات الأساسية للمواطن')
+                            Section::make('البيانات الشخصية')
+                                ->description('أدخل الاسم الرباعي وبيانات الأم')
                                 ->icon('heroicon-o-identification')
                                 ->schema([
-                                    Grid::make(3)
+                                    Grid::make([
+                                        'default' => 1,
+                                        'md' => 6,
+                                    ])
                                         ->schema([
-                                            TextInput::make('national_id')
-                                                ->label('الرقم الوطني')
-                                                ->required()
-                                                ->minLength(11)
-                                                ->maxLength(11)
-                                                ->unique(
-                                                    table: 'citizens',
-                                                    column: 'national_id',
-                                                    ignoreRecord: true,
-                                                )
-                                                ->rules([
-                                                    'digits:11',
-                                                    'regex:/^[0-9]{11}$/',
-                                                ])
-                                                ->inputMode('numeric')
-                                                ->validationMessages([
-                                                    'required' => 'حقل الرقم الوطني مطلوب',
-                                                    'digits' => 'يجب أن يكون الرقم الوطني مكوناً من 11 رقماً',
-                                                    'regex' => 'يجب أن يحتوي الرقم الوطني على أرقام فقط',
-                                                    'unique' => 'هذا الرقم الوطني مسجل مسبقاً لمواطن آخر',
-                                                    'min' => 'يجب أن يتكون الرقم الوطني من 11 رقماً',
-                                                    'max' => 'يجب أن يتكون الرقم الوطني من 11 رقماً',
-                                                ]),
-
                                             TextInput::make('first_name')
                                                 ->label('الاسم الأول')
                                                 ->required()
@@ -69,6 +49,10 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل الاسم الأول عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز الاسم الأول 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي الاسم الأول على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 2,
                                                 ]),
 
                                             TextInput::make('father_name')
@@ -85,6 +69,10 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل اسم الأب عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز اسم الأب 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اسم الأب على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 2,
                                                 ]),
 
                                             TextInput::make('middle_name')
@@ -101,6 +89,10 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل اسم الجد عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز اسم الجد 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اسم الجد على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 2,
                                                 ]),
 
                                             TextInput::make('last_name')
@@ -117,6 +109,10 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل اللقب عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز اللقب 15 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اللقب على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 3,
                                                 ]),
 
                                             TextInput::make('mother_name')
@@ -133,8 +129,13 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل اسم الأم عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز اسم الأم 50 حرفاً',
                                                     'regex' => 'يجب أن يحتوي اسم الأم على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 3,
                                                 ]),
-                                        ]),
+                                        ])
+                                        ->columnSpanFull(),
                                 ])
                                 ->columnSpanFull(),
 
@@ -165,10 +166,14 @@ class CitizenForm
                         ->icon('heroicon-o-calendar-days')
                         ->schema([
                             Section::make('معلومات الميلاد')
-                                ->description('بيانات الميلاد والجنس')
+                                ->description('بيانات الميلاد والجنس وفصيلة الدم والمهنة')
                                 ->icon('heroicon-o-calendar')
                                 ->schema([
-                                    Grid::make(2)
+                                    Grid::make([
+                                        'default' => 1,
+                                        'md' => 2,
+                                        'xl' => 4,
+                                    ])
                                         ->schema([
                                             DatePicker::make('birth_date')
                                                 ->label('تاريخ الميلاد')
@@ -181,6 +186,11 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'يرجى تحديد تاريخ الميلاد',
                                                     'before_or_equal' => 'لا يمكن أن يكون تاريخ الميلاد في المستقبل',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 1,
+                                                    'xl' => 2,
                                                 ]),
 
                                             TextInput::make('birth_place')
@@ -197,6 +207,11 @@ class CitizenForm
                                                     'min' => 'يجب ألا يقل مكان الميلاد عن حرفين',
                                                     'max' => 'يجب ألا يتجاوز مكان الميلاد 255 حرفاً',
                                                     'regex' => 'يجب أن يحتوي مكان الميلاد على حروف عربية فقط',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 1,
+                                                    'xl' => 2,
                                                 ]),
 
                                             Select::make('gender')
@@ -210,6 +225,32 @@ class CitizenForm
                                                 ->validationMessages([
                                                     'required' => 'يرجى اختيار الجنس',
                                                 ]),
+
+                                            Select::make('blood_type')
+                                                ->label('فصيلة الدم')
+                                                ->options([
+                                                    'A+' => 'A+',
+                                                    'A-' => 'A-',
+                                                    'B+' => 'B+',
+                                                    'B-' => 'B-',
+                                                    'AB+' => 'AB+',
+                                                    'AB-' => 'AB-',
+                                                    'O+' => 'O+',
+                                                    'O-' => 'O-',
+                                        ])
+                                                ->placeholder('اختر فصيلة الدم ')
+                                                ->native(false)
+                                                ->required()
+                                                ->searchable()
+                                                ->extraAttributes([
+                                                    'dir' => 'ltr',
+                                                    'class' => 'text-right',
+                                                ])
+                                                ->validationMessages([
+                                                    'in' => 'فصيلة الدم المختارة غير صحيحة',
+                                                    'required' => 'يرجى اختيار فصيلة الدم',
+                                                ]),
+
                                             TextInput::make('occupation')
                                                 ->label('المهنة')
                                                 ->minLength(3)
@@ -223,6 +264,11 @@ class CitizenForm
                                                     'max' => 'يجب ألا تتجاوز المهنة 25 حرفًا.',
                                                     'min' => 'يجب ألا تقل المهنة عن 3 أحرف.',
                                                     'string' => 'يجب إدخال المهنة بصيغة نصية صحيحة.',
+                                                ])
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'md' => 2,
+                                                    'xl' => 2,
                                                 ]),
                                         ]),
                                 ])
@@ -254,7 +300,10 @@ class CitizenForm
                                 ->description('بيانات التواصل مع المواطن')
                                 ->icon('heroicon-o-device-phone-mobile')
                                 ->schema([
-                                    Grid::make(2)
+                                    Grid::make([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ])
                                         ->schema([
                                             TextInput::make('phone')
                                                 ->label('رقم الهاتف')
@@ -262,6 +311,8 @@ class CitizenForm
                                                 ->minLength(9)
                                                 ->maxLength(9)
                                                 ->unique(
+                                                    table: 'citizens',
+                                                    column: 'phone',
                                                     ignoreRecord: true,
                                                 )
                                                 ->rules([

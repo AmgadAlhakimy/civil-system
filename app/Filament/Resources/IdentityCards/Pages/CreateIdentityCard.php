@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\IdentityCards\Pages;
 
 use App\Filament\Resources\IdentityCards\IdentityCardResource;
+use App\Models\Citizen;
 use App\Models\IdentityCard;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -18,6 +19,22 @@ class CreateIdentityCard extends CreateRecord
 
     protected function handleRecordCreation(array $data): IdentityCard
     {
+        $citizen = Citizen::query()
+            ->whereKey($data['citizen_id'])
+            ->where('verification_status', 'approved')
+            ->first();
+
+        if (! $citizen) {
+            Notification::make()
+                ->danger()
+                ->title('لا يمكن إنشاء البطاقة')
+                ->body('لا يمكن إصدار بطاقة شخصية إلا لمواطن تم اعتماد بياناته.')
+                ->persistent()
+                ->send();
+
+            $this->halt();
+        }
+
         $existingCard = IdentityCard::query()
             ->where('citizen_id', $data['citizen_id'])
             ->whereIn('status', ['pending', 'active'])
@@ -28,7 +45,6 @@ class CreateIdentityCard extends CreateRecord
                 ->danger()
                 ->title('لا يمكن إنشاء البطاقة')
                 ->body('هذا المواطن لديه بالفعل بطاقة شخصية قيد المعالجة أو سارية المفعول.')
-                ->persistent()
                 ->send();
 
             $this->halt();

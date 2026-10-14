@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
@@ -11,6 +11,7 @@ use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -22,7 +23,6 @@ class BranchesTable
     {
         return $table
             ->columns([
-
                 TextColumn::make('code')
                     ->label('رمز الفرع')
                     ->searchable()
@@ -80,11 +80,8 @@ class BranchesTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
             ])
-
             ->filters([
-
                 SelectFilter::make('is_active')
                     ->label('حالة الفرع')
                     ->options([
@@ -94,11 +91,8 @@ class BranchesTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
-
             ])
-
             ->recordActions([
-
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
@@ -107,15 +101,20 @@ class BranchesTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
-
             ])
-
             ->toolbarActions([
-
                 BulkActionGroup::make([
-
-                    DeleteBulkAction::make()
+                    BulkAction::make('delete')
                         ->label('حذف المحدد')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->visible(
+                            fn (HasTable $livewire): bool => in_array(
+                                $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                [null, ''],
+                                true
+                            )
+                        )
                         ->requiresConfirmation()
                         ->successNotification(null)
                         ->modalHeading('حذف الفروع المحددة')
@@ -123,6 +122,7 @@ class BranchesTable
                             'سيتم حذف الفروع المسموح بحذفها، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
                         )
                         ->modalSubmitActionLabel('نعم، حذف')
+                        ->deselectRecordsAfterCompletion()
                         ->action(function (Collection $records): void {
                             $deletedCount = 0;
                             $skippedCount = 0;
@@ -140,9 +140,9 @@ class BranchesTable
 
                             if ($skippedCount > 0) {
                                 Notification::make()
-                                    ->title('تمت عملية الحذف')
+                                    ->title('اكتملت عملية الحذف')
                                     ->body(
-                                        "تم حذف {$deletedCount} فرع، بينما تم تجاوز {$skippedCount} فرع لأن لديها مستخدمين مرتبطين بها."
+                                        "تم حذف {$deletedCount} فرع، وتجاوز {$skippedCount} فرع لارتباطها بمستخدمين."
                                     )
                                     ->warning()
                                     ->send();
@@ -151,7 +151,7 @@ class BranchesTable
                             }
 
                             Notification::make()
-                                ->title('تم حذف الفروع')
+                                ->title('تم حذف الفروع بنجاح')
                                 ->body(
                                     "تم حذف {$deletedCount} فرع بنجاح."
                                 )
@@ -162,6 +162,7 @@ class BranchesTable
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
                         ->requiresConfirmation()
+                        ->successNotification(null)
                         ->modalHeading('استعادة الفروع')
                         ->modalDescription(
                             'هل أنت متأكد من استعادة الفروع المحددة؟'
@@ -171,7 +172,7 @@ class BranchesTable
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
                         ->requiresConfirmation()
-                        ->successNotification(null)
+                        ->successNotificationTitle('تم الحذف النهائي بنجاح')
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
                             'سيتم حذف الفروع المسموح بحذفها نهائيًا، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
@@ -194,30 +195,17 @@ class BranchesTable
 
                             if ($skippedCount > 0) {
                                 Notification::make()
-                                    ->title('تمت عملية الحذف النهائي')
+                                    ->title('اكتملت عملية الحذف النهائي')
                                     ->body(
-                                        "تم حذف {$deletedCount} فرع نهائيًا، بينما تم تجاوز {$skippedCount} فرع لأن لديها مستخدمين مرتبطين بها."
+                                        "تم حذف {$deletedCount} فرع نهائيًا، وتجاوز {$skippedCount} فرع لارتباطها بمستخدمين."
                                     )
                                     ->warning()
                                     ->send();
-
-                                return;
                             }
-
-                            Notification::make()
-                                ->title('تم الحذف النهائي')
-                                ->body(
-                                    "تم حذف {$deletedCount} فرع نهائيًا بنجاح."
-                                )
-                                ->success()
-                                ->send();
                         }),
-
                 ])
                     ->label('إجراءات جماعية'),
-
             ])
-
             ->defaultSort('created_at', 'desc');
     }
 }

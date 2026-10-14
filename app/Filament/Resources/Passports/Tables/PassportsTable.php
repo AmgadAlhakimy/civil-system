@@ -100,7 +100,7 @@ class PassportsTable
                     ->placeholder('لم يتم تحديده')
                     ->sortable(),
 
-                TextColumn::make('issuedBy.name')
+                TextColumn::make('issuedBy.full_name')
                     ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

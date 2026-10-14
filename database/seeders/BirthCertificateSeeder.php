@@ -26,25 +26,24 @@ class BirthCertificateSeeder extends Seeder
         $fathers = Citizen::query()
             ->where('gender', 'male')
             ->orderBy('created_at')
-            ->limit(5)
             ->get();
 
         $mothers = Citizen::query()
             ->where('gender', 'female')
             ->orderBy('created_at')
-            ->limit(5)
             ->get();
 
         if (
             $children->count() < 20 ||
-            $fathers->count() < 20 ||
-            $mothers->count() < 20
+            $fathers->isEmpty() ||
+            $mothers->isEmpty()
         ) {
             return;
         }
 
         for ($i = 0; $i < 20; $i++) {
             $child = $children[$i];
+
             $father = $fathers->firstWhere('id', '!=', $child->id);
             $mother = $mothers->firstWhere('id', '!=', $child->id);
 

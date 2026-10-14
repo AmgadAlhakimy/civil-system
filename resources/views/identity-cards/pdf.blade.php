@@ -215,11 +215,6 @@
             direction: rtl;
         }
 
-        .document-number {
-            direction: ltr;
-            display: inline-block;
-        }
-
         .national-id {
             direction: ltr;
             display: inline-block;
@@ -241,7 +236,7 @@
 
         $text = (string) $text;
 
-        if (!preg_match('/[\x{0600}-\x{06FF}]/u', $text)) {
+        if (! preg_match('/[\x{0600}-\x{06FF}]/u', $text)) {
             return $text;
         }
 
@@ -287,7 +282,6 @@
         'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
     );
 
-    $idNumberLabel = $shapeArabic('رقم البطاقة');
     $nationalIdLabel = $shapeArabic('الرقم الوطني');
     $fullNameLabel = $shapeArabic('الاسم الكامل');
     $statusLabel = $shapeArabic('حالة البطاقة');
@@ -304,7 +298,6 @@
 <div class="document-wrapper">
 
     <div class="header">
-
         <h1>
             {{ $documentTitle }}
         </h1>
@@ -312,30 +305,13 @@
         <h2>
             {{ $documentSubtitle }}
         </h2>
-
     </div>
 
     <table class="layout-table">
-
         <tr>
-
             <td class="data-column">
 
                 <table class="info-table">
-
-                    <tr>
-                        <th>
-                            {{ $idNumberLabel }}
-                            <br>
-                            <span class="label-en">Identity Card No.</span>
-                        </th>
-
-                        <td>
-                            <span class="document-number">
-                                {{ $identityCard->id_number }}
-                            </span>
-                        </td>
-                    </tr>
 
                     <tr>
                         <th>
@@ -346,7 +322,7 @@
 
                         <td>
                             <span class="national-id">
-                                {{ $citizen?->national_id ?? '---' }}
+                                {{ $identityCard->national_id ?? '---' }}
                             </span>
                         </td>
                     </tr>
@@ -451,9 +427,7 @@
                 </div>
 
             </td>
-
         </tr>
-
     </table>
 
     <div class="footer-section">
@@ -464,7 +438,7 @@
         </div>
 
         <div class="qr-box">
-            {{ $identityCard->qr_code ?: $identityCard->id_number }}
+            {{ $identityCard->qr_code ?: $identityCard->national_id }}
         </div>
 
         <div class="footer-text">

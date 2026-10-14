@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\Citizen;
 use App\Models\IdentityCard;
 use App\Models\User;
@@ -17,21 +18,31 @@ class IdentityCardSeeder extends Seeder
 
         $user = User::first();
 
-        if ($citizens->isEmpty() || ! $user) {
+        $branch = Branch::query()->first();
+
+        if ($citizens->isEmpty() || ! $user || ! $branch) {
             return;
         }
 
-        foreach ($citizens as $index => $citizen) {
+        foreach ($citizens as $citizen) {
             $issueDate = now()->subYear();
+
+            do {
+                $nationalId = '';
+
+                for ($i = 0; $i < 11; $i++) {
+                    $nationalId .= (string) random_int(0, 9);
+                }
+            } while (
+                IdentityCard::withTrashed()
+                    ->where('national_id', $nationalId)
+                    ->exists()
+            );
 
             IdentityCard::create([
                 'citizen_id' => $citizen->id,
-                'id_number' => str_pad(
-                    (string) ($index + 1),
-                    11,
-                    '0',
-                    STR_PAD_LEFT
-                ),
+                'branch_id' => $branch->id,
+                'national_id' => $nationalId,
                 'issue_date' => $issueDate,
                 'expiry_date' => $issueDate->copy()->addYears(5),
                 'status' => 'active',

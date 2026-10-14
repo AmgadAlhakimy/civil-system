@@ -16,7 +16,6 @@ class Citizen extends Model
     use HasFactory, SoftDeletes, HasUuids, LogsActivity;
 
     protected $fillable = [
-        'national_id',
         'first_name',
         'middle_name',
         'last_name',
@@ -24,6 +23,7 @@ class Citizen extends Model
         'mother_name',
         'birth_date',
         'birth_place',
+        'blood_type',
         'gender',
         'marital_status',
         'occupation',

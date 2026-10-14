@@ -20,7 +20,8 @@ class ListIdentityCards extends ListRecords
         return [
             CreateAction::make()
                 ->label('إصدار بطاقة شخصية')
-                ->icon('heroicon-o-document-plus'),
+                ->icon('heroicon-o-document-plus')
+                ->size('lg'),
         ];
     }
 }

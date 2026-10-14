@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Citizen;
+use App\Models\User;
 use Faker\Factory as FakerFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,8 +17,13 @@ class CitizenFactory extends Factory
             'female',
         ]);
 
+        $isApproved = $this->faker->boolean(60);
+
+        $userId = $isApproved
+            ? User::query()->inRandomOrder()->value('id')
+            : null;
+
         return [
-            'national_id' => $this->faker->unique()->numerify('###########'),
             'first_name' => $faker->firstName(),
             'middle_name' => $faker->firstNameMale(),
             'last_name' => $faker->lastName(),
@@ -27,6 +32,16 @@ class CitizenFactory extends Factory
             'photo' => 'citizens/photos/01KZRJ6N0ZCQ1B69ZRDCEHX4FF.jpeg',
             'birth_date' => $this->faker->dateTimeBetween('-70 years', '-18 years')->format('Y-m-d'),
             'birth_place' => $faker->city(),
+            'blood_type' => $this->faker->randomElement([
+                'A+',
+                'A-',
+                'B+',
+                'B-',
+                'AB+',
+                'AB-',
+                'O+',
+                'O-',
+            ]),
             'gender' => $gender,
             'marital_status' => $this->faker->randomElement([
                 'single',
@@ -39,10 +54,10 @@ class CitizenFactory extends Factory
             'phone' => '7' . $this->faker->unique()->numerify('########'),
             'email' => $this->faker->unique()->safeEmail(),
             'is_active' => $this->faker->boolean(90),
-            'verification_status' => 'pending',
+            'verification_status' => $isApproved ? 'approved' : 'pending',
             'rejection_reason' => null,
-            'verified_at' => null,
-            'verified_by' => null,
+            'verified_at' => $isApproved && $userId ? now() : null,
+            'verified_by' => $isApproved ? $userId : null,
         ];
     }
 }

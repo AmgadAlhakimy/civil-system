@@ -19,14 +19,15 @@ class IdentityCardsTable
     {
         return $table
             ->columns([
-                TextColumn::make('id_number')
-                    ->label('رقم البطاقة')
+                TextColumn::make('national_id')
+                    ->label('الرقم الوطني')
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->copyMessage('تم نسخ رقم البطاقة')
-                    ->weight('bold')
-                    ->icon('heroicon-o-identification'),
+                    ->fontFamily('mono')
+                    ->size('md')
+                    ->copyMessage('تم نسخ الرقم الوطني')
+                    ->weight('bold'),
 
                 TextColumn::make('citizen')
                     ->label('المواطن')
@@ -47,8 +48,7 @@ class IdentityCardsTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                             });
                         }
                     )
@@ -78,6 +78,12 @@ class IdentityCardsTable
                     )
                     ->sortable(),
 
+                TextColumn::make('branch.name')
+                    ->label('جهة الإصدار')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('غير محددة'),
+
                 TextColumn::make('issue_date')
                     ->label('تاريخ الإصدار')
                     ->date('Y-m-d')
@@ -90,10 +96,9 @@ class IdentityCardsTable
                     ->placeholder('لم يتم تحديده')
                     ->sortable(),
 
-                TextColumn::make('issuedBy.name')
+                TextColumn::make('issuedBy.full_name')
                     ->label('تم إنشاء الطلب بواسطة')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('approvedBy.name')
                     ->label('تم الاعتماد بواسطة')

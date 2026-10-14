@@ -11,16 +11,25 @@ return new class extends Migration
         Schema::create('citizens', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
-            $table->string('national_id', 20)->unique();
-
             $table->string('first_name', 50);
+            $table->string('father_name', 50);
             $table->string('middle_name', 50);
             $table->string('last_name', 50);
-            $table->string('father_name', 100);
-            $table->string('mother_name', 100);
+            $table->string('mother_name', 50);
 
             $table->date('birth_date');
-            $table->string('birth_place', 100);
+            $table->string('birth_place', 50);
+
+            $table->enum('blood_type', [
+                'A+',
+                'A-',
+                'B+',
+                'B-',
+                'AB+',
+                'AB-',
+                'O+',
+                'O-',
+            ])->nullable();
 
             $table->enum('gender', ['male', 'female']);
 

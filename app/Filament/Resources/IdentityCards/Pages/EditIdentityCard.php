@@ -21,6 +21,7 @@ class EditIdentityCard extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         unset(
+            $data['national_id'],
             $data['issued_by'],
             $data['issue_date'],
             $data['expiry_date'],

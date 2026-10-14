@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
@@ -11,6 +11,7 @@ use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -22,7 +23,6 @@ class UsersTable
     {
         return $table
             ->columns([
-
                 ImageColumn::make('profile_photo')
                     ->label('الصورة')
                     ->getStateUsing(
@@ -113,11 +113,8 @@ class UsersTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
             ])
-
             ->filters([
-
                 SelectFilter::make('branch_id')
                     ->label('الفرع')
                     ->relationship('branch', 'name')
@@ -140,11 +137,8 @@ class UsersTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
-
             ])
-
             ->recordActions([
-
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
@@ -153,21 +147,28 @@ class UsersTable
                 EditAction::make()
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square'),
-
             ])
-
             ->toolbarActions([
-
                 BulkActionGroup::make([
-
-                    DeleteBulkAction::make()
+                    BulkAction::make('delete')
                         ->label('حذف المحدد')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->visible(
+                            fn (HasTable $livewire): bool => in_array(
+                                $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                [null, ''],
+                                true
+                            )
+                        )
                         ->requiresConfirmation()
+                        ->successNotification(null)
                         ->modalHeading('حذف المستخدمين المحددين')
                         ->modalDescription(
                             'سيتم حذف المستخدمين المسموح بحذفهم، وسيتم تجاوز أي مستخدم هو مدير لفرع.'
                         )
                         ->modalSubmitActionLabel('نعم، حذف')
+                        ->deselectRecordsAfterCompletion()
                         ->action(function (Collection $records): void {
                             $deletedCount = 0;
                             $skippedCount = 0;
@@ -185,7 +186,7 @@ class UsersTable
 
                             if ($skippedCount > 0) {
                                 Notification::make()
-                                    ->title('تمت عملية الحذف')
+                                    ->title('اكتملت عملية الحذف')
                                     ->body(
                                         "تم حذف {$deletedCount} مستخدم، بينما تم تجاوز {$skippedCount} مستخدم لأنهم مديرو فروع."
                                     )
@@ -207,6 +208,7 @@ class UsersTable
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
                         ->requiresConfirmation()
+                        ->successNotification(null)
                         ->modalHeading('استعادة المستخدمين')
                         ->modalDescription(
                             'هل أنت متأكد من استعادة المستخدمين المحددين؟'
@@ -216,6 +218,7 @@ class UsersTable
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
                         ->requiresConfirmation()
+                        ->successNotificationTitle('تم الحذف النهائي بنجاح')
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
                             'سيتم حذف المستخدمين المسموح بحذفهم نهائيًا، وسيتم تجاوز أي مستخدم هو مدير لفرع.'
@@ -238,30 +241,17 @@ class UsersTable
 
                             if ($skippedCount > 0) {
                                 Notification::make()
-                                    ->title('تمت عملية الحذف النهائي')
+                                    ->title('اكتملت عملية الحذف النهائي')
                                     ->body(
                                         "تم حذف {$deletedCount} مستخدم نهائيًا، بينما تم تجاوز {$skippedCount} مستخدم لأنهم مديرو فروع."
                                     )
                                     ->warning()
                                     ->send();
-
-                                return;
                             }
-
-                            Notification::make()
-                                ->title('تم الحذف النهائي')
-                                ->body(
-                                    "تم حذف {$deletedCount} مستخدم نهائيًا بنجاح."
-                                )
-                                ->success()
-                                ->send();
                         }),
-
                 ])
                     ->label('إجراءات جماعية'),
-
             ])
-
             ->defaultSort('created_at', 'desc');
     }
 }

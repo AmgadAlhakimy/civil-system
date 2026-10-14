@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -20,7 +21,8 @@ class IdentityCard extends Model
 
     protected $fillable = [
         'citizen_id',
-        'id_number',
+        'national_id',
+        'branch_id',
         'issue_date',
         'expiry_date',
         'status',
@@ -42,6 +44,29 @@ class IdentityCard extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (IdentityCard $card): void {
+            if (filled($card->national_id)) {
+                return;
+            }
+
+            do {
+                $nationalId = '';
+
+                for ($i = 0; $i < 11; $i++) {
+                    $nationalId .= (string) random_int(0, 9);
+                }
+            } while (
+                static::withTrashed()
+                    ->where('national_id', $nationalId)
+                    ->exists()
+            );
+
+            $card->national_id = $nationalId;
+        });
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -53,6 +78,11 @@ class IdentityCard extends Model
     public function citizen(): BelongsTo
     {
         return $this->belongsTo(Citizen::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function issuedBy(): BelongsTo

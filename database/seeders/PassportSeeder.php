@@ -10,10 +10,12 @@ class PassportSeeder extends Seeder
 {
     public function run(): void
     {
-        Citizen::query()->each(function (Citizen $citizen) {
-            Passport::factory()->create([
-                'citizen_id' => $citizen->id,
-            ]);
-        });
+        Citizen::query()
+            ->limit(40)
+            ->each(function (Citizen $citizen) {
+                Passport::factory()->create([
+                    'citizen_id' => $citizen->id,
+                ]);
+            });
     }
 }

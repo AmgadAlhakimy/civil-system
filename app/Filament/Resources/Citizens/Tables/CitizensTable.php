@@ -21,15 +21,6 @@ class CitizensTable
     {
         return $table
             ->columns([
-
-                TextColumn::make('national_id')
-                    ->label('الرقم الوطني')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->copyMessage('تم نسخ الرقم الوطني')
-                    ->weight('bold'),
-
                 ImageColumn::make('photo')
                     ->label('الصورة')
                     ->getStateUsing(
@@ -84,6 +75,16 @@ class CitizensTable
                             default => $state ?? 'غير محدد',
                         }
                     ),
+
+                TextColumn::make('blood_type')
+                    ->label('فصيلة الدم')
+                    ->placeholder('غير مسجلة')
+                    ->sortable()
+                    ->extraAttributes([
+                        'dir' => 'ltr',
+                        'class' => 'text-right',
+                    ])
+                    ->toggleable(),
 
                 TextColumn::make('phone')
                     ->label('رقم الهاتف')
@@ -198,6 +199,19 @@ class CitizensTable
                     ->options([
                         'male' => 'ذكر',
                         'female' => 'أنثى',
+                    ]),
+
+                SelectFilter::make('blood_type')
+                    ->label('فصيلة الدم')
+                    ->options([
+                        'A+' => 'A+',
+                        'A-' => 'A-',
+                        'B+' => 'B+',
+                        'B-' => 'B-',
+                        'AB+' => 'AB+',
+                        'AB-' => 'AB-',
+                        'O+' => 'O+',
+                        'O-' => 'O-',
                     ]),
 
                 SelectFilter::make('marital_status')

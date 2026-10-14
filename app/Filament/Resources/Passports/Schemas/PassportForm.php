@@ -74,9 +74,9 @@ class PassportForm
                                 TextInput::make('passport_number')
                                     ->label('رقم الجواز')
                                     ->required()
-                                    ->minLength(9)
-                                    ->maxLength(9)
-                                    ->rule('regex:/^[0-9]{9}$/')
+                                    ->minLength(8)
+                                    ->maxLength(8)
+                                    ->rule('regex:/^[0-9]{8}$/')
                                     ->unique(
                                         ignoreRecord: true,
                                     )
@@ -91,8 +91,8 @@ class PassportForm
                                     ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'رقم الجواز مطلوب',
-                                        'min' => 'يجب أن يتكون رقم الجواز من 9 أرقام',
-                                        'max' => 'يجب أن يتكون رقم الجواز من 9 أرقام',
+                                        'min' => 'يجب أن يتكون رقم الجواز من 8 أرقام',
+                                        'max' => 'يجب أن يتكون رقم الجواز من 8 أرقام',
                                         'regex' => 'رقم الجواز يجب أن يحتوي على أرقام فقط',
                                         'unique' => 'رقم الجواز مسجل مسبقاً',
                                     ]),

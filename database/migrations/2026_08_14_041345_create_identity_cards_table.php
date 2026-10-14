@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->uuid('citizen_id');
 
-            $table->string('id_number', 20)->unique();
+            $table->string('national_id', 11)->unique();
 
             $table->enum('status', [
                 'pending',
@@ -36,6 +36,7 @@ return new class extends Migration
             $table->uuid('issued_by');
             $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
+            $table->uuid('branch_id')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
@@ -55,11 +56,17 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
+            $table->foreign('branch_id')
+                ->references('id')
+                ->on('branches')
+                ->onDelete('set null');
+
             $table->index('status');
             $table->index('issue_date');
             $table->index('expiry_date');
             $table->index('citizen_id');
         });
+
     }
 
     public function down(): void

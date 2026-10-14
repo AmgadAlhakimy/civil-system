@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Citizens\Pages;
 
 use App\Filament\Resources\Citizens\CitizenResource;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 
 class CreateCitizen extends CreateRecord
 {
@@ -16,11 +17,11 @@ class CreateCitizen extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['is_active'] = false;
-        $data['verification_status'] = 'pending';
+        $data['is_active'] = true;
+        $data['verification_status'] = 'approved';
         $data['rejection_reason'] = null;
-        $data['verified_by'] = null;
-        $data['verified_at'] = null;
+        $data['verified_by'] = Auth::id();
+        $data['verified_at'] = now();
 
         return $data;
     }
