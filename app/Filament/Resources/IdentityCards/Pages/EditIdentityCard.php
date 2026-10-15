@@ -38,11 +38,12 @@ class EditIdentityCard extends EditRecord
     {
         return [
             ViewAction::make()
-                ->label('عرض')
+                ->label('عرض البطاقة')
                 ->icon('heroicon-o-eye'),
 
             DeleteAction::make()
-                ->label('حذف البطاقة'),
+                ->label('حذف البطاقة')
+                ->icon('heroicon-o-trash'),
 
             ForceDeleteAction::make()
                 ->label('حذف نهائي'),

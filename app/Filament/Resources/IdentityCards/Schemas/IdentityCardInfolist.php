@@ -19,16 +19,10 @@ class IdentityCardInfolist
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                TextEntry::make('national_id')
-                                    ->label('الرقم الوطني')
-                                    ->weight('bold')
-                                    ->copyable()
-                                    ->copyMessage('تم نسخ الرقم الوطني'),
-
-                                TextEntry::make('citizen')
+                                TextEntry::make('citizen.first_name')
                                     ->label('المواطن')
                                     ->formatStateUsing(
-                                        fn ($record): string => collect([
+                                        fn ($state, $record): string => collect([
                                             $record->citizen?->first_name,
                                             $record->citizen?->father_name,
                                             $record->citizen?->middle_name,
@@ -36,7 +30,15 @@ class IdentityCardInfolist
                                         ])
                                             ->filter()
                                             ->join(' ')
-                                    ),
+                                    )
+                                    ->placeholder('المواطن غير محدد')
+                                    ->columnSpanFull(),
+
+                                TextEntry::make('national_id')
+                                    ->label('الرقم الوطني')
+                                    ->weight('bold')
+                                    ->copyable()
+                                    ->copyMessage('تم نسخ الرقم الوطني'),
 
                                 TextEntry::make('status')
                                     ->label('حالة البطاقة')
@@ -103,6 +105,14 @@ class IdentityCardInfolist
                                     ->placeholder('لا توجد ملاحظات')
                                     ->columnSpanFull(),
 
+                                TextEntry::make('rejection_reason')
+                                    ->label('سبب رفض البطاقة')
+                                    ->placeholder('لا يوجد سبب رفض')
+                                    ->visible(
+                                        fn ($record): bool => $record->status === 'rejected'
+                                    )
+                                    ->columnSpanFull(),
+
                                 TextEntry::make('qr_code')
                                     ->label('رمز QR')
                                     ->placeholder('لا يوجد رمز QR')
@@ -124,11 +134,6 @@ class IdentityCardInfolist
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
                                     ->dateTime('d/m/Y H:i'),
-
-                                TextEntry::make('deleted_at')
-                                    ->label('تاريخ الحذف')
-                                    ->dateTime('d/m/Y H:i')
-                                    ->placeholder('غير محذوف'),
                             ]),
                     ])
                     ->columnSpanFull(),

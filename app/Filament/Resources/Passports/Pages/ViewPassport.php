@@ -45,7 +45,7 @@ class ViewPassport extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد الجواز')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد هذا الجواز؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 5 سنوات، وسيصبح الجواز ساريًا.'
+                    'هل أنت متأكد من اعتماد هذا الجواز؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 6 سنوات، وسيصبح الجواز ساريًا.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
@@ -70,7 +70,7 @@ class ViewPassport extends ViewRecord
                             'issue_date' => $issueDate->toDateString(),
                             'expiry_date' => $issueDate
                                 ->copy()
-                                ->addYears(5)
+                                ->addYears($passport->validityYears())
                                 ->toDateString(),
                             'rejection_reason' => null,
                             'verified_at' => null,
@@ -105,7 +105,7 @@ class ViewPassport extends ViewRecord
 
                     Notification::make()
                         ->title('تم اعتماد الجواز بنجاح')
-                        ->body('تم إصدار الجواز وأصبح ساريًا لمدة 5 سنوات.')
+                        ->body('تم إصدار الجواز وأصبح ساريًا لمدة 6 سنوات.')
                         ->success()
                         ->send();
                 }),
@@ -114,25 +114,28 @@ class ViewPassport extends ViewRecord
                 ->label('رفض الجواز')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->modalHeading('رفض الجواز')
-                ->modalDescription('يرجى إدخال سبب رفض الجواز بوضوح.')
-                ->modalSubmitActionLabel('تأكيد الرفض')
-                ->modalCancelActionLabel('إلغاء')
+                ->visible(fn (): bool => $this->record->status === 'pending')
                 ->schema([
                     Textarea::make('rejection_reason')
                         ->label('سبب الرفض')
+                        ->placeholder('اكتب سبب رفض الجواز بالتفصيل')
                         ->required()
                         ->minLength(5)
                         ->maxLength(2000)
                         ->rows(4)
-                        ->placeholder('اكتب سبب رفض الجواز...')
                         ->validationMessages([
-                            'required' => 'سبب الرفض مطلوب.',
+                            'required' => 'يجب كتابة سبب رفض الجواز.',
                             'min' => 'يجب ألا يقل سبب الرفض عن 5 أحرف.',
                             'max' => 'يجب ألا يتجاوز سبب الرفض 2000 حرف.',
                         ]),
                 ])
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->requiresConfirmation()
+                ->modalHeading('رفض الجواز')
+                ->modalDescription(
+                    'اكتب سبب الرفض ثم أكد العملية. سيُحفظ السبب ضمن بيانات الجواز.'
+                )
+                ->modalSubmitActionLabel('تأكيد الرفض')
+                ->modalCancelActionLabel('إلغاء')
                 ->action(function (array $data): void {
                     $rejected = DB::transaction(function () use ($data): bool {
                         $passport = Passport::query()
@@ -146,7 +149,7 @@ class ViewPassport extends ViewRecord
 
                         $passport->update([
                             'status' => 'rejected',
-                            'rejection_reason' => $data['rejection_reason'],
+                            'rejection_reason' => trim($data['rejection_reason']),
                             'verified_at' => now(),
                             'approved_by' => null,
                             'approved_at' => null,
@@ -301,6 +304,15 @@ class ViewPassport extends ViewRecord
                         ->filter()
                         ->join(' ');
 
+                    $fullNameEn = collect([
+                        $citizen?->first_name_en,
+                        $citizen?->father_name_en,
+                        $citizen?->middle_name_en,
+                        $citizen?->last_name_en,
+                    ])
+                        ->filter()
+                        ->join(' ');
+
                     $type = match ($this->record->type) {
                         'ordinary' => 'عادي',
                         'diplomatic' => 'دبلوماسي',
@@ -319,70 +331,75 @@ class ViewPassport extends ViewRecord
                         default => 'غير محدد',
                     };
 
-                    $pdf = Pdf::loadView(
-                        'passports.pdf',
-                        [
-                            'passport' => $this->record,
-                            'citizen' => $citizen,
-                            'fullName' => $this->arabicText($fullName),
-                            'type' => $this->arabicText($type),
-                            'status' => $this->arabicText($status),
-                            'authority' => $this->arabicText(
-                                'مصلحة الهجرة والجوازات - الجمهورية اليمنية'
-                            ),
-                            'documentTitle' => $this->arabicText(
-                                'مستخرج بيانات جواز سفر'
-                            ),
-                            'countryName' => $this->arabicText(
-                                'الجمهورية اليمنية'
-                            ),
-                            'photoLabel' => $this->arabicText(
-                                'صورة صاحب الجواز'
-                            ),
-                            'photoUnavailable' => $this->arabicText(
-                                'صورة غير متوفرة'
-                            ),
-                            'printCountLabel' => $this->arabicText(
-                                'عدد مرات الطباعة'
-                            ),
-                            'verificationLabel' => $this->arabicText(
-                                'رمز التحقق الإلكتروني'
-                            ),
-                            'footerText' => $this->arabicText(
-                                'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني والجوازات بالجمهورية اليمنية.'
-                            ),
-                            'warningText' => $this->arabicText(
-                                'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
-                            ),
-                            'passportNumberLabel' => $this->arabicText(
-                                'رقم الجواز'
-                            ),
-                            'nationalIdLabel' => $this->arabicText(
-                                'الرقم الوطني'
-                            ),
-                            'fullNameLabel' => $this->arabicText(
-                                'الاسم الكامل'
-                            ),
-                            'typeLabel' => $this->arabicText(
-                                'نوع الجواز'
-                            ),
-                            'statusLabel' => $this->arabicText(
-                                'حالة الجواز'
-                            ),
-                            'issueDateLabel' => $this->arabicText(
-                                'تاريخ الإصدار'
-                            ),
-                            'expiryDateLabel' => $this->arabicText(
-                                'تاريخ الانتهاء'
-                            ),
-                            'authorityLabel' => $this->arabicText(
-                                'جهة الإصدار'
-                            ),
-                            'qrLabel' => $this->arabicText(
-                                'رمز التحقق الإلكتروني'
-                            ),
-                        ]
-                    );
+                    $authorityAr = $this->record->issuing_authority_ar
+                        ?: 'مصلحة الهجرة والجوازات - الجمهورية اليمنية';
+
+                    $authorityEn = $this->record->issuing_authority_en ?: '-';
+
+                    $pdf = Pdf::loadView('passports.pdf', [
+                        'passport' => $this->record,
+                        'citizen' => $citizen,
+                        'fullName' => $this->arabicText($fullName),
+                        'fullNameEn' => $fullNameEn ?: '-',
+                        'birthPlaceEn' => $citizen?->birth_place_en ?: '-',
+                        'occupationEn' => $citizen?->occupation_en ?: '-',
+                        'type' => $this->arabicText($type),
+                        'status' => $this->arabicText($status),
+                        'authority' => $this->arabicText($authorityAr),
+                        'authorityEnglish' => $authorityEn,
+                        'documentTitle' => $this->arabicText(
+                            'مستخرج بيانات جواز سفر'
+                        ),
+                        'countryName' => $this->arabicText(
+                            'الجمهورية اليمنية'
+                        ),
+                        'photoLabel' => $this->arabicText(
+                            'صورة صاحب الجواز'
+                        ),
+                        'photoUnavailable' => $this->arabicText(
+                            'صورة غير متوفرة'
+                        ),
+                        'printCountLabel' => $this->arabicText(
+                            'عدد مرات الطباعة'
+                        ),
+                        'verificationLabel' => $this->arabicText(
+                            'رمز التحقق الإلكتروني'
+                        ),
+                        'footerText' => $this->arabicText(
+                            'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني والجوازات بالجمهورية اليمنية.'
+                        ),
+                        'warningText' => $this->arabicText(
+                            'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
+                        ),
+                        'passportNumberLabel' => $this->arabicText(
+                            'رقم الجواز'
+                        ),
+                        'nationalIdLabel' => $this->arabicText(
+                            'الرقم الوطني'
+                        ),
+                        'fullNameLabel' => $this->arabicText(
+                            'الاسم الكامل'
+                        ),
+                        'typeLabel' => $this->arabicText(
+                            'نوع الجواز'
+                        ),
+                        'statusLabel' => $this->arabicText(
+                            'حالة الجواز'
+                        ),
+                        'issueDateLabel' => $this->arabicText(
+                            'تاريخ الإصدار'
+                        ),
+                        'expiryDateLabel' => $this->arabicText(
+                            'تاريخ الانتهاء'
+                        ),
+                        'authorityLabel' => $this->arabicText(
+                            'جهة الإصدار'
+                        ),
+                        'authorityEnglishLabel' => 'Issuing Authority',
+                        'qrLabel' => $this->arabicText(
+                            'رمز التحقق الإلكتروني'
+                        ),
+                    ]);
 
                     $this->record->increment('print_count');
 

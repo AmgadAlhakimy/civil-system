@@ -10,6 +10,8 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class EditPassport extends EditRecord
 {
@@ -21,38 +23,55 @@ class EditPassport extends EditRecord
             'record' => $this->getRecord(),
         ]);
     }
-    protected function handleRecordUpdate(
-        \Illuminate\Database\Eloquent\Model $record,
-        array $data
-    ): Passport {
-        $existingPassport = Passport::query()
-            ->where('citizen_id', $data['citizen_id'])
-            ->where('type', $data['type'])
-            ->where('id', '!=', $record->id)
-            ->whereIn('status', ['pending', 'active'])
-            ->exists();
 
-        if ($existingPassport) {
-            Notification::make()
-                ->danger()
-                ->title('لا يمكن تعديل الجواز')
-                ->body('هذا المواطن لديه بالفعل جواز من نفس النوع قيد المعالجة أو ساري المفعول.')
-                ->persistent()
-                ->send();
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $citizen = $this->getRecord()->citizen;
 
-            $this->halt();
+        if (! $citizen) {
+            return $data;
         }
 
-        $record->fill([
-            'citizen_id' => $data['citizen_id'],
-            'passport_number' => $data['passport_number'],
-            'type' => $data['type'],
-            'notes' => $data['notes'] ?? null,
-        ]);
+        $data['citizen_first_name_en'] = $citizen->first_name_en;
+        $data['citizen_father_name_en'] = $citizen->father_name_en;
+        $data['citizen_middle_name_en'] = $citizen->middle_name_en;
+        $data['citizen_last_name_en'] = $citizen->last_name_en;
+        $data['citizen_birth_place_en'] = $citizen->birth_place_en;
+        $data['citizen_occupation_en'] = $citizen->occupation_en;
 
-        $record->save();
+        return $data;
+    }
 
-        return $record;
+    protected function handleRecordUpdate(
+        Model $record,
+        array $data
+    ): Passport {
+        if (! $record instanceof Passport) {
+            throw new \RuntimeException('السجل المحدد ليس جواز سفر صالحًا.');
+        }
+
+        return DB::transaction(function () use ($record, $data): Passport {
+            $citizen = $record->citizen()
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $citizen->first_name_en = $data['citizen_first_name_en'];
+            $citizen->father_name_en = $data['citizen_father_name_en'];
+            $citizen->middle_name_en = $data['citizen_middle_name_en'];
+            $citizen->last_name_en = $data['citizen_last_name_en'];
+            $citizen->birth_place_en = $data['citizen_birth_place_en'];
+            $citizen->occupation_en = $data['citizen_occupation_en'];
+
+            $citizen->save();
+
+            $record->issuing_authority_ar = $data['issuing_authority_ar'];
+            $record->issuing_authority_en = $data['issuing_authority_en'];
+            $record->notes = $data['notes'] ?? null;
+
+            $record->save();
+
+            return $record;
+        });
     }
 
     protected function getHeaderActions(): array

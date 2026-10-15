@@ -6,7 +6,9 @@ use App\Filament\Resources\IdentityCards\IdentityCardResource;
 use ArPHP\I18N\Arabic;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -73,13 +75,8 @@ class ViewIdentityCard extends ViewRecord
                             ->copy()
                             ->addYears(5)
                             ->toDateString(),
+                        'rejection_reason' => null,
                     ]);
-
-                    Notification::make()
-                        ->title('تم اعتماد البطاقة بنجاح')
-                        ->body('تم إصدار البطاقة وأصبحت سارية لمدة 5 سنوات.')
-                        ->success()
-                        ->send();
 
                     $this->record->refresh();
 
@@ -89,7 +86,14 @@ class ViewIdentityCard extends ViewRecord
                         'approved_at',
                         'issue_date',
                         'expiry_date',
+                        'rejection_reason',
                     ]);
+
+                    Notification::make()
+                        ->title('تم اعتماد البطاقة بنجاح')
+                        ->body('تم إصدار البطاقة وأصبحت سارية لمدة 5 سنوات.')
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('print')
@@ -226,7 +230,9 @@ class ViewIdentityCard extends ViewRecord
 
                     return response()->streamDownload(
                         fn () => print($pdf->output()),
-                        'identity-card-' . $this->record->national_id . '.pdf'
+                        'identity-card-' .
+                        $this->record->national_id .
+                        '.pdf'
                     );
                 }),
 
@@ -234,15 +240,29 @@ class ViewIdentityCard extends ViewRecord
                 ->label('رفض البطاقة')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
+                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->schema([
+                    Textarea::make('rejection_reason')
+                        ->label('سبب رفض البطاقة')
+                        ->placeholder('اكتب سبب رفض البطاقة بالتفصيل')
+                        ->required()
+                        ->minLength(5)
+                        ->maxLength(2000)
+                        ->rows(4)
+                        ->validationMessages([
+                            'required' => 'يجب كتابة سبب رفض البطاقة.',
+                            'min' => 'يجب ألا يقل سبب الرفض عن 5 أحرف.',
+                            'max' => 'يجب ألا يتجاوز سبب الرفض 2000 حرف.',
+                        ]),
+                ])
                 ->requiresConfirmation()
                 ->modalHeading('رفض البطاقة الشخصية')
                 ->modalDescription(
-                    'هل أنت متأكد من رفض طلب البطاقة الشخصية؟'
+                    'اكتب سبب الرفض ثم أكد العملية. سيُحفظ السبب ضمن بيانات البطاقة.'
                 )
-                ->modalSubmitActionLabel('نعم، رفض')
+                ->modalSubmitActionLabel('تأكيد الرفض')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن رفض البطاقة')
@@ -255,32 +275,98 @@ class ViewIdentityCard extends ViewRecord
 
                     $this->record->update([
                         'status' => 'rejected',
+                        'rejection_reason' => trim(
+                            $data['rejection_reason']
+                        ),
                         'approved_by' => null,
                         'approved_at' => null,
                         'issue_date' => null,
                         'expiry_date' => null,
                     ]);
 
-                    Notification::make()
-                        ->title('تم رفض البطاقة')
-                        ->body('تم تغيير حالة البطاقة إلى مرفوضة.')
-                        ->danger()
-                        ->send();
-
                     $this->record->refresh();
 
                     $this->refreshFormData([
                         'status',
+                        'rejection_reason',
                         'approved_by',
                         'approved_at',
                         'issue_date',
                         'expiry_date',
                     ]);
+
+                    Notification::make()
+                        ->title('تم رفض البطاقة')
+                        ->body('تم حفظ سبب الرفض بنجاح.')
+                        ->danger()
+                        ->send();
+                }),
+
+            Action::make('resubmit')
+                ->label('إعادة التقديم')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->visible(fn (): bool => $this->record->status === 'rejected')
+                ->requiresConfirmation()
+                ->modalHeading('إعادة تقديم طلب البطاقة')
+                ->modalDescription(
+                    'هل تريد إعادة تقديم الطلب؟ ستتغير الحالة إلى قيد الانتظار، وسيُمسح سبب الرفض السابق.'
+                )
+                ->modalSubmitActionLabel('نعم، إعادة التقديم')
+                ->modalCancelActionLabel('إلغاء')
+                ->action(function (): void {
+                    if ($this->record->status !== 'rejected') {
+                        Notification::make()
+                            ->title('لا يمكن إعادة التقديم')
+                            ->body('البطاقة ليست في حالة الرفض.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->record->update([
+                        'status' => 'pending',
+                        'rejection_reason' => null,
+                        'approved_by' => null,
+                        'approved_at' => null,
+                        'issue_date' => null,
+                        'expiry_date' => null,
+                    ]);
+
+                    $this->record->refresh();
+
+                    $this->refreshFormData([
+                        'status',
+                        'rejection_reason',
+                        'approved_by',
+                        'approved_at',
+                        'issue_date',
+                        'expiry_date',
+                    ]);
+
+                    Notification::make()
+                        ->title('تمت إعادة تقديم الطلب')
+                        ->body('أصبحت البطاقة قيد الانتظار وجاهزة للمراجعة.')
+                        ->success()
+                        ->send();
                 }),
 
             EditAction::make()
                 ->label('تعديل البطاقة')
                 ->icon('heroicon-o-pencil-square'),
+
+            DeleteAction::make()
+                ->label('حذف البطاقة')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('حذف البطاقة الشخصية')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف هذه البطاقة الشخصية؟ سيتم نقلها إلى سلة المحذوفات ويمكن استعادتها لاحقًا.'
+                )
+                ->modalSubmitActionLabel('نعم، حذف')
+                ->modalCancelActionLabel('إلغاء'),
         ];
     }
 }

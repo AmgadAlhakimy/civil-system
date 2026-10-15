@@ -26,8 +26,7 @@ class IdentityCardsTable
                     ->copyable()
                     ->fontFamily('mono')
                     ->size('md')
-                    ->copyMessage('تم نسخ الرقم الوطني')
-                    ->weight('bold'),
+                    ->copyMessage('تم نسخ الرقم الوطني'),
 
                 TextColumn::make('citizen')
                     ->label('المواطن')
@@ -98,7 +97,8 @@ class IdentityCardsTable
 
                 TextColumn::make('issuedBy.full_name')
                     ->label('تم إنشاء الطلب بواسطة')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('approvedBy.name')
                     ->label('تم الاعتماد بواسطة')
@@ -152,8 +152,7 @@ class IdentityCardsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->icon('heroicon-o-eye'),
 
                 EditAction::make()
                     ->label('تعديل')

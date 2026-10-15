@@ -14,7 +14,9 @@ class PassportFactory extends Factory
     {
         return [
             'citizen_id' => null,
-            'passport_number' => fake()->unique()->numerify('#########'),
+            'passport_number' => fake()->unique()->numerify('########'),
+            'issuing_authority_ar' => 'مصلحة الهجرة والجوازات',
+            'issuing_authority_en' => 'Immigration and Passport Authority',
             'issue_date' => null,
             'expiry_date' => null,
             'type' => fake()->randomElement([

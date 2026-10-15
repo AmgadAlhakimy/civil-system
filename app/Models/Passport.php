@@ -17,6 +17,8 @@ class Passport extends Model
     protected $fillable = [
         'citizen_id',
         'passport_number',
+        'issuing_authority_ar',
+        'issuing_authority_en',
         'issue_date',
         'expiry_date',
         'type',
@@ -28,7 +30,6 @@ class Passport extends Model
         'approved_by',
         'approved_at',
     ];
-
     protected $casts = [
         'issue_date' => 'date',
         'expiry_date' => 'date',
@@ -61,7 +62,7 @@ class Passport extends Model
 
     public function validityYears(): int
     {
-        return 5;
+        return 6;
     }
 
     public function isExpired(): bool

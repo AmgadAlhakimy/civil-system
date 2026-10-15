@@ -32,7 +32,7 @@ class IdentityCardResource extends Resource
         return 'السجل المدني';
     }
 
-    protected static ?string $recordTitleAttribute = 'id_number';
+    protected static ?string $recordTitleAttribute = 'national_id';
 
     protected static ?string $modelLabel = 'بطاقة شخصية';
 
@@ -40,7 +40,12 @@ class IdentityCardResource extends Resource
 
     public static function getRecordTitle($record): string
     {
-        return 'بيانات البطاقة الشخصية: ' . $record->id_number;
+        return 'بيانات البطاقة الشخصية: ' . $record->national_id;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['national_id'];
     }
 
     public static function form(Schema $schema): Schema

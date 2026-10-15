@@ -25,8 +25,9 @@ class PassportsTable
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->copyMessage('تم نسخ رقم الجواز')
-                    ->weight('bold'),
+                    ->fontFamily('mono')
+                    ->size('md')
+                    ->copyMessage('تم نسخ رقم الجواز'),
 
                 TextColumn::make('citizen')
                     ->label('المواطن')
@@ -47,8 +48,7 @@ class PassportsTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                             });
                         }
                     )
@@ -71,6 +71,12 @@ class PassportsTable
                             default => $state ?? 'غير محدد',
                         }
                     ),
+
+                TextColumn::make('issuing_authority_ar')
+                    ->label('جهة الإصدار')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('غير محدد'),
 
                 TextColumn::make('status')
                     ->label('الحالة')
@@ -134,6 +140,7 @@ class PassportsTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
             ])
 
             ->filters([

@@ -29,9 +29,21 @@ class CitizenFactory extends Factory
             'last_name' => $faker->lastName(),
             'father_name' => $faker->firstNameMale(),
             'mother_name' => $faker->firstNameFemale(),
+
+            'first_name_en' => null,
+            'father_name_en' => null,
+            'middle_name_en' => null,
+            'last_name_en' => null,
+
             'photo' => 'citizens/photos/01KZRJ6N0ZCQ1B69ZRDCEHX4FF.jpeg',
-            'birth_date' => $this->faker->dateTimeBetween('-70 years', '-18 years')->format('Y-m-d'),
+
+            'birth_date' => $this->faker
+                ->dateTimeBetween('-70 years', '-18 years')
+                ->format('Y-m-d'),
+
             'birth_place' => $faker->city(),
+            'birth_place_en' => null,
+
             'blood_type' => $this->faker->randomElement([
                 'A+',
                 'A-',
@@ -42,21 +54,33 @@ class CitizenFactory extends Factory
                 'O+',
                 'O-',
             ]),
+
             'gender' => $gender,
+
             'marital_status' => $this->faker->randomElement([
                 'single',
                 'married',
                 'divorced',
                 'widowed',
             ]),
+
             'occupation' => $faker->jobTitle(),
+            'occupation_en' => null,
+
             'address' => $faker->address(),
+
             'phone' => '7' . $this->faker->unique()->numerify('########'),
+
             'email' => $this->faker->unique()->safeEmail(),
+
             'is_active' => $this->faker->boolean(90),
+
             'verification_status' => $isApproved ? 'approved' : 'pending',
+
             'rejection_reason' => null,
+
             'verified_at' => $isApproved && $userId ? now() : null,
+
             'verified_by' => $isApproved ? $userId : null,
         ];
     }

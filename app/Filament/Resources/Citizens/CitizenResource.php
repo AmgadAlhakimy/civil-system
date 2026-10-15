@@ -36,7 +36,6 @@ public static function getRecordTitle($record): string
     {
         return 'السجل المدني';
     }
-//    protected static ?string $recordTitleAttribute = 'full_name';
     protected static ?string $modelLabel = 'مواطن';
 
     protected static ?string $pluralModelLabel = 'المواطنون';
@@ -60,6 +59,15 @@ public static function getRecordTitle($record): string
     {
         return [
             //
+        ];
+    }
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'first_name',
+            'father_name',
+            'middle_name',
+            'last_name',
         ];
     }
 

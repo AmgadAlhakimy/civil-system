@@ -17,16 +17,27 @@ class Citizen extends Model
 
     protected $fillable = [
         'first_name',
+        'father_name',
         'middle_name',
         'last_name',
-        'father_name',
         'mother_name',
+
+        'first_name_en',
+        'father_name_en',
+        'middle_name_en',
+        'last_name_en',
+
         'birth_date',
         'birth_place',
+        'birth_place_en',
+
         'blood_type',
         'gender',
         'marital_status',
+
         'occupation',
+        'occupation_en',
+
         'address',
         'phone',
         'email',

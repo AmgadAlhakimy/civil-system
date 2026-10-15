@@ -120,6 +120,7 @@
             text-align: left;
             display: inline-block;
             font-family: DejaVu Sans, sans-serif;
+            font-size: 10px;
         }
 
         .label-en {
@@ -159,13 +160,6 @@
             font-size: 9px;
             color: #4b5563;
             font-weight: bold;
-            text-align: center;
-        }
-
-        .print-count {
-            margin-top: 12px;
-            font-size: 8px;
-            color: #555555;
             text-align: center;
         }
 
@@ -215,11 +209,7 @@
             direction: rtl;
         }
 
-        .document-number {
-            direction: ltr;
-            display: inline-block;
-        }
-
+        .document-number,
         .national-id {
             direction: ltr;
             display: inline-block;
@@ -241,7 +231,7 @@
 
         $text = (string) $text;
 
-        if (!preg_match('/[\x{0600}-\x{06FF}]/u', $text)) {
+        if (! preg_match('/[\x{0600}-\x{06FF}]/u', $text)) {
             return $text;
         }
 
@@ -259,6 +249,15 @@
         ->filter()
         ->join(' ');
 
+    $fullNameEn = collect([
+        $citizen?->first_name_en,
+        $citizen?->father_name_en,
+        $citizen?->middle_name_en,
+        $citizen?->last_name_en,
+    ])
+        ->filter()
+        ->join(' ');
+
     $fullName = $shapeArabic($fullName);
 
     $type = match ($passport->type) {
@@ -270,9 +269,8 @@
 
     $status = match ($passport->status) {
         'pending' => $shapeArabic('قيد الانتظار'),
-        'approved' => $shapeArabic('معتمد'),
         'rejected' => $shapeArabic('مرفوض'),
-        'active' => $shapeArabic('فعال'),
+        'active' => $shapeArabic('ساري'),
         'expired' => $shapeArabic('منتهي'),
         'cancelled' => $shapeArabic('ملغي'),
         'lost' => $shapeArabic('مفقود'),
@@ -280,14 +278,25 @@
         default => $shapeArabic('غير محدد'),
     };
 
-    $authority = $shapeArabic('مصلحة الهجرة والجوازات - اليمن');
+    $authority = $shapeArabic(
+        $passport->issuing_authority_ar
+            ?: 'مصلحة الهجرة والجوازات - اليمن'
+    );
+
+    $authorityEn = $passport->issuing_authority_en ?: '-';
+
+    $birthPlaceEn = $citizen?->birth_place_en ?: '-';
+
+    $occupationEn = $citizen?->occupation_en ?: '-';
 
     $photoPlaceholder = $shapeArabic('صورة غير متوفرة');
     $photoLabel = $shapeArabic('صورة صاحب الجواز');
     $qrTitle = $shapeArabic('رمز التحقق الإلكتروني');
+
     $footerText1 = $shapeArabic(
         'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني والجوازات بالجمهورية اليمنية.'
     );
+
     $footerText2 = $shapeArabic(
         'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
     );
@@ -300,6 +309,8 @@
     $issueDateLabel = $shapeArabic('تاريخ الإصدار');
     $expiryDateLabel = $shapeArabic('تاريخ الانتهاء');
     $authorityLabel = $shapeArabic('جهة الإصدار');
+    $birthPlaceLabel = $shapeArabic('مكان الميلاد');
+    $occupationLabel = $shapeArabic('المهنة');
 
     $documentTitle = $shapeArabic('الجمهورية اليمنية');
     $documentSubtitle = $shapeArabic('مستخرج بيانات جواز سفر');
@@ -310,21 +321,12 @@
 <div class="document-wrapper">
 
     <div class="header">
-
-        <h1>
-            {{ $documentTitle }}
-        </h1>
-
-        <h2>
-            {{ $documentSubtitle }}
-        </h2>
-
+        <h1>{{ $documentTitle }}</h1>
+        <h2>{{ $documentSubtitle }}</h2>
     </div>
 
     <table class="layout-table">
-
         <tr>
-
             <td class="data-column">
 
                 <table class="info-table">
@@ -335,7 +337,6 @@
                             <br>
                             <span class="label-en">Passport No.</span>
                         </th>
-
                         <td>
                             <span class="document-number">
                                 {{ $passport->passport_number }}
@@ -349,7 +350,6 @@
                             <br>
                             <span class="label-en">National ID</span>
                         </th>
-
                         <td>
                             <span class="national-id">
                                 {{ $citizen?->national_id ?? '---' }}
@@ -363,10 +363,48 @@
                             <br>
                             <span class="label-en">Full Name</span>
                         </th>
-
                         <td>
                             <span class="arabic-text">
                                 {{ $fullName ?: '---' }}
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>
+                            الاسم الكامل بالإنجليزية
+                            <br>
+                            <span class="label-en">Full Name in English</span>
+                        </th>
+                        <td>
+                            <span class="english-text">
+                                {{ $fullNameEn ?: '---' }}
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>
+                            {{ $birthPlaceLabel }}
+                            <br>
+                            <span class="label-en">Place of Birth</span>
+                        </th>
+                        <td>
+                            <span class="english-text">
+                                {{ $birthPlaceEn }}
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>
+                            {{ $occupationLabel }}
+                            <br>
+                            <span class="label-en">Occupation</span>
+                        </th>
+                        <td>
+                            <span class="english-text">
+                                {{ $occupationEn }}
                             </span>
                         </td>
                     </tr>
@@ -377,7 +415,6 @@
                             <br>
                             <span class="label-en">Type</span>
                         </th>
-
                         <td>
                             <span class="arabic-text">
                                 {{ $type }}
@@ -391,7 +428,6 @@
                             <br>
                             <span class="label-en">Status</span>
                         </th>
-
                         <td>
                             <span class="badge">
                                 {{ $status }}
@@ -405,7 +441,6 @@
                             <br>
                             <span class="label-en">Date of Issue</span>
                         </th>
-
                         <td>
                             <span class="ltr-text">
                                 {{ $passport->issue_date?->format('Y-m-d') ?? '---' }}
@@ -419,7 +454,6 @@
                             <br>
                             <span class="label-en">Date of Expiry</span>
                         </th>
-
                         <td>
                             <span class="ltr-text">
                                 {{ $passport->expiry_date?->format('Y-m-d') ?? '---' }}
@@ -431,12 +465,24 @@
                         <th>
                             {{ $authorityLabel }}
                             <br>
-                            <span class="label-en">Authority</span>
+                            <span class="label-en">Issuing Authority</span>
                         </th>
-
                         <td>
                             <span class="arabic-text">
                                 {{ $authority }}
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>
+                            جهة الإصدار بالإنجليزية
+                            <br>
+                            <span class="label-en">Issuing Authority in English</span>
+                        </th>
+                        <td>
+                            <span class="english-text">
+                                {{ $authorityEn }}
                             </span>
                         </td>
                     </tr>
@@ -446,22 +492,17 @@
             </td>
 
             <td class="photo-column">
-
                 <div class="photo-container">
 
                     @if ($photo && file_exists(storage_path('app/private/' . $photo)))
-
                         <img
                             src="{{ storage_path('app/private/' . $photo) }}"
                             class="photo-box"
                         >
-
                     @else
-
                         <div class="photo-placeholder">
                             {{ $photoPlaceholder }}
                         </div>
-
                     @endif
 
                     <div class="photo-label">
@@ -469,11 +510,8 @@
                     </div>
 
                 </div>
-
             </td>
-
         </tr>
-
     </table>
 
     <div class="footer-section">
@@ -488,13 +526,9 @@
         </div>
 
         <div class="footer-text">
-
             {{ $footerText1 }}
-
             <br>
-
             {{ $footerText2 }}
-
         </div>
 
     </div>

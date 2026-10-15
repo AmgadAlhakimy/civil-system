@@ -25,12 +25,21 @@ class IdentityCardForm
                                     ->relationship(
                                         name: 'citizen',
                                         titleAttribute: 'first_name',
-                                        modifyQueryUsing: fn ($query) => $query
-                                            ->where('verification_status', 'approved')
-                                            ->orderBy('first_name')
-                                            ->orderBy('father_name')
-                                            ->orderBy('middle_name')
-                                            ->orderBy('last_name')
+                                        modifyQueryUsing: function ($query, $record = null) {
+                                            $query->orderBy('first_name')
+                                                ->orderBy('father_name')
+                                                ->orderBy('middle_name')
+                                                ->orderBy('last_name');
+
+                                            if (! $record) {
+                                                $query->where(
+                                                    'verification_status',
+                                                    'approved'
+                                                );
+                                            }
+
+                                            return $query;
+                                        }
                                     )
                                     ->getOptionLabelFromRecordUsing(
                                         fn ($record) => collect([
@@ -54,11 +63,14 @@ class IdentityCardForm
                                     ->required()
                                     ->native(false)
                                     ->disabled(
-                                        fn ($record): bool => $record?->status !== null
-                                            && ! in_array($record->status, [
-                                                'pending',
-                                                'rejected',
-                                            ], true)
+                                        fn ($record, string $operation): bool => $operation === 'edit'
+                                            || (
+                                                $record?->status !== null
+                                                && ! in_array($record->status, [
+                                                    'pending',
+                                                    'rejected',
+                                                ], true)
+                                            )
                                     )
                                     ->dehydrated()
                                     ->validationMessages([

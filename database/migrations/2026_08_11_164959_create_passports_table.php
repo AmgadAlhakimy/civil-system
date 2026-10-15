@@ -13,7 +13,9 @@ return new class extends Migration
 
             $table->uuid('citizen_id');
 
-            $table->string('passport_number', 9)->unique();
+            $table->string('passport_number', 8)->unique();
+            $table->string('issuing_authority_ar', 100);
+            $table->string('issuing_authority_en', 100);
 
             $table->enum('type', [
                 'ordinary',

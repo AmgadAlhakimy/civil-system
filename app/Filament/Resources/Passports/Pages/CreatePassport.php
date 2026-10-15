@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Passports\Pages;
 
 use App\Filament\Resources\Passports\PassportResource;
+use App\Models\Citizen;
 use App\Models\Passport;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\DB;
 
 class CreatePassport extends CreateRecord
 {
@@ -32,29 +34,48 @@ class CreatePassport extends CreateRecord
                 ->send();
 
             $this->halt();
-
-            return new Passport();
         }
 
-        $passport = new Passport();
+        return DB::transaction(function () use ($data): Passport {
+            $citizen = Citizen::query()
+                ->findOrFail($data['citizen_id']);
 
-        $passport->fill([
-            'citizen_id' => $data['citizen_id'],
-            'passport_number' => $data['passport_number'],
-            'type' => $data['type'],
-            'notes' => $data['notes'] ?? null,
-        ]);
+            $citizen->first_name_en = $data['citizen_first_name_en'];
+            $citizen->father_name_en = $data['citizen_father_name_en'];
+            $citizen->middle_name_en = $data['citizen_middle_name_en'];
+            $citizen->last_name_en = $data['citizen_last_name_en'];
+            $citizen->birth_place_en = $data['citizen_birth_place_en'];
+            $citizen->occupation_en = $data['citizen_occupation_en'];
 
-        $passport->issued_by = auth()->id();
-        $passport->status = 'pending';
-        $passport->print_count = 0;
-        $passport->issue_date = null;
-        $passport->expiry_date = null;
-        $passport->approved_by = null;
-        $passport->approved_at = null;
+            $citizen->save();
 
-        $passport->save();
+            $issueDate = now();
 
-        return $passport;
+            $passport = new Passport();
+
+            $passport->citizen_id = $data['citizen_id'];
+            $passport->passport_number = $data['passport_number'];
+            $passport->type = $data['type'];
+            $passport->issuing_authority_ar = $data['issuing_authority_ar'];
+            $passport->issuing_authority_en = $data['issuing_authority_en'];
+            $passport->notes = $data['notes'] ?? null;
+
+            $passport->issued_by = auth()->id();
+
+            $passport->status = 'active';
+            $passport->issue_date = $issueDate->toDateString();
+            $passport->expiry_date = $issueDate
+                ->copy()
+                ->addYears($passport->validityYears())
+                ->toDateString();
+
+            $passport->approved_by = auth()->id();
+            $passport->approved_at = $issueDate;
+            $passport->print_count = 0;
+
+            $passport->save();
+
+            return $passport;
+        });
     }
 }

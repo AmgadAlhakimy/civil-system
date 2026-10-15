@@ -17,8 +17,14 @@ return new class extends Migration
             $table->string('last_name', 50);
             $table->string('mother_name', 50);
 
+            $table->string('first_name_en', 50)->nullable();
+            $table->string('father_name_en', 50)->nullable();
+            $table->string('middle_name_en', 50)->nullable();
+            $table->string('last_name_en', 50)->nullable();
+
             $table->date('birth_date');
             $table->string('birth_place', 50);
+            $table->string('birth_place_en', 50)->nullable();
 
             $table->enum('blood_type', [
                 'A+',
@@ -41,6 +47,7 @@ return new class extends Migration
             ]);
 
             $table->string('occupation', 100)->nullable();
+            $table->string('occupation_en', 100)->nullable();
 
             $table->text('address');
 

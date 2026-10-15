@@ -254,14 +254,14 @@ class CitizenForm
                                             TextInput::make('occupation')
                                                 ->label('المهنة')
                                                 ->minLength(3)
-                                                ->maxLength(25)
+                                                ->maxLength(100)
                                                 ->dehydrateStateUsing(
                                                     fn (?string $state): ?string => filled($state)
                                                         ? trim($state)
                                                         : null
                                                 )
                                                 ->validationMessages([
-                                                    'max' => 'يجب ألا تتجاوز المهنة 25 حرفًا.',
+                                                    'max' => 'يجب ألا تتجاوز المهنة 100 حرفًا.',
                                                     'min' => 'يجب ألا تقل المهنة عن 3 أحرف.',
                                                     'string' => 'يجب إدخال المهنة بصيغة نصية صحيحة.',
                                                 ])

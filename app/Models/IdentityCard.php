@@ -27,7 +27,7 @@ class IdentityCard extends Model
         'expiry_date',
         'status',
         'notes',
-        'qr_code',
+        'rejection_reason',
         'print_count',
         'issued_by',
         'approved_by',
@@ -97,7 +97,7 @@ class IdentityCard extends Model
 
     public function validityYears(): int
     {
-        return 5;
+        return 10;
     }
 
     public function isExpired(): bool

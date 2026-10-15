@@ -29,7 +29,8 @@ return new class extends Migration
             $table->date('expiry_date')->nullable();
 
             $table->text('notes')->nullable();
-            $table->text('qr_code')->nullable();
+
+            $table->text('rejection_reason')->nullable();
 
             $table->integer('print_count')->default(0);
 

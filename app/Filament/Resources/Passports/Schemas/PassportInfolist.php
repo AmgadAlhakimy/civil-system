@@ -31,7 +31,7 @@ class PassportInfolist
                                         ImageEntry::make('citizen.photo')
                                             ->label('الصورة الشخصية')
                                             ->getStateUsing(
-                                                fn ($record) => $record->citizen?->photo
+                                                fn($record) => $record->citizen?->photo
                                                     ? route(
                                                         'citizens.photo',
                                                         [
@@ -53,14 +53,11 @@ class PassportInfolist
                                 Grid::make(2)
                                     ->schema([
 
-                                        TextEntry::make('passport_number')
-                                            ->label('رقم الجواز')
-                                            ->weight('bold'),
 
                                         TextEntry::make('citizen')
                                             ->label('المواطن')
                                             ->formatStateUsing(
-                                                fn ($record): string => collect([
+                                                fn($record): string => collect([
                                                     $record->citizen?->first_name,
                                                     $record->citizen?->father_name,
                                                     $record->citizen?->middle_name,
@@ -68,12 +65,17 @@ class PassportInfolist
                                                 ])
                                                     ->filter()
                                                     ->join(' ')
-                                            ),
+                                            )
+                                            ->columnSpanFull(),
+
+                                        TextEntry::make('passport_number')
+                                            ->label('رقم الجواز')
+                                            ->weight('bold'),
 
                                         TextEntry::make('type')
                                             ->label('نوع الجواز')
                                             ->formatStateUsing(
-                                                fn (?string $state): string => match ($state) {
+                                                fn(?string $state): string => match ($state) {
                                                     'ordinary' => 'عادي',
                                                     'diplomatic' => 'دبلوماسي',
                                                     'official' => 'رسمي',
@@ -81,10 +83,14 @@ class PassportInfolist
                                                 }
                                             ),
 
+                                        TextEntry::make('issuing_authority_ar')
+                                            ->label('جهة إصدار الجواز')
+                                            ->placeholder('غير محدد'),
+
                                         TextEntry::make('status')
                                             ->label('حالة الجواز')
                                             ->formatStateUsing(
-                                                fn (?string $state): string => match ($state) {
+                                                fn(?string $state): string => match ($state) {
                                                     'pending' => 'قيد الانتظار',
                                                     'rejected' => 'مرفوض',
                                                     'active' => 'ساري',
@@ -160,7 +166,7 @@ class PassportInfolist
                                     ->placeholder('لم يتم تسجيل سبب الرفض')
                                     ->columnSpan(1)
                                     ->visible(
-                                        fn ($record): bool => $record?->status === 'rejected'
+                                        fn($record): bool => $record?->status === 'rejected'
                                     ),
 
                             ]),
@@ -194,7 +200,7 @@ class PassportInfolist
                             ->hiddenLabel()
                             ->view('filament.infolists.passport-verification-qr')
                             ->state(
-                                fn ($record): array => [
+                                fn($record): array => [
                                     'url' => route(
                                         'passports.verify',
                                         ['passport' => $record->getKey()]
