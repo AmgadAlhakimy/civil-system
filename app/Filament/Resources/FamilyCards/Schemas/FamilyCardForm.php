@@ -31,11 +31,21 @@ class FamilyCardForm
                                     ->relationship(
                                         name: 'head',
                                         titleAttribute: 'first_name',
-                                        modifyQueryUsing: fn ($query) => $query
-                                            ->orderBy('first_name')
-                                            ->orderBy('father_name')
-                                            ->orderBy('middle_name')
-                                            ->orderBy('last_name')
+                                        modifyQueryUsing: function ($query, $record = null) {
+                                            $query->orderBy('first_name')
+                                                ->orderBy('father_name')
+                                                ->orderBy('middle_name')
+                                                ->orderBy('last_name');
+
+                                            if (! $record) {
+                                                $query->where(
+                                                    'verification_status',
+                                                    'approved'
+                                                );
+                                            }
+
+                                            return $query;
+                                        }
                                     )
                                     ->getOptionLabelFromRecordUsing(
                                         fn ($record) => collect([
@@ -52,9 +62,10 @@ class FamilyCardForm
                                         'father_name',
                                         'middle_name',
                                         'last_name',
-                                        'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم المواطن')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->validationMessages([
@@ -89,6 +100,12 @@ class FamilyCardForm
                         Repeater::make('members')
                             ->relationship('members')
                             ->label('أفراد الأسرة')
+                            ->required()
+                            ->minItems(1)
+                            ->validationMessages([
+                                'required' => 'يجب إضافة فرد واحد على الأقل من أفراد الأسرة',
+                                'min' => 'يجب إضافة فرد واحد على الأقل من أفراد الأسرة',
+                            ])
                             ->schema([
 
                                 Grid::make(3)
@@ -99,12 +116,26 @@ class FamilyCardForm
                                             ->relationship(
                                                 name: 'citizen',
                                                 titleAttribute: 'first_name',
-                                                modifyQueryUsing: function ($query, $get) {
+                                                modifyQueryUsing: function ($query, $get, $record = null) {
                                                     $headId = $get('../../head_id');
+
+                                                    $query->orderBy('first_name')
+                                                        ->orderBy('father_name')
+                                                        ->orderBy('middle_name')
+                                                        ->orderBy('last_name');
+
+                                                    if (! $record) {
+                                                        $query->where(
+                                                            'verification_status',
+                                                            'approved'
+                                                        );
+                                                    }
 
                                                     if ($headId) {
                                                         $query->where('id', '!=', $headId);
                                                     }
+
+                                                    return $query;
                                                 },
                                             )
                                             ->getOptionLabelFromRecordUsing(
@@ -122,9 +153,10 @@ class FamilyCardForm
                                                 'father_name',
                                                 'middle_name',
                                                 'last_name',
-                                                'national_id',
                                             ])
-                                            ->preload()
+                                            ->searchPrompt('ابحث باسم المواطن')
+                                            ->searchDebounce(500)
+                                            ->optionsLimit(50)
                                             ->required()
                                             ->native(false)
                                             ->distinct()
@@ -209,17 +241,12 @@ class FamilyCardForm
                     ->icon('heroicon-o-information-circle')
                     ->schema([
 
-                        Grid::make(2)
+                        Grid::make(1)
                             ->schema([
-
                                 Textarea::make('notes')
                                     ->label('ملاحظات')
                                     ->rows(4)
                                     ->maxLength(1000),
-
-                                Textarea::make('qr_code')
-                                    ->label('رمز QR')
-                                    ->rows(4),
 
                             ]),
                     ])

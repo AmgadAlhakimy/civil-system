@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->uuid('head_id');
 
-            $table->string('card_number', 20)->unique();
+            $table->string('card_number', 11)->unique();
 
             $table->enum('status', [
                 'pending',
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->date('expiry_date')->nullable();
 
             $table->text('notes')->nullable();
-            $table->text('qr_code')->nullable();
+            $table->text('rejection_reason')->nullable();
 
             $table->integer('print_count')->default(0);
 
