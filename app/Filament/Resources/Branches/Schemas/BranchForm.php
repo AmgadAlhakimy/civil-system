@@ -17,6 +17,9 @@ class BranchForm
         return $schema
             ->components([
 
+                // ═══════════════════════════════════════════════
+                // القسم 1: بيانات الفرع
+                // ═══════════════════════════════════════════════
                 Section::make('بيانات الفرع')
                     ->description('المعلومات الأساسية للفرع')
                     ->icon('heroicon-o-building-office-2')
@@ -28,9 +31,7 @@ class BranchForm
                                     ->label('رمز الفرع')
                                     ->required()
                                     ->placeholder('SNA-01')
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->minLength(3)
                                     ->maxLength(20)
                                     ->regex('/^[A-Za-z0-9-]+$/')
@@ -42,9 +43,9 @@ class BranchForm
                                     ->validationMessages([
                                         'required' => 'حقل رمز الفرع مطلوب',
                                         'unique' => 'رمز الفرع مستخدم مسبقاً',
-                                        'min' => 'يجب ألا يقل رمز الفرع عن 3 أحرف أو أرقام',
+                                        'min' => 'يجب ألا يقل رمز الفرع عن 3 أحرف',
                                         'max' => 'يجب ألا يتجاوز رمز الفرع 20 حرفاً',
-                                        'regex' => 'رمز الفرع يجب أن يحتوي على أحرف إنجليزية أو أرقام أو شرطة فقط',
+                                        'regex' => 'الرمز يجب أن يحتوي على أحرف إنجليزية أو أرقام أو شرطة فقط',
                                     ]),
 
                                 TextInput::make('name')
@@ -52,10 +53,6 @@ class BranchForm
                                     ->required()
                                     ->minLength(3)
                                     ->maxLength(100)
-                                    ->rules([
-                                        'string',
-                                        'regex:/^[\p{Arabic}\s]+$/u',
-                                    ])
                                     ->dehydrateStateUsing(
                                         fn (?string $state): ?string => $state
                                             ? trim(preg_replace('/\s+/u', ' ', $state))
@@ -65,8 +62,19 @@ class BranchForm
                                         'required' => 'حقل اسم الفرع مطلوب',
                                         'min' => 'يجب ألا يقل اسم الفرع عن 3 أحرف',
                                         'max' => 'يجب ألا يتجاوز اسم الفرع 100 حرف',
-                                        'regex' => 'يجب أن يحتوي اسم الفرع على حروف عربية فقط',
                                     ]),
+
+                                // ✅ المحافظة (جديد)
+                                Select::make('governorate_id')
+                                    ->label('المحافظة')
+                                    ->relationship('governorate', 'name_ar')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->native(false)
+                                    ->placeholder('اختر المحافظة')
+                                    ->helperText('الفرع يتبع محافظة واحدة')
+                                    ->columnSpanFull(),
 
                                 Textarea::make('address')
                                     ->label('عنوان الفرع')
@@ -91,9 +99,7 @@ class BranchForm
                                     ->required()
                                     ->minLength(9)
                                     ->maxLength(9)
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->rules([
                                         'digits:9',
                                         'regex:/^7[0-9]{8}$/',
@@ -102,32 +108,30 @@ class BranchForm
                                     ->validationMessages([
                                         'required' => 'حقل رقم الهاتف مطلوب',
                                         'digits' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
-                                        'regex' => 'رقم الهاتف غير صالح، يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
-                                        'min' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
-                                        'max' => 'يجب أن يتكون رقم الهاتف من 9 أرقام',
-                                        'unique' => 'رقم الهاتف هذا مستخدم مسبقاً',
+                                        'regex' => 'رقم الهاتف يجب أن يبدأ بـ 7',
+                                        'unique' => 'رقم الهاتف مستخدم مسبقاً',
                                     ]),
 
                                 TextInput::make('email')
                                     ->label('البريد الإلكتروني')
                                     ->email()
                                     ->nullable()
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->maxLength(100)
                                     ->validationMessages([
                                         'email' => 'صيغة البريد الإلكتروني غير صحيحة',
                                         'unique' => 'البريد الإلكتروني مستخدم مسبقاً',
-                                        'max' => 'يجب ألا يتجاوز البريد الإلكتروني 100 حرف',
                                     ]),
 
                             ]),
                     ])
                     ->columnSpanFull(),
 
+                // ═══════════════════════════════════════════════
+                // القسم 2: إدارة الفرع
+                // ═══════════════════════════════════════════════
                 Section::make('إدارة الفرع')
-                    ->description('معلومات مدير الفرع وحالة الفرع')
+                    ->description('حالة الفرع والمدير المسؤول')
                     ->icon('heroicon-o-user-group')
                     ->schema([
                         Grid::make(3)
@@ -137,10 +141,8 @@ class BranchForm
                                     ->label('الفرع نشط')
                                     ->default(true)
                                     ->required()
-                                    ->inline(false)
-                                    ->validationMessages([
-                                        'required' => 'يرجى تحديد حالة الفرع',
-                                    ])
+                                    ->onColor('success')
+                                    ->offColor('danger')
                                     ->columnSpan(1),
 
                                 Select::make('manager_id')
@@ -151,20 +153,15 @@ class BranchForm
                                         titleAttribute: 'full_name',
                                         modifyQueryUsing: function ($query, $livewire) {
                                             $branch = $livewire->getRecord();
-
                                             if (! $branch) {
                                                 return $query->whereRaw('1 = 0');
                                             }
-
                                             return $query->where('branch_id', $branch->id);
                                         },
                                     )
                                     ->searchable()
                                     ->preload()
                                     ->nullable()
-                                    ->validationMessages([
-                                        'exists' => 'مدير الفرع المحدد غير موجود',
-                                    ])
                                     ->columnSpan(2),
 
                             ]),

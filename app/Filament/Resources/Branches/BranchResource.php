@@ -22,26 +22,24 @@ class BranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
+    // ═══════════════════════════════════════════════════════════
+    // الأيقونة والترتيب
+    // ═══════════════════════════════════════════════════════════
+    protected static string|BackedEnum|null $navigationIcon =
+        Heroicon::OutlinedBuildingOffice2;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'النظام';
-    }
-
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
-
-    protected static ?string $modelLabel = 'فرع';
-
-    protected static ?string $pluralModelLabel = 'الفروع';
 
     public static function getRecordTitle($record): string
     {
         return 'بيانات الفرع: ' . $record->name;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // النماذج والجداول
+    // ═══════════════════════════════════════════════════════════
     public static function form(Schema $schema): Schema
     {
         return BranchForm::configure($schema);
@@ -59,9 +57,7 @@ class BranchResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -80,5 +76,38 @@ class BranchResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // التسميات العربية
+    // ═══════════════════════════════════════════════════════════
+    public static function getModelLabel(): string
+    {
+        return 'فرع';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'الفروع';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'الفروع';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'المواقع الجغرافية';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'success';
     }
 }

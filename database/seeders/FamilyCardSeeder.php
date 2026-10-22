@@ -30,7 +30,7 @@ class FamilyCardSeeder extends Seeder
                 'expiry_date' => null,
                 'status' => 'pending',
                 'notes' => null,
-                'qr_code' => null,
+                'rejection_reason' => null,
                 'print_count' => 0,
                 'issued_by' => $user->id,
                 'approved_by' => null,

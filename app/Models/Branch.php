@@ -19,6 +19,8 @@ class Branch extends Model
     protected $fillable = [
         'code',
         'name',
+        'governorate_id',   // ← أضف هذا
+
         'address',
         'phone',
         'email',
@@ -49,5 +51,10 @@ class Branch extends Model
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function governorate(): BelongsTo
+    {
+        return $this->belongsTo(Governorate::class);
     }
 }

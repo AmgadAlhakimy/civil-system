@@ -15,7 +15,7 @@ class BranchInfolist
             ->components([
 
                 Section::make('البيانات الأساسية')
-                    ->description('المعلومات الأساسية للفرع وبيانات التواصل')
+                    ->description('المعلومات الأساسية للفرع')
                     ->icon('heroicon-o-building-office-2')
                     ->schema([
                         Grid::make(3)
@@ -25,7 +25,8 @@ class BranchInfolist
                                     ->label('رمز الفرع')
                                     ->icon('heroicon-o-hashtag')
                                     ->copyable()
-                                    ->copyMessage('تم نسخ رمز الفرع'),
+                                    ->badge()
+                                    ->color('info'),
 
                                 TextEntry::make('name')
                                     ->label('اسم الفرع')
@@ -33,31 +34,36 @@ class BranchInfolist
                                     ->weight('bold')
                                     ->size('lg'),
 
+                                // ✅ المحافظة
+                                TextEntry::make('governorate.name_ar')
+                                    ->label('المحافظة')
+                                    ->icon('heroicon-o-building-library')
+                                    ->badge()
+                                    ->color('warning')
+                                    ->placeholder('غير محددة'),
+
                                 TextEntry::make('address')
-                                    ->label('عنوان الفرع')
+                                    ->label('العنوان')
                                     ->icon('heroicon-o-map-pin')
                                     ->columnSpanFull(),
 
                                 TextEntry::make('phone')
                                     ->label('رقم الهاتف')
                                     ->icon('heroicon-o-phone')
-                                    ->copyable()
-                                    ->copyMessage('تم نسخ رقم الهاتف')
-                                    ->placeholder('غير محدد'),
+                                    ->copyable(),
 
                                 TextEntry::make('email')
                                     ->label('البريد الإلكتروني')
                                     ->icon('heroicon-o-envelope')
                                     ->copyable()
-                                    ->copyMessage('تم نسخ البريد الإلكتروني')
                                     ->placeholder('غير محدد'),
 
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                Section::make('إدارة الفرع ومعلومات النظام')
-                    ->description('معلومات مدير الفرع وحالة التشغيل وتفاصيل النظام')
+                Section::make('إدارة الفرع')
+                    ->description('معلومات المدير والحالة')
                     ->icon('heroicon-o-user-group')
                     ->schema([
                         Grid::make(2)
@@ -86,17 +92,18 @@ class BranchInfolist
                                             ? 'نشط'
                                             : 'غير نشط'
                                     )
-                                    ->color('gray'),
+                                    ->badge(),
 
                                 TextEntry::make('created_at')
-                                    ->label('تاريخ إنشاء الفرع')
+                                    ->label('تاريخ الإنشاء')
                                     ->icon('heroicon-o-calendar-days')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('Y/m/d H:i'),
 
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
                                     ->icon('heroicon-o-arrow-path')
-                                    ->dateTime('Y-m-d H:i'),
+                                    ->dateTime('Y/m/d H:i')
+                                    ->since(),
 
                             ]),
                     ])

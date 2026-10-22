@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -20,12 +17,24 @@ return new class extends Migration
             $table->string('full_name')->nullable();
 
             // Contact Information
-            $table->string('email')->unique();
+            $table->string('email')->nullable()->unique();  // ✅ nullable
             $table->string('phone', 20)->nullable()->unique();
 
             // Authentication
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // ✅ OTP Fields (جديد للمواطنين)
+            $table->string('otp_code', 6)->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
+            $table->boolean('is_verified')->default(false);
+
+            // ✅ Device Token (للبصمة/الوجه)
+            $table->string('device_token')->nullable();
+
+            // ✅ Settings
+            $table->boolean('biometric_enabled')->default(false);
+            $table->boolean('notifications_enabled')->default(true);
 
             // Branch
             $table->uuid('branch_id')->nullable();
@@ -60,26 +69,18 @@ return new class extends Migration
             // Indexes
             $table->index('status');
             $table->index('branch_id');
+            $table->index('phone');       // ✅ للبحث السريع
+            $table->index('otp_code');    // ✅
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Password Reset Tokens
-        |--------------------------------------------------------------------------
-        */
-
+        // Password Reset Tokens
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Sessions
-        |--------------------------------------------------------------------------
-        */
-
+        // Sessions
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->uuid('user_id')->nullable()->index();
@@ -90,9 +91,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('sessions');

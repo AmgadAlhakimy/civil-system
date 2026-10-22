@@ -22,7 +22,7 @@ class FamilyCard extends Model
         'expiry_date',
         'status',
         'notes',
-        'qr_code',
+        'rejection_reason',
         'print_count',
         'issued_by',
         'approved_by',

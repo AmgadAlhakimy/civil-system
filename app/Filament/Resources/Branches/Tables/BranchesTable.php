@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use App\Models\Governorate;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
@@ -23,74 +24,106 @@ class BranchesTable
     {
         return $table
             ->columns([
+
                 TextColumn::make('code')
                     ->label('رمز الفرع')
                     ->searchable()
                     ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ رمز الفرع')
-                    ->weight('bold'),
+                    ->badge()
+                    ->color('info')
+                    ->fontFamily('mono'),
 
                 TextColumn::make('name')
                     ->label('اسم الفرع')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->icon('heroicon-o-building-office-2')
+                    ->iconColor('primary'),
+
+                // ✅ المحافظة (جديد)
+                TextColumn::make('governorate.name_ar')
+                    ->label('المحافظة')
+                    ->badge()
+                    ->color('warning')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('غير محددة'),
 
                 TextColumn::make('address')
-                    ->label('عنوان الفرع')
+                    ->label('العنوان')
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->wrap(),
 
                 TextColumn::make('phone')
-                    ->label('رقم الهاتف')
+                    ->label('الهاتف')
                     ->searchable()
                     ->copyable()
-                    ->sortable()
-                    ->copyMessage('تم نسخ رقم الهاتف'),
+                    ->copyMessage('تم نسخ رقم الهاتف')
+                    ->icon('heroicon-o-phone'),
 
                 TextColumn::make('email')
-                    ->label('البريد الإلكتروني')
+                    ->label('البريد')
                     ->searchable()
                     ->copyable()
-                    ->sortable()
-                    ->copyMessage('تم نسخ البريد الإلكتروني'),
+                    ->copyMessage('تم نسخ البريد')
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 TextColumn::make('manager.full_name')
-                    ->label('مدير الفرع')
+                    ->label('المدير')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('غير محدد'),
+                    ->placeholder('غير محدد')
+                    ->toggleable(),
 
                 IconColumn::make('is_active')
                     ->label('الحالة')
                     ->boolean()
                     ->sortable()
                     ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle'),
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('Y/m/d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
                     ->label('آخر تحديث')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('Y/m/d H:i')
+                    ->since()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
+            ->striped()
             ->filters([
+                // فلتر حسب المحافظة (جديد)
+                SelectFilter::make('governorate_id')
+                    ->label('المحافظة')
+                    ->options(fn () => Governorate::active()->ordered()->pluck('name_ar', 'id')->toArray())
+                    ->searchable()
+                    ->preload()
+                    ->native(false),
+
                 SelectFilter::make('is_active')
                     ->label('حالة الفرع')
                     ->options([
                         1 => 'نشط',
                         0 => 'غير نشط',
-                    ]),
+                    ])
+                    ->native(false),
 
                 TrashedFilter::make()
-                    ->label('سلة المحذوفات'),
+                    ->label('المحذوفة'),
             ])
             ->recordActions([
                 ViewAction::make()
@@ -118,94 +151,68 @@ class BranchesTable
                         ->requiresConfirmation()
                         ->successNotification(null)
                         ->modalHeading('حذف الفروع المحددة')
-                        ->modalDescription(
-                            'سيتم حذف الفروع المسموح بحذفها، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
-                        )
+                        ->modalDescription('سيتم حذف الفروع المسموح بحذفها، وتجاوز أي فرع مرتبط بمستخدمين.')
                         ->modalSubmitActionLabel('نعم، حذف')
                         ->deselectRecordsAfterCompletion()
                         ->action(function (Collection $records): void {
-                            $deletedCount = 0;
-                            $skippedCount = 0;
+                            $deleted = 0;
+                            $skipped = 0;
 
                             foreach ($records as $record) {
                                 if ($record->users()->exists()) {
-                                    $skippedCount++;
-
+                                    $skipped++;
                                     continue;
                                 }
-
                                 $record->delete();
-                                $deletedCount++;
+                                $deleted++;
                             }
 
-                            if ($skippedCount > 0) {
+                            if ($skipped > 0) {
                                 Notification::make()
-                                    ->title('اكتملت عملية الحذف')
-                                    ->body(
-                                        "تم حذف {$deletedCount} فرع، وتجاوز {$skippedCount} فرع لارتباطها بمستخدمين."
-                                    )
+                                    ->title('اكتملت العملية')
+                                    ->body("تم حذف {$deleted} فرع، وتجاوز {$skipped} لارتباطها بمستخدمين.")
                                     ->warning()
                                     ->send();
-
                                 return;
                             }
 
                             Notification::make()
-                                ->title('تم حذف الفروع بنجاح')
-                                ->body(
-                                    "تم حذف {$deletedCount} فرع بنجاح."
-                                )
+                                ->title('تم الحذف بنجاح')
+                                ->body("تم حذف {$deleted} فرع.")
                                 ->success()
                                 ->send();
                         }),
 
                     RestoreBulkAction::make()
-                        ->label('استعادة المحدد')
-                        ->requiresConfirmation()
-                        ->successNotification(null)
-                        ->modalHeading('استعادة الفروع')
-                        ->modalDescription(
-                            'هل أنت متأكد من استعادة الفروع المحددة؟'
-                        )
-                        ->modalSubmitActionLabel('نعم، استعادة'),
+                        ->label('استعادة المحدد'),
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
-                        ->requiresConfirmation()
-                        ->successNotificationTitle('تم الحذف النهائي بنجاح')
-                        ->modalHeading('حذف نهائي')
-                        ->modalDescription(
-                            'سيتم حذف الفروع المسموح بحذفها نهائيًا، وسيتم تجاوز أي فرع مرتبط بمستخدمين.'
-                        )
-                        ->modalSubmitActionLabel('نعم، حذف نهائي')
                         ->action(function (Collection $records): void {
-                            $deletedCount = 0;
-                            $skippedCount = 0;
+                            $deleted = 0;
+                            $skipped = 0;
 
                             foreach ($records as $record) {
                                 if ($record->users()->exists()) {
-                                    $skippedCount++;
-
+                                    $skipped++;
                                     continue;
                                 }
-
                                 $record->forceDelete();
-                                $deletedCount++;
+                                $deleted++;
                             }
 
-                            if ($skippedCount > 0) {
+                            if ($skipped > 0) {
                                 Notification::make()
-                                    ->title('اكتملت عملية الحذف النهائي')
-                                    ->body(
-                                        "تم حذف {$deletedCount} فرع نهائيًا، وتجاوز {$skippedCount} فرع لارتباطها بمستخدمين."
-                                    )
+                                    ->title('اكتمل الحذف النهائي')
+                                    ->body("تم حذف {$deleted} نهائياً، وتجاوز {$skipped}.")
                                     ->warning()
                                     ->send();
                             }
                         }),
-                ])
-                    ->label('إجراءات جماعية'),
+                ])->label('إجراءات جماعية'),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->emptyStateHeading('لا توجد فروع بعد')
+            ->emptyStateDescription('ابدأ بإضافة فرع جديد من زر "إنشاء".')
+            ->emptyStateIcon('heroicon-o-building-office-2');
     }
 }
