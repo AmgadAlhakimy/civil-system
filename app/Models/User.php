@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -10,13 +11,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Laravel\Sanctum\HasApiTokens;  // ✅ جديد
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-class User extends Authenticatable
+
+class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable, HasUuids, SoftDeletes, HasRoles, LogsActivity, HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use HasUuids;
+    use SoftDeletes;
+    use HasRoles;
+    use LogsActivity;
+    use HasApiTokens;
 
     protected $fillable = [
         'name',
@@ -24,12 +32,14 @@ class User extends Authenticatable
         'email',
         'phone',
         'password',
-        'otp_code',           // ✅ جديد
-        'otp_expires_at',     // ✅ جديد
-        'is_verified',        // ✅ جديد
-        'device_token',       // ✅ جديد
-        'biometric_enabled',  // ✅ جديد
-        'notifications_enabled', // ✅ جديد
+        'must_change_password',
+        'account_type',
+        'otp_code',
+        'otp_expires_at',
+        'is_verified',
+        'device_token',
+        'biometric_enabled',
+        'notifications_enabled',
         'branch_id',
         'status',
         'last_login_at',
@@ -40,10 +50,13 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'otp_code',           // ✅ إخفاء OTP
+        'otp_code',
+        'otp_expires_at',
+        'device_token',
     ];
 
     protected $attributes = [
+        'account_type' => 'employee',
         'status' => 'active',
         'is_verified' => false,
         'biometric_enabled' => false,
@@ -56,6 +69,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'must_change_password' => 'boolean',
             'is_verified' => 'boolean',
             'biometric_enabled' => 'boolean',
             'notifications_enabled' => 'boolean',
@@ -63,10 +77,23 @@ class User extends Authenticatable
         ];
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return in_array($this->account_type, ['employee', 'external'], true)
+            && $this->status === 'active';
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logAll()
+            ->logExcept([
+                'password',
+                'remember_token',
+                'otp_code',
+                'otp_expires_at',
+                'device_token',
+            ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -85,7 +112,6 @@ class User extends Authenticatable
     {
         return ! $this->managedBranches()->exists();
     }
-
 
     public function initials(): string
     {

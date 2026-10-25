@@ -52,6 +52,18 @@ class UsersTable
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('account_type')
+                    ->label('نوع الحساب')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'employee' => 'موظف السجل المدني',
+                            'external' => 'جهة خاصة',
+                            'citizen' => 'مواطن',
+                            default => 'غير محدد',
+                        }
+                    )
+                    ->sortable(),
+
                 TextColumn::make('email')
                     ->label('البريد الإلكتروني')
                     ->searchable()
@@ -68,6 +80,7 @@ class UsersTable
 
                 TextColumn::make('branch.name')
                     ->label('الفرع')
+                    ->placeholder('لا يوجد فرع')
                     ->searchable()
                     ->sortable(),
 
@@ -115,6 +128,14 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('account_type')
+                    ->label('نوع الحساب')
+                    ->options([
+                        'employee' => 'موظف السجل المدني',
+                        'external' => 'جهة خاصة',
+                        'citizen' => 'مواطن',
+                    ]),
+
                 SelectFilter::make('branch_id')
                     ->label('الفرع')
                     ->relationship('branch', 'name')
@@ -247,7 +268,17 @@ class UsersTable
                                     )
                                     ->warning()
                                     ->send();
+
+                                return;
                             }
+
+                            Notification::make()
+                                ->title('تم الحذف النهائي')
+                                ->body(
+                                    "تم حذف {$deletedCount} مستخدم نهائيًا بنجاح."
+                                )
+                                ->success()
+                                ->send();
                         }),
                 ])
                     ->label('إجراءات جماعية'),

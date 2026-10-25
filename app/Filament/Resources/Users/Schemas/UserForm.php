@@ -19,6 +19,21 @@ class UserForm
                     ->description('المعلومات الأساسية للمستخدم')
                     ->icon('heroicon-o-user')
                     ->schema([
+                        Select::make('account_type')
+                            ->label('نوع الحساب')
+                            ->placeholder('اختر نوع الحساب')
+                            ->options([
+                                'employee' => 'موظف السجل المدني',
+                                'external' => 'جهة خاصة',
+                            ])
+                            ->default('employee')
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->validationMessages([
+                                'required' => 'يرجى اختيار نوع الحساب',
+                            ]),
+
                         Grid::make(2)
                             ->schema([
                                 TextInput::make('name')
@@ -27,9 +42,7 @@ class UserForm
                                     ->minLength(3)
                                     ->maxLength(50)
                                     ->regex('/^[A-Za-z][A-Za-z0-9_]*$/')
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->autocomplete('username')
                                     ->validationMessages([
                                         'required' => 'حقل اسم المستخدم مطلوب',
@@ -63,23 +76,20 @@ class UserForm
                                     ->default(null)
                                     ->autocomplete('off')
                                     ->maxLength(255)
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->validationMessages([
                                         'required' => 'حقل البريد الإلكتروني مطلوب',
                                         'email' => 'صيغة البريد الإلكتروني غير صحيحة',
                                         'max' => 'يجب ألا يزيد البريد الإلكتروني عن 255 حرفًا',
                                         'unique' => 'البريد الإلكتروني مستخدم مسبقاً',
                                     ]),
+
                                 TextInput::make('phone')
                                     ->label('رقم الهاتف')
                                     ->required()
                                     ->minLength(9)
                                     ->maxLength(9)
-                                    ->unique(
-                                        ignoreRecord: true,
-                                    )
+                                    ->unique(ignoreRecord: true)
                                     ->rules([
                                         'digits:9',
                                         'regex:/^7[0-9]{8}$/',
@@ -101,7 +111,10 @@ class UserForm
                     ->description('الفرع والدور وحالة المستخدم')
                     ->icon('heroicon-o-building-office')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make()
+                            ->columns(
+                                fn ($get): int => $get('account_type') === 'external' ? 2 : 3
+                            )
                             ->schema([
                                 Select::make('branch_id')
                                     ->label('الفرع')
@@ -109,7 +122,15 @@ class UserForm
                                     ->relationship('branch', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->required()
+                                    ->required(
+                                        fn ($get): bool => $get('account_type') === 'employee'
+                                    )
+                                    ->visible(
+                                        fn ($get): bool => $get('account_type') === 'employee'
+                                    )
+                                    ->dehydrated(
+                                        fn ($get): bool => $get('account_type') === 'employee'
+                                    )
                                     ->native(false)
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الفرع',
@@ -140,8 +161,7 @@ class UserForm
                                     ->native(false)
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار دور المستخدم',
-                                    ])
-                                    ->columnSpanFull(),
+                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),

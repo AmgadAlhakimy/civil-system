@@ -76,15 +76,40 @@ class UserInfolist
                     ->columnSpanFull(),
 
                 Section::make('بيانات العمل والصلاحيات')
-                    ->description('الفرع وحالة الحساب والدور الممنوح للمستخدم')
+                    ->description('نوع الحساب والفرع وحالة الحساب والدور الممنوح للمستخدم')
                     ->icon('heroicon-o-building-office-2')
                     ->schema([
                         Grid::make(3)
                             ->schema([
+                                TextEntry::make('account_type')
+                                    ->label('نوع الحساب')
+                                    ->icon('heroicon-o-identification')
+                                    ->formatStateUsing(
+                                        fn (?string $state): string => match ($state) {
+                                            'employee' => 'موظف',
+                                            'external' => 'جهة خارجية',
+                                            'citizen' => 'مواطن',
+                                            default => $state ?? 'غير محدد',
+                                        }
+                                    )
+                                    ->color(
+                                        fn (?string $state): string => match ($state) {
+                                            'employee' => 'primary',
+                                            'external' => 'info',
+                                            'citizen' => 'success',
+                                            default => 'gray',
+                                        }
+                                    ),
+
                                 TextEntry::make('branch.name')
                                     ->label('الفرع')
                                     ->icon('heroicon-o-building-office')
-                                    ->placeholder('غير محدد'),
+                                    ->placeholder('لا يرتبط بفرع')
+                                    ->getStateUsing(
+                                        fn ($record): ?string => $record->account_type === 'external'
+                                            ? 'لا يرتبط بفرع'
+                                            : ($record->branch?->name ?? 'غير محدد')
+                                    ),
 
                                 TextEntry::make('status')
                                     ->label('حالة المستخدم')

@@ -5,39 +5,35 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // إنشاء الفروع
         $this->call([
             BranchSeeder::class,
         ]);
 
-        // إنشاء الأدوار والصلاحيات
         $this->call([
             RolesAndPermissionsSeeder::class,
         ]);
 
-        // إنشاء مستخدم مدير النظام
-        $admin = User::factory()->create([
-            'name' => 'Amjad',
-            'full_name' => 'مدير النظام',
-            'email' => 'admin@civil.gov',
-            'phone' => '777100001',
-            'password' => Hash::make('Pa$$w0rd'),
-            'branch_id' => Branch::where('code', 'SNA-01')->value('id'),
-            'status' => 'active',
-        ]);
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@civil.gov'],
+            [
+                'name' => 'Amjad',
+                'full_name' => 'مدير النظام',
+                'phone' => '777100001',
+                'password' => 'Pa$$w0rd',
+                'must_change_password' => true,
+                'account_type' => 'employee',
+                'branch_id' => Branch::where('code', 'SNA-01')->value('id'),
+                'status' => 'active',
+            ]
+        );
 
         $admin->assignRole('admin');
 
-        // بيانات النظام التجريبية
         $this->call([
             UserSeeder::class,
             CitizenSeeder::class,
@@ -51,7 +47,6 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             GovernorateDistrictSeeder::class,
             ServiceFeeSeeder::class,
-
         ]);
     }
 }

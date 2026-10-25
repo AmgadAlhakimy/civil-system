@@ -9,78 +9,62 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            // Primary Key
             $table->uuid('id')->primary();
 
-            // Basic Information
             $table->string('name');
             $table->string('full_name')->nullable();
 
-            // Contact Information
-            $table->string('email')->nullable()->unique();  // ✅ nullable
+            $table->string('email')->nullable()->unique();
             $table->string('phone', 20)->nullable()->unique();
 
-            // Authentication
+            $table->string('account_type')->index();
+
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('must_change_password')->default(true);
 
-            // ✅ OTP Fields (جديد للمواطنين)
             $table->string('otp_code', 6)->nullable();
             $table->timestamp('otp_expires_at')->nullable();
             $table->boolean('is_verified')->default(false);
 
-            // ✅ Device Token (للبصمة/الوجه)
             $table->string('device_token')->nullable();
 
-            // ✅ Settings
             $table->boolean('biometric_enabled')->default(false);
             $table->boolean('notifications_enabled')->default(true);
 
-            // Branch
             $table->uuid('branch_id')->nullable();
 
-            // Account Status
             $table->enum('status', [
                 'active',
                 'inactive',
                 'blocked',
             ])->default('active');
 
-            // Login Information
             $table->timestamp('last_login_at')->nullable();
             $table->string('last_login_ip', 45)->nullable();
 
-            // Profile
             $table->string('profile_photo')->nullable();
 
-            // Laravel Authentication
             $table->rememberToken();
 
-            // Timestamps & Soft Delete
             $table->timestamps();
             $table->softDeletes();
 
-            // Foreign Key
             $table->foreign('branch_id')
                 ->references('id')
                 ->on('branches')
                 ->nullOnDelete();
 
-            // Indexes
             $table->index('status');
-            $table->index('branch_id');
-            $table->index('phone');       // ✅ للبحث السريع
-            $table->index('otp_code');    // ✅
+            $table->index('otp_code');
         });
 
-        // Password Reset Tokens
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        // Sessions
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->uuid('user_id')->nullable()->index();

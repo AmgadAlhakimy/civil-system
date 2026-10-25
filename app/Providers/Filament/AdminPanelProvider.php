@@ -14,6 +14,8 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Filament\Pages\ChangePassword;
+use App\Http\Middleware\EnsurePasswordChange;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -93,6 +95,7 @@ HTML
             )
             ->pages([
                 Dashboard::class,
+                ChangePassword::class,
             ])
             ->discoverWidgets(
                 in: app_path('Filament/Widgets'),
@@ -118,6 +121,7 @@ HTML
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsurePasswordChange::class,
             ]);
     }
 }

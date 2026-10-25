@@ -42,6 +42,15 @@ class EditUser extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (($data['account_type'] ?? null) === 'external') {
+            $data['branch_id'] = null;
+        }
+
+        return $data;
+    }
+
     public function mount(int|string $record): void
     {
         parent::mount($record);
