@@ -2,48 +2,120 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
-use Filament\Forms\Components\Select;
+use App\Models\Permission;
+use Closure;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class RoleForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
+        $moduleLabels = [
+            'users' => 'المستخدمون',
+            'roles' => 'الأدوار والصلاحيات',
+            'branches' => 'الفروع',
+            'citizens' => 'المواطنون',
+            'passports' => 'الجوازات',
+            'identity_cards' => 'بطاقات الهوية',
+            'family_cards' => 'البطاقات العائلية',
+            'birth_certificates' => 'شهادات الميلاد',
+            'death_certificates' => 'شهادات الوفاة',
+            'appointments' => 'المواعيد',
+            'reports' => 'التقارير',
+            'backups' => 'النسخ الاحتياطية',
+            'audit_logs' => 'سجل التدقيق',
+        ];
 
-                Grid::make(2)
-                    ->schema([
+        $modules = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereNotNull('module')
+            ->select('module')
+            ->distinct()
+            ->orderBy('module')
+            ->pluck('module')
+            ->values();
 
-                        TextInput::make('name')
-                            ->label('اسم الدور')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(100)
-                            ->placeholder('مثال: admin'),
+        $sections = [];
 
-                        TextInput::make('name_ar')
-                            ->label('اسم الدور بالعربي')
-                            ->required()
-                            ->maxLength(100)
-                            ->placeholder('مثال: مدير النظام'),
+        foreach ($modules as $index => $module) {
+            $label = $moduleLabels[$module] ?? $module;
 
-                    ])
-                    ->columnSpanFull(),
+            $checkbox = CheckboxList::make("permissions_{$module}")
+                ->label('اختر الصلاحيات المطلوبة')
+                ->options(
+                    Permission::query()
+                        ->where('guard_name', 'web')
+                        ->where('module', $module)
+                        ->orderBy('name')
+                        ->pluck('name_ar', 'id')
+                        ->toArray()
+                )
+                ->columns(2)
+                ->bulkToggleable()
+                ->live()
+                ->dehydrated(false);
 
-                Select::make('permissions')
-                    ->label('الصلاحيات')
-                    ->multiple()
-                    ->relationship(
-                        name: 'permissions',
-                        titleAttribute: 'name_ar'
-                    )
-                    ->preload()
-                    ->searchable()
-                    ->columnSpanFull(),
+            if ($index === 0) {
+                $checkbox->rules([
+                    function (Get $get): Closure {
+                        return function (
+                            string $attribute,
+                                   $value,
+                            Closure $fail
+                        ) use ($get): void {
+                            $selected = false;
 
-            ]);
+                            foreach (
+                                Permission::query()
+                                    ->where('guard_name', 'web')
+                                    ->whereNotNull('module')
+                                    ->distinct()
+                                    ->pluck('module') as $module
+                            ) {
+                                $values = $get("permissions_{$module}");
+
+                                if (is_array($values) && count($values) > 0) {
+                                    $selected = true;
+                                    break;
+                                }
+                            }
+
+                            if (! $selected) {
+                                $fail(
+                                    'يجب اختيار صلاحية واحدة على الأقل قبل حفظ الدور.'
+                                );
+                            }
+                        };
+                    },
+                ]);
+            }
+
+            $sections[] = Section::make($label)
+                ->heading($label)
+                ->collapsible()
+                ->collapsed($index !== 0)
+                ->schema([$checkbox])
+                ->columnSpanFull();
+        }
+
+        return $schema->components([
+            Section::make('بيانات الدور')
+                ->schema([
+                    TextInput::make('name')
+                        ->label('اسم الدور')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(100)
+                        ->placeholder('مثال: موظف التسجيل')
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
+
+            ...$sections,
+        ]);
     }
 }

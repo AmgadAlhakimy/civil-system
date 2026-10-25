@@ -80,7 +80,7 @@ class ReportsTable
                 TextColumn::make('size')
                     ->label('حجم الملف')
                     ->formatStateUsing(function ($state): string {
-                        if (!filled($state) || $state <= 0) {
+                        if (! filled($state) || $state <= 0) {
                             return 'غير متوفر';
                         }
 
@@ -170,11 +170,19 @@ class ReportsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('reports.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('reports.update') ?? false
+                    ),
 
                 Action::make('download')
                     ->label('تحميل')
@@ -182,11 +190,24 @@ class ReportsTable
                     ->color('success')
                     ->visible(
                         fn ($record): bool =>
-                            $record->status === 'completed'
+                            (auth()->user()?->can('reports.download') ?? false)
+                            && $record->status === 'completed'
                             && filled($record->path)
                             && Storage::disk('local')->exists($record->path)
                     )
                     ->action(function ($record) {
+                        abort_unless(
+                            auth()->user()?->can('reports.download'),
+                            403
+                        );
+
+                        abort_unless(
+                            $record->status === 'completed'
+                            && filled($record->path)
+                            && Storage::disk('local')->exists($record->path),
+                            404
+                        );
+
                         return Storage::disk('local')->download(
                             $record->path,
                             basename($record->path)
@@ -197,6 +218,16 @@ class ReportsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('reports.delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('reports.delete'),
+                                403
+                            );
+                        })
                         ->requiresConfirmation()
                         ->modalHeading('حذف التقارير المحددة')
                         ->modalDescription('هل أنت متأكد من حذف التقارير المحددة؟')

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Pages\Auth;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -10,6 +10,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class ChangePassword extends Page
 {
@@ -50,9 +51,9 @@ class ChangePassword extends Page
                             ->password()
                             ->revealable()
                             ->required()
-                            ->autocomplete('off')
+                            ->autocomplete('current-password')
                             ->validationMessages([
-                                'required' => 'يرجى إدخال كلمة المرور الحالية يدويًا.',
+                                'required' => 'يرجى إدخال كلمة المرور الحالية.',
                             ]),
 
                         TextInput::make('password')
@@ -67,12 +68,14 @@ class ChangePassword extends Page
                                 'different:data.current_password',
                                 Password::min(8)
                                     ->letters()
-                                    ->numbers(),
+                                    ->numbers()
+                                    ->symbols(),
                             ])
                             ->validationMessages([
                                 'required' => 'يرجى إدخال كلمة المرور الجديدة.',
-                                'min' => 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف.',
-                                'max' => 'يجب ألا تتجاوز كلمة المرور الجديدة 128 حرفًا.',
+                                'string' => 'يجب أن تكون كلمة المرور نصًا صالحًا.',
+                                'min' => 'يجب ألا تقل كلمة المرور عن 8 أحرف.',
+                                'max' => 'يجب ألا تتجاوز كلمة المرور 128 حرفًا.',
                                 'different' => 'يجب أن تختلف كلمة المرور الجديدة عن الحالية.',
                             ])
                             ->autocomplete('new-password'),
@@ -82,10 +85,12 @@ class ChangePassword extends Page
                             ->password()
                             ->revealable()
                             ->required()
-                            ->autocomplete('new-password')
+                            ->same('password')
                             ->validationMessages([
                                 'required' => 'يرجى تأكيد كلمة المرور الجديدة.',
-                            ]),
+                                'same' => 'تأكيد كلمة المرور غير مطابق لكلمة المرور الجديدة.',
+                            ])
+                            ->autocomplete('new-password'),
                     ]),
             ]);
     }
@@ -118,11 +123,7 @@ class ChangePassword extends Page
             ]);
         }
 
-        if (
-            ! is_string($password) ||
-            ! is_string($confirmation) ||
-            $password !== $confirmation
-        ) {
+        if (! is_string($password) || ! is_string($confirmation) || $password !== $confirmation) {
             throw ValidationException::withMessages([
                 'data.password_confirmation' => 'تأكيد كلمة المرور غير مطابق لكلمة المرور الجديدة.',
             ]);
@@ -134,7 +135,38 @@ class ChangePassword extends Page
             ]);
         }
 
-        $user->password = $password;
+        $validator = Validator::make(
+            ['password' => $password],
+            [
+                'password' => [
+                    'required',
+                    'string',
+                    'min:8',
+                    'max:128',
+                    Password::min(8)
+                        ->letters()
+                        ->numbers()
+                        ->symbols(),
+                ],
+            ],
+            [
+                'password.required' => 'يرجى إدخال كلمة المرور الجديدة.',
+                'password.string' => 'يجب أن تكون كلمة المرور نصًا صالحًا.',
+                'password.min' => 'يجب ألا تقل كلمة المرور عن 8 أحرف.',
+                'password.max' => 'يجب ألا تتجاوز كلمة المرور 128 حرفًا.',
+                'password.letters' => 'يجب أن تحتوي كلمة المرور على حرف واحد على الأقل.',
+                'password.numbers' => 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.',
+                'password.symbols' => 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل، مثل @ أو # أو !.',
+            ],
+        );
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages([
+                'data.password' => implode(' ', $validator->errors()->all()),
+            ]);
+        }
+
+        $user->password = Hash::make($password);
         $user->must_change_password = false;
         $user->save();
 

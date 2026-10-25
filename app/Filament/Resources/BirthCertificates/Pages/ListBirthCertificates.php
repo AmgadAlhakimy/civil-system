@@ -10,6 +10,16 @@ class ListBirthCertificates extends ListRecords
 {
     protected static string $resource = BirthCertificateResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('birth_certificates.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'شهادات الميلاد';
@@ -20,7 +30,10 @@ class ListBirthCertificates extends ListRecords
         return [
             CreateAction::make()
                 ->label('إصدار شهادة ميلاد')
-                ->icon('heroicon-o-document-plus'),
+                ->icon('heroicon-o-document-plus')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('birth_certificates.create') ?? false
+                ),
         ];
     }
 }

@@ -7,30 +7,44 @@ use App\Models\Citizen;
 use App\Models\Passport;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 class CreatePassport extends CreateRecord
 {
     protected static string $resource = PassportResource::class;
 
+    protected function authorizeAccess(): void
+    {
+        parent::authorizeAccess();
+
+        if (! auth()->user()?->can("passports.create")) {
+            throw new AuthorizationException(
+                "ليس لديك صلاحية إنشاء جوازات السفر."
+            );
+        }
+    }
+
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl("index");
     }
 
     protected function handleRecordCreation(array $data): Passport
     {
         $existingPassport = Passport::query()
-            ->where('citizen_id', $data['citizen_id'])
-            ->where('type', $data['type'])
-            ->whereIn('status', ['pending', 'active'])
+            ->where("citizen_id", $data["citizen_id"])
+            ->where("type", $data["type"])
+            ->whereIn("status", ["pending", "active"])
             ->exists();
 
         if ($existingPassport) {
             Notification::make()
                 ->danger()
-                ->title('لا يمكن إنشاء الجواز')
-                ->body('هذا المواطن لديه بالفعل طلب جواز من نفس النوع قيد المعالجة أو جواز ساري المفعول.')
+                ->title("لا يمكن إنشاء الجواز")
+                ->body(
+                    "هذا المواطن لديه بالفعل طلب جواز من نفس النوع قيد المعالجة أو جواز ساري المفعول."
+                )
                 ->send();
 
             $this->halt();
@@ -38,14 +52,14 @@ class CreatePassport extends CreateRecord
 
         return DB::transaction(function () use ($data): Passport {
             $citizen = Citizen::query()
-                ->findOrFail($data['citizen_id']);
+                ->findOrFail($data["citizen_id"]);
 
-            $citizen->first_name_en = $data['citizen_first_name_en'];
-            $citizen->father_name_en = $data['citizen_father_name_en'];
-            $citizen->middle_name_en = $data['citizen_middle_name_en'];
-            $citizen->last_name_en = $data['citizen_last_name_en'];
-            $citizen->birth_place_en = $data['citizen_birth_place_en'];
-            $citizen->occupation_en = $data['citizen_occupation_en'];
+            $citizen->first_name_en = $data["citizen_first_name_en"];
+            $citizen->father_name_en = $data["citizen_father_name_en"];
+            $citizen->middle_name_en = $data["citizen_middle_name_en"];
+            $citizen->last_name_en = $data["citizen_last_name_en"];
+            $citizen->birth_place_en = $data["citizen_birth_place_en"];
+            $citizen->occupation_en = $data["citizen_occupation_en"];
 
             $citizen->save();
 
@@ -53,16 +67,16 @@ class CreatePassport extends CreateRecord
 
             $passport = new Passport();
 
-            $passport->citizen_id = $data['citizen_id'];
-            $passport->passport_number = $data['passport_number'];
-            $passport->type = $data['type'];
-            $passport->issuing_authority_ar = $data['issuing_authority_ar'];
-            $passport->issuing_authority_en = $data['issuing_authority_en'];
-            $passport->notes = $data['notes'] ?? null;
+            $passport->citizen_id = $data["citizen_id"];
+            $passport->passport_number = $data["passport_number"];
+            $passport->type = $data["type"];
+            $passport->issuing_authority_ar = $data["issuing_authority_ar"];
+            $passport->issuing_authority_en = $data["issuing_authority_en"];
+            $passport->notes = $data["notes"] ?? null;
 
             $passport->issued_by = auth()->id();
 
-            $passport->status = 'active';
+            $passport->status = "active";
             $passport->issue_date = $issueDate->toDateString();
             $passport->expiry_date = $issueDate
                 ->copy()

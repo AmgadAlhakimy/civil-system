@@ -12,6 +12,16 @@ class ViewAppointment extends ViewRecord
 {
     protected static string $resource = AppointmentResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('appointments.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'بيانات الموعد: ' . $this->record->appointment_date;
@@ -20,7 +30,6 @@ class ViewAppointment extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-
             Action::make('confirm')
                 ->label('تأكيد الموعد')
                 ->icon('heroicon-o-check-circle')
@@ -32,8 +41,20 @@ class ViewAppointment extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، تأكيد الموعد')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('appointments.confirm')
+                    && $this->record->status === 'pending'
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('appointments.confirm'),
+                        403
+                    );
+
+                    abort_unless(
+                        $this->record->status === 'pending',
+                        403
+                    );
 
                     $this->record->update([
                         'status' => 'confirmed',
@@ -65,8 +86,20 @@ class ViewAppointment extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، تم الحضور')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'confirmed')
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('appointments.attend')
+                    && $this->record->status === 'confirmed'
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('appointments.attend'),
+                        403
+                    );
+
+                    abort_unless(
+                        $this->record->status === 'confirmed',
+                        403
+                    );
 
                     $this->record->update([
                         'status' => 'attended',
@@ -94,8 +127,20 @@ class ViewAppointment extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، لم يحضر')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'confirmed')
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('appointments.no_show')
+                    && $this->record->status === 'confirmed'
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('appointments.no_show'),
+                        403
+                    );
+
+                    abort_unless(
+                        $this->record->status === 'confirmed',
+                        403
+                    );
 
                     $this->record->update([
                         'status' => 'no_show',
@@ -123,12 +168,28 @@ class ViewAppointment extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، إلغاء الموعد')
                 ->modalCancelActionLabel('تراجع')
-                ->visible(fn (): bool => in_array(
-                    $this->record->status,
-                    ['pending', 'confirmed'],
-                    true
-                ))
+                ->visible(fn (): bool =>
+                    (auth()->user()?->can('appointments.cancel') ?? false)
+                    && in_array(
+                        $this->record->status,
+                        ['pending', 'confirmed'],
+                        true
+                    )
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('appointments.cancel'),
+                        403
+                    );
+
+                    abort_unless(
+                        in_array(
+                            $this->record->status,
+                            ['pending', 'confirmed'],
+                            true
+                        ),
+                        403
+                    );
 
                     $this->record->update([
                         'status' => 'cancelled',
@@ -148,11 +209,14 @@ class ViewAppointment extends ViewRecord
             EditAction::make()
                 ->label('تعديل')
                 ->icon('heroicon-o-pencil-square')
-                ->visible(fn (): bool => in_array(
-                    $this->record->status,
-                    ['pending', 'confirmed'],
-                    true
-                )),
+                ->visible(fn (): bool =>
+                    (auth()->user()?->can('appointments.update') ?? false)
+                    && in_array(
+                        $this->record->status,
+                        ['pending', 'confirmed'],
+                        true
+                    )
+                ),
         ];
     }
 }

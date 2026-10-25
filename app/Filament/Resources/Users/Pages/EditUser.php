@@ -12,27 +12,42 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return auth()->user()?->can('users.edit') ?? false;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             ViewAction::make()
                 ->label('عرض المستخدم')
                 ->icon('heroicon-o-eye')
-                ->color('primary'),
+                ->color('primary')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('users.view') ?? false
+                ),
 
             DeleteAction::make()
                 ->label('حذف المستخدم')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('users.delete') ?? false
+                )
                 ->requiresConfirmation()
                 ->modalHeading('حذف المستخدم')
-                ->modalDescription('هل أنت متأكد من حذف هذا المستخدم؟ يمكن استعادته من سلة المحذوفات.')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف هذا المستخدم؟ يمكن استعادته من سلة المحذوفات.'
+                )
                 ->modalSubmitActionLabel('نعم، حذف')
                 ->before(function (DeleteAction $action): void {
                     if (! $this->record->canBeDeleted()) {
                         Notification::make()
                             ->title('لا يمكن حذف المستخدم')
-                            ->body('هذا المستخدم هو مدير لفرع. يجب تعيين مدير آخر للفرع أولًا ثم محاولة حذف المستخدم مرة أخرى.')
+                            ->body(
+                                'هذا المستخدم هو مدير لفرع. يجب تعيين مدير آخر للفرع أولًا ثم محاولة حذف المستخدم مرة أخرى.'
+                            )
                             ->danger()
                             ->send();
 
@@ -58,7 +73,9 @@ class EditUser extends EditRecord
         if ($this->record->trashed()) {
             Notification::make()
                 ->title('المستخدم محذوف')
-                ->body('هذا المستخدم موجود في سلة المحذوفات. يجب استعادة المستخدم أولًا قبل تعديله.')
+                ->body(
+                    'هذا المستخدم موجود في سلة المحذوفات. يجب استعادة المستخدم أولًا قبل تعديله.'
+                )
                 ->danger()
                 ->persistent()
                 ->send();

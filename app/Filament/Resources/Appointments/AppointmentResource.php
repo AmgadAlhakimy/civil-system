@@ -27,16 +27,16 @@ class AppointmentResource extends Resource
 
     protected static ?int $navigationSort = 7;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'السجل المدني';
-    }
-
     protected static ?string $recordTitleAttribute = 'appointment_date';
 
     protected static ?string $modelLabel = 'موعد';
 
     protected static ?string $pluralModelLabel = 'المواعيد';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
 
     public static function getRecordTitle($record): string
     {
@@ -45,6 +45,56 @@ class AppointmentResource extends Resource
         );
 
         return 'بيانات الموعد: ' . ($citizenName ?: 'غير محدد');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('appointments.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('appointments.create') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('appointments.view') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('appointments.update') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('appointments.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('appointments.delete') ?? false;
+    }
+
+    public static function canRestore($record): bool
+    {
+        return auth()->user()?->can('appointments.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('appointments.restore') ?? false;
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return auth()->user()?->can('appointments.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('appointments.force_delete') ?? false;
     }
 
     public static function form(Schema $schema): Schema

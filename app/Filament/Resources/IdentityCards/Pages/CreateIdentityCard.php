@@ -18,6 +18,16 @@ class CreateIdentityCard extends CreateRecord
         return 'إصدار بطاقة شخصية';
     }
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('identity_cards.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function handleRecordCreation(array $data): IdentityCard
     {
         return DB::transaction(function () use ($data): IdentityCard {

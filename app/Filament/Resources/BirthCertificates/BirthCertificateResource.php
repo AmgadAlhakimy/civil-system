@@ -27,20 +27,70 @@ class BirthCertificateResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'السجل المدني';
-    }
-
     protected static ?string $recordTitleAttribute = 'certificate_number';
 
     protected static ?string $modelLabel = 'شهادة ميلاد';
 
     protected static ?string $pluralModelLabel = 'شهادات الميلاد';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
+
     public static function getRecordTitle($record): string
     {
         return 'بيانات شهادة الميلاد: ' . $record->certificate_number;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('birth_certificates.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('birth_certificates.create') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('birth_certificates.view') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('birth_certificates.update') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('birth_certificates.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('birth_certificates.delete') ?? false;
+    }
+
+    public static function canRestore($record): bool
+    {
+        return auth()->user()?->can('birth_certificates.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('birth_certificates.restore') ?? false;
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return auth()->user()?->can('birth_certificates.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('birth_certificates.force_delete') ?? false;
     }
 
     public static function form(Schema $schema): Schema

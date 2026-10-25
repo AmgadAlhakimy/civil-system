@@ -10,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -23,35 +24,24 @@ class ServiceRequestsTable
     {
         return $table
             ->columns([
-                // ═══════════════════════════════════════════════
-                // رقم الطلب
-                // ═══════════════════════════════════════════════
                 TextColumn::make('request_number')
                     ->label('رقم الطلب')
                     ->searchable()
                     ->sortable()
-                    ->badge()
                     ->color('primary')
                     ->copyable()
                     ->copyMessage('تم نسخ رقم الطلب')
                     ->fontFamily('mono')
                     ->weight('bold'),
 
-                // ═══════════════════════════════════════════════
-                // الخدمة
-                // ═══════════════════════════════════════════════
                 TextColumn::make('service_name')
                     ->label('الخدمة')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
 
-                // ═══════════════════════════════════════════════
-                // الفئة
-                // ═══════════════════════════════════════════════
                 TextColumn::make('category')
                     ->label('الفئة')
-                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'id_card' => 'primary',
                         'passport' => 'success',
@@ -67,9 +57,6 @@ class ServiceRequestsTable
                         default => $state,
                     }),
 
-                // ═══════════════════════════════════════════════
-                // صاحب الطلب
-                // ═══════════════════════════════════════════════
                 TextColumn::make('user.name')
                     ->label('صاحب الطلب')
                     ->searchable()
@@ -77,9 +64,6 @@ class ServiceRequestsTable
                     ->icon('heroicon-o-user')
                     ->toggleable(),
 
-                // ═══════════════════════════════════════════════
-                // المبلغ
-                // ═══════════════════════════════════════════════
                 TextColumn::make('amount')
                     ->label('المبلغ')
                     ->numeric()
@@ -87,15 +71,13 @@ class ServiceRequestsTable
                     ->weight('bold')
                     ->color('success')
                     ->icon('heroicon-o-banknotes')
-                    ->formatStateUsing(fn ($state, $record) => 
-                        number_format((float) $state, 0) . ' ' . $record->currency),
+                    ->formatStateUsing(
+                        fn ($state, $record) =>
+                            number_format((float) $state, 0) . ' ' . $record->currency
+                    ),
 
-                // ═══════════════════════════════════════════════
-                // حالة الدفع
-                // ═══════════════════════════════════════════════
                 TextColumn::make('payment_status')
                     ->label('حالة الدفع')
-                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'paid' => 'success',
                         'pending' => 'warning',
@@ -109,12 +91,8 @@ class ServiceRequestsTable
                         default => $state,
                     }),
 
-                // ═══════════════════════════════════════════════
-                // حالة الطلب
-                // ═══════════════════════════════════════════════
                 TextColumn::make('status')
                     ->label('حالة الطلب')
-                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
                         'processing' => 'info',
@@ -131,26 +109,17 @@ class ServiceRequestsTable
                     })
                     ->sortable(),
 
-                // ═══════════════════════════════════════════════
-                // الفرع
-                // ═══════════════════════════════════════════════
                 TextColumn::make('branch.name')
                     ->label('الفرع')
                     ->toggleable()
                     ->placeholder('غير محدد'),
 
-                // ═══════════════════════════════════════════════
-                // التاريخ
-                // ═══════════════════════════════════════════════
                 TextColumn::make('created_at')
                     ->label('تاريخ الطلب')
                     ->dateTime('Y/m/d H:i')
                     ->sortable()
                     ->since(),
 
-                // ═══════════════════════════════════════════════
-                // مخفية
-                // ═══════════════════════════════════════════════
                 TextColumn::make('reviewedBy.name')
                     ->label('المراجع')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -163,7 +132,6 @@ class ServiceRequestsTable
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->filters([
-                // فلتر الحالة
                 SelectFilter::make('status')
                     ->label('حالة الطلب')
                     ->options([
@@ -175,7 +143,6 @@ class ServiceRequestsTable
                     ->multiple()
                     ->native(false),
 
-                // فلتر الفئة
                 SelectFilter::make('category')
                     ->label('الفئة')
                     ->options([
@@ -187,7 +154,6 @@ class ServiceRequestsTable
                     ->multiple()
                     ->native(false),
 
-                // فلتر حالة الدفع
                 SelectFilter::make('payment_status')
                     ->label('حالة الدفع')
                     ->options([
@@ -200,10 +166,18 @@ class ServiceRequestsTable
                 TrashedFilter::make()->label('المحذوفة'),
             ])
             ->recordActions([
-                ViewAction::make()->label('عرض'),
-                EditAction::make()->label('تعديل'),
+                ViewAction::make()
+                    ->label('عرض')
+                    ->visible(fn (): bool =>
+                        auth()->user()?->can('service_requests.view') ?? false
+                    ),
 
-                // ✅ موافقة (تنتقل إلى approved)
+                EditAction::make()
+                    ->label('تعديل')
+                    ->visible(fn (): bool =>
+                        auth()->user()?->can('service_requests.update') ?? false
+                    ),
+
                 Action::make('approve')
                     ->label('موافقة')
                     ->icon('heroicon-o-check-circle')
@@ -213,15 +187,26 @@ class ServiceRequestsTable
                     ->modalDescription('سيتم اعتماد الطلب وستُنشأ البطاقة/الوثيقة تلقائياً.')
                     ->modalSubmitActionLabel('نعم، موافقة')
                     ->visible(fn (ServiceRequest $record): bool =>
-                        in_array($record->status, ['pending', 'processing']))
+                        (auth()->user()?->can('service_requests.approve') ?? false)
+                        && in_array($record->status, ['pending', 'processing'], true)
+                    )
                     ->action(function (ServiceRequest $record): void {
+                        abort_unless(
+                            auth()->user()?->can('service_requests.approve'),
+                            403
+                        );
+
+                        abort_unless(
+                            in_array($record->status, ['pending', 'processing'], true),
+                            403
+                        );
+
                         $record->update([
                             'status' => 'approved',
                             'reviewed_by' => auth()->id(),
                             'reviewed_at' => now(),
                         ]);
 
-                        // إنشاء IdentityCard إن كانت الخدمة بطاقة
                         if ($record->category === 'id_card') {
                             $record->createIdentityCard();
                         }
@@ -233,14 +218,13 @@ class ServiceRequestsTable
                             ->send();
                     }),
 
-                // ✅ رفض (يحتاج سبب)
                 Action::make('reject')
                     ->label('رفض')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->form([
-                        \Filament\Forms\Components\Textarea::make('rejection_reason')
+                        Textarea::make('rejection_reason')
                             ->label('سبب الرفض')
                             ->required()
                             ->rows(3),
@@ -248,8 +232,20 @@ class ServiceRequestsTable
                     ->modalHeading('رفض الطلب')
                     ->modalSubmitActionLabel('نعم، رفض')
                     ->visible(fn (ServiceRequest $record): bool =>
-                        in_array($record->status, ['pending', 'processing']))
+                        (auth()->user()?->can('service_requests.reject') ?? false)
+                        && in_array($record->status, ['pending', 'processing'], true)
+                    )
                     ->action(function (ServiceRequest $record, array $data): void {
+                        abort_unless(
+                            auth()->user()?->can('service_requests.reject'),
+                            403
+                        );
+
+                        abort_unless(
+                            in_array($record->status, ['pending', 'processing'], true),
+                            403
+                        );
+
                         $record->update([
                             'status' => 'rejected',
                             'rejection_reason' => $data['rejection_reason'],
@@ -266,9 +262,41 @@ class ServiceRequestsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()->label('حذف'),
-                    ForceDeleteBulkAction::make()->label('حذف نهائي'),
-                    RestoreBulkAction::make()->label('استعادة'),
+                    DeleteBulkAction::make()
+                        ->label('حذف')
+                        ->visible(fn (): bool =>
+                            auth()->user()?->can('service_requests.delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('service_requests.delete'),
+                                403
+                            );
+                        }),
+
+                    ForceDeleteBulkAction::make()
+                        ->label('حذف نهائي')
+                        ->visible(fn (): bool =>
+                            auth()->user()?->can('service_requests.force_delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('service_requests.force_delete'),
+                                403
+                            );
+                        }),
+
+                    RestoreBulkAction::make()
+                        ->label('استعادة')
+                        ->visible(fn (): bool =>
+                            auth()->user()?->can('service_requests.restore') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('service_requests.restore'),
+                                403
+                            );
+                        }),
                 ]),
             ])
             ->emptyStateHeading('لا توجد طلبات بعد')

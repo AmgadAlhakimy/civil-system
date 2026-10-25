@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Roles\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -14,14 +15,8 @@ class RolesTable
     {
         return $table
             ->columns([
-
-                TextColumn::make('name_ar')
-                    ->label('اسم الدور')
-                    ->searchable()
-                    ->sortable(),
-
                 TextColumn::make('name')
-                    ->label('الاسم البرمجي')
+                    ->label('اسم الدور')
                     ->searchable()
                     ->sortable(),
 
@@ -33,30 +28,43 @@ class RolesTable
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime('Y-m-d H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
                     ->label('آخر تحديث')
                     ->dateTime('Y-m-d H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
-
-            ->filters([
-                //
-            ])
-
             ->recordActions([
-                EditAction::make()
-                    ->label('تعديل'),
-            ])
+                ViewAction::make()
+                    ->label('عرض')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('roles.view') ?? false
+                    ),
 
+                EditAction::make()
+                    ->label('تعديل')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('roles.update') ?? false
+                    ),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
-                        ->requiresConfirmation(),
+                        ->requiresConfirmation()
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('roles.delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('roles.delete'),
+                                403
+                            );
+                        }),
                 ]),
             ]);
     }

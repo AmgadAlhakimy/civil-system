@@ -9,10 +9,21 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
 
 class EditCitizen extends EditRecord
 {
     protected static string $resource = CitizenResource::class;
+
+    protected function authorizeAccess(): void
+    {
+        parent::authorizeAccess();
+
+        abort_unless(
+            Auth::user()?->can('citizens.update'),
+            403
+        );
+    }
 
     protected function getHeaderActions(): array
     {
@@ -20,18 +31,30 @@ class EditCitizen extends EditRecord
             ViewAction::make()
                 ->label('عرض المواطن')
                 ->icon('heroicon-o-eye')
-                ->size('lg'),
+                ->size('lg')
+                ->visible(
+                    fn (): bool => Auth::user()?->can('citizens.view') ?? false
+                ),
 
             DeleteAction::make()
                 ->label('حذف المواطن')
                 ->icon('heroicon-o-trash')
-                ->size('lg'),
+                ->size('lg')
+                ->visible(
+                    fn (): bool => Auth::user()?->can('citizens.delete') ?? false
+                ),
 
             ForceDeleteAction::make()
-                ->label('حذف المواطن نهائياً'),
+                ->label('حذف المواطن نهائياً')
+                ->visible(
+                    fn (): bool => Auth::user()?->can('citizens.force_delete') ?? false
+                ),
 
             RestoreAction::make()
-                ->label('استعادة المواطن'),
+                ->label('استعادة المواطن')
+                ->visible(
+                    fn (): bool => Auth::user()?->can('citizens.restore') ?? false
+                ),
         ];
     }
 

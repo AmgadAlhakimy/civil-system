@@ -77,9 +77,9 @@ class AuditLogsTable
 
                             return match ($record->subject_type) {
                                 'App\\Models\\Citizen' => trim(
-                                    $state->first_name . ' ' .
-                                    $state->middle_name . ' ' .
-                                    $state->last_name
+                                    ($state->first_name ?? '') . ' ' .
+                                    ($state->middle_name ?? '') . ' ' .
+                                    ($state->last_name ?? '')
                                 ),
 
                                 'App\\Models\\Passport' => $state->passport_number
@@ -95,8 +95,8 @@ class AuditLogsTable
                                     ?? 'بطاقة شخصية',
 
                                 default => class_basename(
-                                    $record->subject_type
-                                ),
+                                    $record->subject_type ?? ''
+                                ) ?: 'غير محدد',
                             };
                         }
                     )
@@ -105,7 +105,10 @@ class AuditLogsTable
                 TextColumn::make('description')
                     ->label('الوصف')
                     ->formatStateUsing(
-                        fn (?string $state, Activity $record): string => match ($record->event) {
+                        fn (
+                            ?string $state,
+                            Activity $record
+                        ): string => match ($record->event) {
                             'created' => 'تمت إضافة السجل',
                             'updated' => 'تم تعديل السجل',
                             'deleted' => 'تم حذف السجل',
@@ -130,7 +133,11 @@ class AuditLogsTable
                 ViewAction::make()
                     ->label('عرض التفاصيل')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn (Activity $record): bool =>
+                            auth()->user()?->can('audit_logs.view') ?? false
+                    ),
             ])
             ->toolbarActions([])
             ->defaultSort('created_at', 'desc');

@@ -8,4 +8,14 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateGovernorate extends CreateRecord
 {
     protected static string $resource = GovernorateResource::class;
+
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('governorates.create'),
+            403
+        );
+
+        parent::mount();
+    }
 }

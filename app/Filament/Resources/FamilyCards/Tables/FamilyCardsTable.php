@@ -157,11 +157,17 @@ class FamilyCardsTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('family_cards.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('family_cards.update') ?? false
+                    ),
 
             ])
 
@@ -171,6 +177,9 @@ class FamilyCardsTable
 
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('family_cards.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف البطاقات المحددة')
                         ->modalDescription(
@@ -180,6 +189,9 @@ class FamilyCardsTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('family_cards.restore') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('استعادة البطاقات')
                         ->modalDescription(
@@ -189,6 +201,9 @@ class FamilyCardsTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('family_cards.force_delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(

@@ -10,10 +10,23 @@ class ListBackups extends ListRecords
 {
     protected static string $resource = BackupResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('backups.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->visible(
+                    fn (): bool => auth()->user()?->can('backups.create') ?? false
+                ),
         ];
     }
 }

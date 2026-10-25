@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Roles;
 use App\Filament\Resources\Roles\Pages\CreateRole;
 use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
+use App\Filament\Resources\Roles\Pages\ViewRole;
 use App\Filament\Resources\Roles\Schemas\RoleForm;
 use App\Filament\Resources\Roles\Tables\RolesTable;
 use App\Models\Role;
@@ -21,22 +22,22 @@ class RoleResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedShieldCheck;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'النظام';
-    }
-
-    protected static ?int $navigationSort = 3;
-
-    protected static ?string $recordTitleAttribute = 'name_ar';
+    protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?string $modelLabel = 'دور';
 
     protected static ?string $pluralModelLabel = 'الأدوار';
 
+    protected static ?int $navigationSort = 3;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'النظام';
+    }
+
     public static function getRecordTitle($record): string
     {
-        return 'بيانات الدور: ' . $record->name_ar;
+        return 'بيانات الدور: ' . $record->name;
     }
 
     public static function form(Schema $schema): Schema
@@ -59,17 +60,17 @@ class RoleResource extends Resource
         return [
             'index' => ListRoles::route('/'),
             'create' => CreateRole::route('/create'),
+            'view' => ViewRole::route('/{record}'),
             'edit' => EditRole::route('/{record}/edit'),
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Permissions
-    |--------------------------------------------------------------------------
-    */
-
     public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('roles.view') ?? false;
+    }
+
+    public static function canView($record): bool
     {
         return auth()->user()?->can('roles.view') ?? false;
     }
@@ -81,10 +82,15 @@ class RoleResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can('roles.edit') ?? false;
+        return auth()->user()?->can('roles.update') ?? false;
     }
 
     public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('roles.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
     {
         return auth()->user()?->can('roles.delete') ?? false;
     }

@@ -13,7 +13,11 @@ class EditPermission extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label('حذف الصلاحية')
+                ->authorize(
+                    fn (): bool => auth()->user()?->can('permissions.delete') ?? false
+                ),
         ];
     }
 }

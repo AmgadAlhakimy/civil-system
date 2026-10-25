@@ -14,37 +14,74 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ServiceFeeResource extends Resource
 {
     protected static ?string $model = ServiceFee::class;
 
-    // ═══════════════════════════════════════════════════════════
     // الأيقونة والملاحة
-    // ═══════════════════════════════════════════════════════════
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBanknotes;
 
     protected static ?string $recordTitleAttribute = 'service_name';
 
-    // ═══════════════════════════════════════════════════════════
-    // التسميات العربية
-    // ═══════════════════════════════════════════════════════════
-    protected static ?string $modelLabel = 'خدمة';
-
-    protected static ?string $pluralModelLabel = 'الرسوم';
-
-    protected static ?string $navigationLabel = 'الرسوم';
-
-    // ═══════════════════════════════════════════════════════════
     // الترتيب
-    // ═══════════════════════════════════════════════════════════
     protected static ?int $navigationSort = 10;
 
-    // ═══════════════════════════════════════════════════════════
+    // الصلاحيات الأساسية
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('service_fees.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('service_fees.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('service_fees.view') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('service_fees.update') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('service_fees.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('service_fees.delete') ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('service_fees.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('service_fees.restore') ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('service_fees.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('service_fees.force_delete') ?? false;
+    }
+
     // النماذج والجداول
-    // ═══════════════════════════════════════════════════════════
     public static function form(Schema $schema): Schema
     {
         return ServiceFeeForm::configure($schema);
@@ -57,9 +94,7 @@ class ServiceFeeResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -79,9 +114,7 @@ class ServiceFeeResource extends Resource
             ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // تسمية المجموعة بالعربية (Filament 4)
-    // ═══════════════════════════════════════════════════════════
+    // تسمية المجموعة بالعربية
     public static function getNavigationGroup(): ?string
     {
         return 'الإعدادات';

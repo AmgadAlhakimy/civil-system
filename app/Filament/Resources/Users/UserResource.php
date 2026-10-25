@@ -13,7 +13,6 @@ use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -22,12 +21,8 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'النظام';
-    }
+    protected static string|BackedEnum|null $navigationIcon =
+        'heroicon-o-user-circle';
 
     protected static ?int $navigationSort = 2;
 
@@ -36,6 +31,11 @@ class UserResource extends Resource
     protected static ?string $modelLabel = 'مستخدم';
 
     protected static ?string $pluralModelLabel = 'المستخدمون';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'النظام';
+    }
 
     public static function getRecordTitle($record): string
     {
@@ -70,6 +70,31 @@ class UserResource extends Resource
             'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('users.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('users.create') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('users.edit') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('users.delete') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('users.view') ?? false;
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

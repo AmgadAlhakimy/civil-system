@@ -20,25 +20,57 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CitizenResource extends Resource
 {
-public static function getRecordTitle($record): string
-{
-    return 'بيانات المواطن: ' . trim(
-        "{$record->first_name} {$record->father_name} {$record->middle_name} {$record->last_name}"
-    );
-}
-
     protected static ?string $model = Citizen::class;
 
-    protected static string|BackedEnum|null $navigationIcon =Heroicon::OutlinedUsers;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
+
     protected static ?int $navigationSort = 1;
+
+    protected static ?string $modelLabel = 'مواطن';
+
+    protected static ?string $pluralModelLabel = 'المواطنون';
+
+    public static function getRecordTitle($record): string
+    {
+        return 'بيانات المواطن: ' . trim(
+                "{$record->first_name} {$record->father_name} {$record->middle_name} {$record->last_name}"
+            );
+    }
 
     public static function getNavigationGroup(): ?string
     {
         return 'السجل المدني';
     }
-    protected static ?string $modelLabel = 'مواطن';
 
-    protected static ?string $pluralModelLabel = 'المواطنون';
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('citizens.view') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('citizens.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('citizens.create') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('citizens.update') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('citizens.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('citizens.delete') ?? false;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -61,6 +93,7 @@ public static function getRecordTitle($record): string
             //
         ];
     }
+
     public static function getGloballySearchableAttributes(): array
     {
         return [
@@ -88,5 +121,4 @@ public static function getRecordTitle($record): string
                 SoftDeletingScope::class,
             ]);
     }
-
 }

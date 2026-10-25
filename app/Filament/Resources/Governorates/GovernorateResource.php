@@ -14,15 +14,13 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class GovernorateResource extends Resource
 {
     protected static ?string $model = Governorate::class;
 
-    // ═══════════════════════════════════════════════════════════
-    // الأيقونة والترتيب
-    // ═══════════════════════════════════════════════════════════
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingLibrary;
 
@@ -30,9 +28,56 @@ class GovernorateResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    // ═══════════════════════════════════════════════════════════
-    // النماذج والجداول
-    // ═══════════════════════════════════════════════════════════
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('governorates.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('governorates.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('governorates.view') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('governorates.update') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('governorates.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('governorates.delete') ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('governorates.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('governorates.restore') ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('governorates.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('governorates.force_delete') ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return GovernorateForm::configure($schema);
@@ -67,9 +112,6 @@ class GovernorateResource extends Resource
             ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // التسميات العربية
-    // ═══════════════════════════════════════════════════════════
     public static function getModelLabel(): string
     {
         return 'محافظة';
@@ -90,9 +132,6 @@ class GovernorateResource extends Resource
         return 'المواقع الجغرافية';
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // Badge العدد
-    // ═══════════════════════════════════════════════════════════
     public static function getNavigationBadge(): ?string
     {
         return (string) static::getModel()::count();

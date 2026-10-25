@@ -10,6 +10,16 @@ class ListAppointments extends ListRecords
 {
     protected static string $resource = AppointmentResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('appointments.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'المواعيد';
@@ -20,7 +30,8 @@ class ListAppointments extends ListRecords
         return [
             CreateAction::make()
                 ->label('حجز موعد')
-                ->icon('heroicon-o-calendar-days'),
+                ->icon('heroicon-o-calendar-days')
+                ->visible(fn (): bool => auth()->user()?->can('appointments.create') ?? false),
         ];
     }
 }

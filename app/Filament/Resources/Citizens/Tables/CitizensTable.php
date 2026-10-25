@@ -190,10 +190,8 @@ class CitizensTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
             ])
             ->filters([
-
                 SelectFilter::make('gender')
                     ->label('الجنس')
                     ->options([
@@ -240,30 +238,42 @@ class CitizensTable
 
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
-
             ])
             ->recordActions([
-
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('citizens.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
-
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('citizens.update') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->label('حذف المحدد'),
+                        ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('citizens.delete') ?? false
+                        ),
 
                     RestoreBulkAction::make()
-                        ->label('استعادة المحدد'),
+                        ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('citizens.restore') ?? false
+                        ),
 
                     ForceDeleteBulkAction::make()
-                        ->label('حذف نهائي'),
+                        ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('citizens.force_delete') ?? false
+                        ),
                 ])
                     ->label('إجراءات جماعية'),
             ])

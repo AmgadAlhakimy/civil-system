@@ -10,10 +10,23 @@ class ListServiceRequests extends ListRecords
 {
     protected static string $resource = ServiceRequestResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('service_requests.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('service_requests.create') ?? false
+                ),
         ];
     }
 }

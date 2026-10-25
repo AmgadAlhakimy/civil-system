@@ -12,6 +12,16 @@ class CreateReport extends CreateRecord
 {
     protected static string $resource = ReportResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('reports.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getCreatedNotification(): ?Notification
     {
         return null;
@@ -19,6 +29,11 @@ class CreateReport extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        abort_unless(
+            auth()->user()?->can('reports.create'),
+            403
+        );
+
         $filters = [
             'gender' => $data['gender'] ?? null,
             'marital_status' => $data['marital_status'] ?? null,

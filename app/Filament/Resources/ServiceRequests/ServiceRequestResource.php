@@ -16,15 +16,14 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ServiceRequestResource extends Resource
 {
     protected static ?string $model = ServiceRequest::class;
 
-    // ═══════════════════════════════════════════════════════════
     // الأيقونة والترتيب
-    // ═══════════════════════════════════════════════════════════
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedClipboardDocumentList;
 
@@ -32,9 +31,58 @@ class ServiceRequestResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
-    // ═══════════════════════════════════════════════════════════
+    // الصلاحيات الأساسية
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('service_requests.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('service_requests.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('service_requests.view') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('service_requests.update') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('service_requests.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('service_requests.delete') ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('service_requests.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('service_requests.restore') ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('service_requests.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('service_requests.force_delete') ?? false;
+    }
+
     // النماذج والجداول
-    // ═══════════════════════════════════════════════════════════
     public static function form(Schema $schema): Schema
     {
         return ServiceRequestForm::configure($schema);
@@ -73,9 +121,7 @@ class ServiceRequestResource extends Resource
             ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
     // التسميات العربية
-    // ═══════════════════════════════════════════════════════════
     public static function getModelLabel(): string
     {
         return 'طلب';
@@ -96,12 +142,13 @@ class ServiceRequestResource extends Resource
         return 'إدارة الخدمات';
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // Badge: عدد الطلبات المعلقة
-    // ═══════════════════════════════════════════════════════════
+    // عدد الطلبات المعلقة
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', 'pending')->count();
+        $count = static::getModel()
+            ->where('status', 'pending')
+            ->count();
+
         return $count > 0 ? (string) $count : null;
     }
 

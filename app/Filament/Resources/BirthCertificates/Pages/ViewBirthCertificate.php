@@ -13,6 +13,16 @@ class ViewBirthCertificate extends ViewRecord
 {
     protected static string $resource = BirthCertificateResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('birth_certificates.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'بيانات شهادة الميلاد: ' . $this->record->certificate_number;
@@ -33,8 +43,17 @@ class ViewBirthCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('birth_certificates.approve') ?? false)
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('birth_certificates.approve'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن اعتماد الشهادة')
@@ -81,8 +100,17 @@ class ViewBirthCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، طباعة')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'active')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'active'
+                        && (auth()->user()?->can('birth_certificates.print') ?? false)
+                )
                 ->action(function () {
+                    abort_unless(
+                        auth()->user()?->can('birth_certificates.print'),
+                        403
+                    );
+
                     if ($this->record->status !== 'active') {
                         Notification::make()
                             ->title('لا يمكن طباعة الشهادة')
@@ -147,8 +175,17 @@ class ViewBirthCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، إلغاء')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('birth_certificates.cancel') ?? false)
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('birth_certificates.cancel'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن إلغاء الشهادة')
@@ -184,7 +221,10 @@ class ViewBirthCertificate extends ViewRecord
 
             EditAction::make()
                 ->label('تعديل الشهادة')
-                ->icon('heroicon-o-pencil-square'),
+                ->icon('heroicon-o-pencil-square')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('birth_certificates.update') ?? false
+                ),
 
         ];
     }

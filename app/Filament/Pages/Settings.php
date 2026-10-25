@@ -163,7 +163,7 @@ class Settings extends Page
                                         collect(Themes::all())
                                             ->mapWithKeys(
                                                 function (
-                                                    array $theme,
+                                                    array  $theme,
                                                     string $key
                                                 ): array {
                                                     $name =
@@ -201,18 +201,13 @@ class Settings extends Page
                     ->columnSpanFull(),
 
                 Section::make('إعدادات النسخ الاحتياطي')
-                    ->description(
-                        'إعدادات النسخ الاحتياطي التلقائي للنظام'
-                    )
+                    ->description('إعدادات النسخ الاحتياطي التلقائي للنظام')
                     ->icon('heroicon-o-server-stack')
+                    ->visible(fn(): bool => auth()->user()?->can('settings.backup') ?? false)
                     ->schema([
                         Toggle::make('automatic_backup_enabled')
-                            ->label(
-                                'تفعيل النسخ الاحتياطي التلقائي'
-                            )
-                            ->helperText(
-                                'السماح للنظام بتنفيذ النسخ الاحتياطي تلقائيًا حسب الجدول المحدد.'
-                            )
+                            ->label('تفعيل النسخ الاحتياطي التلقائي')
+                            ->helperText('السماح للنظام بتنفيذ النسخ الاحتياطي تلقائيًا حسب الجدول المحدد.')
                             ->default(true)
                             ->live(),
 
@@ -226,18 +221,14 @@ class Settings extends Page
                             ->default('daily')
                             ->required()
                             ->native(false)
-                            ->prefixIcon(
-                                'heroicon-o-arrow-path'
-                            ),
+                            ->prefixIcon('heroicon-o-arrow-path'),
 
                         TimePicker::make('automatic_backup_time')
                             ->label('وقت التنفيذ')
                             ->default('03:00')
                             ->seconds(false)
                             ->required()
-                            ->prefixIcon(
-                                'heroicon-o-clock'
-                            ),
+                            ->prefixIcon('heroicon-o-clock'),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
@@ -284,7 +275,7 @@ class Settings extends Page
 
         $settings->set(
             'automatic_backup_enabled',
-            (bool) $data['automatic_backup_enabled'],
+            (bool)$data['automatic_backup_enabled'],
             'backup',
             'تفعيل النسخ الاحتياطي التلقائي'
         );

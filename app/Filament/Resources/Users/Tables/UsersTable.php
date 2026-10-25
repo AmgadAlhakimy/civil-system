@@ -163,11 +163,17 @@ class UsersTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('users.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('users.edit') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -176,11 +182,13 @@ class UsersTable
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->visible(
-                            fn (HasTable $livewire): bool => in_array(
-                                $livewire->getTableFilterState('trashed')['value'] ?? null,
-                                [null, ''],
-                                true
-                            )
+                            fn (HasTable $livewire): bool => (
+                                    auth()->user()?->can('users.delete') ?? false
+                                ) && in_array(
+                                    $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                    [null, ''],
+                                    true
+                                )
                         )
                         ->requiresConfirmation()
                         ->successNotification(null)
@@ -197,7 +205,6 @@ class UsersTable
                             foreach ($records as $record) {
                                 if (! $record->canBeDeleted()) {
                                     $skippedCount++;
-
                                     continue;
                                 }
 
@@ -228,6 +235,7 @@ class UsersTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(false)
                         ->requiresConfirmation()
                         ->successNotification(null)
                         ->modalHeading('استعادة المستخدمين')
@@ -238,6 +246,7 @@ class UsersTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(false)
                         ->requiresConfirmation()
                         ->successNotificationTitle('تم الحذف النهائي بنجاح')
                         ->modalHeading('حذف نهائي')
@@ -252,7 +261,6 @@ class UsersTable
                             foreach ($records as $record) {
                                 if (! $record->canBeDeleted()) {
                                     $skippedCount++;
-
                                     continue;
                                 }
 

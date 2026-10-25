@@ -12,20 +12,53 @@ class ViewReport extends ViewRecord
 {
     protected static string $resource = ReportResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('reports.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             Action::make('download')
                 ->label('تحميل التقرير')
                 ->icon('heroicon-o-arrow-down-tray')
-                ->visible(fn () => filled($this->record->path))
+                ->visible(
+                    fn (): bool =>
+                        (auth()->user()?->can('reports.download') ?? false)
+                        && $this->record->status === 'completed'
+                        && filled($this->record->path)
+                        && Storage::disk('local')->exists($this->record->path)
+                )
                 ->action(function () {
+                    abort_unless(
+                        auth()->user()?->can('reports.download'),
+                        403
+                    );
+
+                    abort_unless(
+                        $this->record->status === 'completed'
+                        && filled($this->record->path)
+                        && Storage::disk('local')->exists($this->record->path),
+                        404
+                    );
+
                     return Storage::disk('local')->download(
-                        $this->record->path
+                        $this->record->path,
+                        basename($this->record->path)
                     );
                 }),
 
-            EditAction::make(),
+            EditAction::make()
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('reports.update') ?? false
+                ),
         ];
     }
 }

@@ -10,10 +10,21 @@ class ListGovernorates extends ListRecords
 {
     protected static string $resource = GovernorateResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('governorates.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->visible(fn (): bool => auth()->user()?->can('governorates.create') ?? false),
         ];
     }
 }

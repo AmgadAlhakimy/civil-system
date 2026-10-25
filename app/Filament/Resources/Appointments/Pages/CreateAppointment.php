@@ -9,6 +9,16 @@ class CreateAppointment extends CreateRecord
 {
     protected static string $resource = AppointmentResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('appointments.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'حجز موعد';

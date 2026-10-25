@@ -142,7 +142,6 @@ class PassportsTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
             ])
-
             ->filters([
                 SelectFilter::make('type')
                     ->label('نوع الجواز')
@@ -167,22 +166,29 @@ class PassportsTable
                 TrashedFilter::make()
                     ->label('سلة المحذوفات'),
             ])
-
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('passports.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('passports.edit') ?? false
+                    ),
             ])
-
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('passports.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف الجوازات المحددة')
                         ->modalDescription(
@@ -192,6 +198,9 @@ class PassportsTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('passports.restore') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('استعادة الجوازات')
                         ->modalDescription(
@@ -201,6 +210,9 @@ class PassportsTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('passports.force_delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
@@ -210,7 +222,6 @@ class PassportsTable
                 ])
                     ->label('إجراءات جماعية'),
             ])
-
             ->defaultSort('created_at', 'desc');
     }
 }

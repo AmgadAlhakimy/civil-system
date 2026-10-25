@@ -43,7 +43,6 @@ class BranchesTable
                     ->icon('heroicon-o-building-office-2')
                     ->iconColor('primary'),
 
-                // ✅ المحافظة (جديد)
                 TextColumn::make('governorate.name_ar')
                     ->label('المحافظة')
                     ->badge()
@@ -106,10 +105,14 @@ class BranchesTable
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->filters([
-                // فلتر حسب المحافظة (جديد)
                 SelectFilter::make('governorate_id')
                     ->label('المحافظة')
-                    ->options(fn () => Governorate::active()->ordered()->pluck('name_ar', 'id')->toArray())
+                    ->options(
+                        fn () => Governorate::active()
+                            ->ordered()
+                            ->pluck('name_ar', 'id')
+                            ->toArray()
+                    )
                     ->searchable()
                     ->preload()
                     ->native(false),
@@ -129,11 +132,17 @@ class BranchesTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('branches.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('branches.update') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -142,19 +151,28 @@ class BranchesTable
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->visible(
-                            fn (HasTable $livewire): bool => in_array(
-                                $livewire->getTableFilterState('trashed')['value'] ?? null,
-                                [null, ''],
-                                true
-                            )
+                            fn (HasTable $livewire): bool =>
+                                (auth()->user()?->can('branches.delete') ?? false)
+                                && in_array(
+                                    $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                    [null, ''],
+                                    true
+                                )
                         )
                         ->requiresConfirmation()
                         ->successNotification(null)
                         ->modalHeading('حذف الفروع المحددة')
-                        ->modalDescription('سيتم حذف الفروع المسموح بحذفها، وتجاوز أي فرع مرتبط بمستخدمين.')
+                        ->modalDescription(
+                            'سيتم حذف الفروع المسموح بحذفها، وتجاوز أي فرع مرتبط بمستخدمين.'
+                        )
                         ->modalSubmitActionLabel('نعم، حذف')
                         ->deselectRecordsAfterCompletion()
                         ->action(function (Collection $records): void {
+                            abort_unless(
+                                auth()->user()?->can('branches.delete'),
+                                403
+                            );
+
                             $deleted = 0;
                             $skipped = 0;
 
@@ -163,6 +181,7 @@ class BranchesTable
                                     $skipped++;
                                     continue;
                                 }
+
                                 $record->delete();
                                 $deleted++;
                             }
@@ -170,9 +189,12 @@ class BranchesTable
                             if ($skipped > 0) {
                                 Notification::make()
                                     ->title('اكتملت العملية')
-                                    ->body("تم حذف {$deleted} فرع، وتجاوز {$skipped} لارتباطها بمستخدمين.")
+                                    ->body(
+                                        "تم حذف {$deleted} فرع، وتجاوز {$skipped} لارتباطها بمستخدمين."
+                                    )
                                     ->warning()
                                     ->send();
+
                                 return;
                             }
 
@@ -184,11 +206,22 @@ class BranchesTable
                         }),
 
                     RestoreBulkAction::make()
-                        ->label('استعادة المحدد'),
+                        ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('branches.restore') ?? false
+                        ),
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('branches.force_delete') ?? false
+                        )
                         ->action(function (Collection $records): void {
+                            abort_unless(
+                                auth()->user()?->can('branches.force_delete'),
+                                403
+                            );
+
                             $deleted = 0;
                             $skipped = 0;
 
@@ -197,6 +230,7 @@ class BranchesTable
                                     $skipped++;
                                     continue;
                                 }
+
                                 $record->forceDelete();
                                 $deleted++;
                             }
@@ -204,10 +238,20 @@ class BranchesTable
                             if ($skipped > 0) {
                                 Notification::make()
                                     ->title('اكتمل الحذف النهائي')
-                                    ->body("تم حذف {$deleted} نهائياً، وتجاوز {$skipped}.")
+                                    ->body(
+                                        "تم حذف {$deleted} نهائياً، وتجاوز {$skipped}."
+                                    )
                                     ->warning()
                                     ->send();
+
+                                return;
                             }
+
+                            Notification::make()
+                                ->title('تم الحذف النهائي بنجاح')
+                                ->body("تم حذف {$deleted} فرع نهائياً.")
+                                ->success()
+                                ->send();
                         }),
                 ])->label('إجراءات جماعية'),
             ])

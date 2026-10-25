@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ReportResource extends Resource
 {
@@ -36,6 +37,56 @@ class ReportResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return 'التقارير والإدارة';
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('reports.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('reports.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('reports.view') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('reports.update') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('reports.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('reports.delete') ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('reports.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('reports.restore') ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('reports.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('reports.force_delete') ?? false;
     }
 
     public static function form(Schema $schema): Schema

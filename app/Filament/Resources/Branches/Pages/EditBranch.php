@@ -12,45 +12,13 @@ class EditBranch extends EditRecord
 {
     protected static string $resource = BranchResource::class;
 
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('view', [
-            'record' => $this->record,
-        ]);
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            ViewAction::make()
-                ->label('عرض الفرع')
-                ->icon('heroicon-o-eye')
-                ->color('primary'),
-
-            DeleteAction::make()
-                ->label('حذف الفرع')
-                ->icon('heroicon-o-trash')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('حذف الفرع')
-                ->modalDescription('هل أنت متأكد من حذف هذا الفرع؟ يمكن استعادته من سلة المحذوفات.')
-                ->modalSubmitActionLabel('نعم، حذف')
-                ->before(function (DeleteAction $action): void {
-                    if ($this->record->users()->exists()) {
-                        Notification::make()
-                            ->title('لا يمكن حذف الفرع')
-                            ->body('لا يمكن حذف هذا الفرع لأنه يحتوي على مستخدمين مرتبطين به. يجب نقل المستخدمين إلى فرع آخر أولًا ثم محاولة الحذف مرة أخرى.')
-                            ->danger()
-                            ->send();
-
-                        $action->cancel();
-                    }
-                }),
-        ];
-    }
-
     public function mount(int|string $record): void
     {
+        abort_unless(
+            auth()->user()?->can('branches.update'),
+            403
+        );
+
         parent::mount($record);
 
         if ($this->record->trashed()) {
@@ -65,5 +33,57 @@ class EditBranch extends EditRecord
                 BranchResource::getUrl('index')
             );
         }
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('view', [
+            'record' => $this->record,
+        ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            ViewAction::make()
+                ->label('عرض الفرع')
+                ->icon('heroicon-o-eye')
+                ->color('primary')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('branches.view') ?? false
+                ),
+
+            DeleteAction::make()
+                ->label('حذف الفرع')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('حذف الفرع')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف هذا الفرع؟ يمكن استعادته من سلة المحذوفات.'
+                )
+                ->modalSubmitActionLabel('نعم، حذف')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('branches.delete') ?? false
+                )
+                ->before(function (DeleteAction $action): void {
+                    abort_unless(
+                        auth()->user()?->can('branches.delete'),
+                        403
+                    );
+
+                    if ($this->record->users()->exists()) {
+                        Notification::make()
+                            ->title('لا يمكن حذف الفرع')
+                            ->body(
+                                'لا يمكن حذف هذا الفرع لأنه يحتوي على مستخدمين مرتبطين به. يجب نقل المستخدمين إلى فرع آخر أولًا ثم محاولة الحذف مرة أخرى.'
+                            )
+                            ->danger()
+                            ->send();
+
+                        $action->cancel();
+                    }
+                }),
+        ];
     }
 }

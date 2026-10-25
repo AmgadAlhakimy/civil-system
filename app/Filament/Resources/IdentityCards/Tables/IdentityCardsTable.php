@@ -152,11 +152,19 @@ class IdentityCardsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('identity_cards.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('identity_cards.update') ?? false
+                    ),
             ])
 
             ->toolbarActions([
@@ -168,7 +176,11 @@ class IdentityCardsTable
                         ->modalDescription(
                             'هل أنت متأكد من حذف البطاقات المحددة؟ يمكن استعادتها من سلة المحذوفات.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف'),
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('identity_cards.delete') ?? false
+                        ),
 
                     RestoreBulkAction::make()
                         ->label('استعادة البطاقات')
@@ -177,7 +189,11 @@ class IdentityCardsTable
                         ->modalDescription(
                             'هل أنت متأكد من استعادة البطاقات المحددة؟'
                         )
-                        ->modalSubmitActionLabel('نعم، استعادة'),
+                        ->modalSubmitActionLabel('نعم، استعادة')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('identity_cards.restore') ?? false
+                        ),
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
@@ -186,7 +202,11 @@ class IdentityCardsTable
                         ->modalDescription(
                             'تحذير: سيتم حذف البطاقات نهائيًا ولا يمكن استعادتها.'
                         )
-                        ->modalSubmitActionLabel('نعم، حذف نهائي'),
+                        ->modalSubmitActionLabel('نعم، حذف نهائي')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('identity_cards.force_delete') ?? false
+                        ),
                 ])
                     ->label('إجراءات جماعية'),
             ])

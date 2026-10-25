@@ -14,15 +14,13 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DistrictResource extends Resource
 {
     protected static ?string $model = District::class;
 
-    // ═══════════════════════════════════════════════════════════
-    // الأيقونة والترتيب
-    // ═══════════════════════════════════════════════════════════
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedMap;
 
@@ -30,9 +28,56 @@ class DistrictResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    // ═══════════════════════════════════════════════════════════
-    // النماذج والجداول
-    // ═══════════════════════════════════════════════════════════
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('districts.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('districts.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('districts.view') ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->can('districts.update') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('districts.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('districts.delete') ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('districts.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('districts.restore') ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('districts.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('districts.force_delete') ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return DistrictForm::configure($schema);
@@ -65,9 +110,6 @@ class DistrictResource extends Resource
             ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // التسميات العربية
-    // ═══════════════════════════════════════════════════════════
     public static function getModelLabel(): string
     {
         return 'مديرية';

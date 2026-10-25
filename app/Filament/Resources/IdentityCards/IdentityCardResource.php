@@ -27,16 +27,16 @@ class IdentityCardResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'السجل المدني';
-    }
-
     protected static ?string $recordTitleAttribute = 'national_id';
 
     protected static ?string $modelLabel = 'بطاقة شخصية';
 
     protected static ?string $pluralModelLabel = 'البطاقات الشخصية';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
 
     public static function getRecordTitle($record): string
     {
@@ -46,6 +46,56 @@ class IdentityCardResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return ['national_id'];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('identity_cards.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('identity_cards.create') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('identity_cards.view') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('identity_cards.update') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('identity_cards.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('identity_cards.delete') ?? false;
+    }
+
+    public static function canRestore($record): bool
+    {
+        return auth()->user()?->can('identity_cards.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('identity_cards.restore') ?? false;
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return auth()->user()?->can('identity_cards.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('identity_cards.force_delete') ?? false;
     }
 
     public static function form(Schema $schema): Schema

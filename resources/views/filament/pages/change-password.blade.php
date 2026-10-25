@@ -7,9 +7,18 @@
             <x-filament::button
                 type="submit"
                 class="w-full"
+                wire:loading.attr="disabled"
+                wire:target="save"
             >
-                حفظ كلمة المرور الجديدة
+                <span wire:loading.remove wire:target="save">
+                    حفظ كلمة المرور الجديدة
+                </span>
+
+                <span wire:loading wire:target="save">
+                    جارٍ حفظ كلمة المرور...
+                </span>
             </x-filament::button>
+
         </form>
     </div>
 </x-filament-panels::page>

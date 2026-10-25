@@ -10,6 +10,16 @@ class ListFamilyCards extends ListRecords
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('family_cards.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'البطاقات العائلية';
@@ -20,7 +30,10 @@ class ListFamilyCards extends ListRecords
         return [
             CreateAction::make()
                 ->label('إصدار بطاقة عائلية')
-                ->icon('heroicon-o-document-plus'),
+                ->icon('heroicon-o-document-plus')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.create') ?? false
+                ),
         ];
     }
 }

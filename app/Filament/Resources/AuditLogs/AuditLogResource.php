@@ -33,6 +33,16 @@ class AuditLogResource extends Resource
         return 'التقارير والإدارة';
     }
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('audit_logs.view') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('audit_logs.view') ?? false;
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -44,6 +54,11 @@ class AuditLogResource extends Resource
     }
 
     public static function canDelete($record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
     {
         return false;
     }
