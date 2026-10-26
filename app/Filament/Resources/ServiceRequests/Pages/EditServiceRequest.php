@@ -13,13 +13,38 @@ class EditServiceRequest extends EditRecord
 {
     protected static string $resource = ServiceRequestResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('service_requests.update'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            ViewAction::make(),
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
+            ViewAction::make()
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('service_requests.view') ?? false
+                ),
+
+            DeleteAction::make()
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('service_requests.delete') ?? false
+                ),
+
+            ForceDeleteAction::make()
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('service_requests.force_delete') ?? false
+                ),
+
+            RestoreAction::make()
+                ->visible(fn (): bool =>
+                    auth()->user()?->can('service_requests.restore') ?? false
+                ),
         ];
     }
 }

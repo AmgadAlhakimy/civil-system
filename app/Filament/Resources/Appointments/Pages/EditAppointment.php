@@ -13,6 +13,16 @@ class EditAppointment extends EditRecord
 {
     protected static string $resource = AppointmentResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('appointments.update'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'تعديل الموعد';
@@ -23,16 +33,20 @@ class EditAppointment extends EditRecord
         return [
             ViewAction::make()
                 ->label('عرض')
-                ->icon('heroicon-o-eye'),
+                ->icon('heroicon-o-eye')
+                ->visible(fn (): bool => auth()->user()?->can('appointments.view') ?? false),
 
             DeleteAction::make()
-                ->label('حذف'),
+                ->label('حذف')
+                ->visible(fn (): bool => auth()->user()?->can('appointments.delete') ?? false),
 
             ForceDeleteAction::make()
-                ->label('حذف نهائي'),
+                ->label('حذف نهائي')
+                ->visible(fn (): bool => auth()->user()?->can('appointments.force_delete') ?? false),
 
             RestoreAction::make()
-                ->label('استعادة'),
+                ->label('استعادة')
+                ->visible(fn (): bool => auth()->user()?->can('appointments.restore') ?? false),
         ];
     }
 }

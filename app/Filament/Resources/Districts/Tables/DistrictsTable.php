@@ -21,10 +21,6 @@ class DistrictsTable
     {
         return $table
             ->columns([
-
-                // ═══════════════════════════════════════════════
-                // الاسم بالعربية
-                // ═══════════════════════════════════════════════
                 TextColumn::make('name_ar')
                     ->label('الاسم بالعربية')
                     ->searchable()
@@ -33,31 +29,20 @@ class DistrictsTable
                     ->icon('heroicon-o-map-pin')
                     ->iconColor('primary'),
 
-                // ═══════════════════════════════════════════════
-                // المحافظة (Badge)
-                // ═══════════════════════════════════════════════
                 TextColumn::make('governorate.name_ar')
                     ->label('المحافظة')
-                    ->badge()
                     ->color('info')
                     ->searchable()
                     ->sortable(),
 
-                // ═══════════════════════════════════════════════
-                // الاسم بالإنجليزية
-                // ═══════════════════════════════════════════════
                 TextColumn::make('name_en')
                     ->label('بالإنكليزية')
                     ->searchable()
                     ->toggleable()
                     ->color('gray'),
 
-                // ═══════════════════════════════════════════════
-                // الرمز
-                // ═══════════════════════════════════════════════
                 TextColumn::make('code')
                     ->label('الرمز')
-                    ->badge()
                     ->color('gray')
                     ->searchable()
                     ->copyable()
@@ -66,9 +51,6 @@ class DistrictsTable
                     ->placeholder('—')
                     ->toggleable(),
 
-                // ═══════════════════════════════════════════════
-                // الحالة
-                // ═══════════════════════════════════════════════
                 IconColumn::make('is_active')
                     ->label('الحالة')
                     ->boolean()
@@ -78,9 +60,6 @@ class DistrictsTable
                     ->falseColor('danger')
                     ->alignCenter(),
 
-                // ═══════════════════════════════════════════════
-                // الترتيب (مخفي افتراضياً)
-                // ═══════════════════════════════════════════════
                 TextColumn::make('sort_order')
                     ->label('الترتيب')
                     ->numeric()
@@ -88,9 +67,6 @@ class DistrictsTable
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                // ═══════════════════════════════════════════════
-                // التواريخ
-                // ═══════════════════════════════════════════════
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime('Y/m/d H:i')
@@ -113,16 +89,18 @@ class DistrictsTable
             ->defaultSort('governorate.name_ar', 'asc')
             ->striped()
             ->filters([
-
-                // فلتر حسب المحافظة
                 SelectFilter::make('governorate_id')
                     ->label('المحافظة')
-                    ->options(fn () => Governorate::active()->ordered()->pluck('name_ar', 'id')->toArray())
+                    ->options(
+                        fn () => Governorate::active()
+                            ->ordered()
+                            ->pluck('name_ar', 'id')
+                            ->toArray()
+                    )
                     ->searchable()
                     ->preload()
                     ->native(false),
 
-                // فلتر الحالة
                 TernaryFilter::make('is_active')
                     ->label('الحالة')
                     ->placeholder('الكل')
@@ -130,22 +108,53 @@ class DistrictsTable
                     ->falseLabel('المعطّلة فقط')
                     ->native(false),
 
-                // فلتر المحذوفة
                 TrashedFilter::make()
                     ->label('المحذوفة'),
             ])
             ->recordActions([
                 EditAction::make()
-                    ->label('تعديل'),
+                    ->label('تعديل')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('districts.update') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->label('حذف'),
+                        ->label('حذف')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('districts.delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('districts.delete'),
+                                403
+                            );
+                        }),
+
                     ForceDeleteBulkAction::make()
-                        ->label('حذف نهائي'),
+                        ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('districts.force_delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('districts.force_delete'),
+                                403
+                            );
+                        }),
+
                     RestoreBulkAction::make()
-                        ->label('استعادة'),
+                        ->label('استعادة')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('districts.restore') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('districts.restore'),
+                                403
+                            );
+                        }),
                 ]),
             ])
             ->emptyStateHeading('لا توجد مديريات بعد')

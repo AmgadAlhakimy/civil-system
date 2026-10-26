@@ -22,9 +22,6 @@ class BranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    // ═══════════════════════════════════════════════════════════
-    // الأيقونة والترتيب
-    // ═══════════════════════════════════════════════════════════
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingOffice2;
 
@@ -32,14 +29,61 @@ class BranchResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('branches.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('branches.create') ?? false;
+    }
+
+    public static function canView(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->can('branches.view') ?? false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->can('branches.update') ?? false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->can('branches.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('branches.delete') ?? false;
+    }
+
+    public static function canRestore(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->can('branches.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('branches.restore') ?? false;
+    }
+
+    public static function canForceDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->can('branches.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('branches.force_delete') ?? false;
+    }
+
     public static function getRecordTitle($record): string
     {
         return 'بيانات الفرع: ' . $record->name;
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // النماذج والجداول
-    // ═══════════════════════════════════════════════════════════
     public static function form(Schema $schema): Schema
     {
         return BranchForm::configure($schema);
@@ -78,9 +122,6 @@ class BranchResource extends Resource
             ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // التسميات العربية
-    // ═══════════════════════════════════════════════════════════
     public static function getModelLabel(): string
     {
         return 'فرع';

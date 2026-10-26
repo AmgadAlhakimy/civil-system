@@ -9,6 +9,16 @@ class CreateDeathCertificate extends CreateRecord
 {
     protected static string $resource = DeathCertificateResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('death_certificates.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'إصدار شهادة وفاة';

@@ -145,7 +145,6 @@ class DeathCertificatesTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
             ])
-
             ->filters([
 
                 SelectFilter::make('status')
@@ -160,26 +159,36 @@ class DeathCertificatesTable
                     ->label('سلة المحذوفات'),
 
             ])
-
             ->recordActions([
 
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn ($record): bool =>
+                            auth()->user()?->can('death_certificates.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn ($record): bool =>
+                            auth()->user()?->can('death_certificates.update') ?? false
+                    ),
 
             ])
-
             ->toolbarActions([
 
                 BulkActionGroup::make([
 
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('death_certificates.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف شهادات الوفاة المحددة')
                         ->modalDescription(
@@ -189,6 +198,10 @@ class DeathCertificatesTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('death_certificates.restore') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('استعادة الشهادات')
                         ->modalDescription(
@@ -198,6 +211,10 @@ class DeathCertificatesTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('death_certificates.force_delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
@@ -209,7 +226,6 @@ class DeathCertificatesTable
                     ->label('إجراءات جماعية'),
 
             ])
-
             ->defaultSort('created_at', 'desc');
     }
 }

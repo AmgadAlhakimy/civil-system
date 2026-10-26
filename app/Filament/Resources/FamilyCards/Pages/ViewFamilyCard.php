@@ -13,6 +13,16 @@ class ViewFamilyCard extends ViewRecord
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('family_cards.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'بيانات البطاقة العائلية: ' . $this->record->card_number;
@@ -33,8 +43,16 @@ class ViewFamilyCard extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool => $this->record->status === 'pending'
+                        && (auth()->user()?->can('family_cards.approve') ?? false)
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('family_cards.approve'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن اعتماد البطاقة')
@@ -86,8 +104,16 @@ class ViewFamilyCard extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، طباعة')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'active')
+                ->visible(
+                    fn (): bool => $this->record->status === 'active'
+                        && (auth()->user()?->can('family_cards.print') ?? false)
+                )
                 ->action(function () {
+                    abort_unless(
+                        auth()->user()?->can('family_cards.print'),
+                        403
+                    );
+
                     if ($this->record->status !== 'active') {
                         Notification::make()
                             ->title('لا يمكن طباعة البطاقة')
@@ -152,8 +178,16 @@ class ViewFamilyCard extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، رفض')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool => $this->record->status === 'pending'
+                        && (auth()->user()?->can('family_cards.reject') ?? false)
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('family_cards.reject'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن رفض البطاقة')
@@ -191,7 +225,10 @@ class ViewFamilyCard extends ViewRecord
 
             EditAction::make()
                 ->label('تعديل البطاقة')
-                ->icon('heroicon-o-pencil-square'),
+                ->icon('heroicon-o-pencil-square')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.update') ?? false
+                ),
 
         ];
     }

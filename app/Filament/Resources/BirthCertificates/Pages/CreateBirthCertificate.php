@@ -9,6 +9,16 @@ class CreateBirthCertificate extends CreateRecord
 {
     protected static string $resource = BirthCertificateResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('birth_certificates.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'إصدار شهادة ميلاد';

@@ -10,10 +10,23 @@ class ListDistricts extends ListRecords
 {
     protected static string $resource = DistrictResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('districts.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->visible(
+                    fn (): bool => auth()->user()?->can('districts.create') ?? false
+                ),
         ];
     }
 }

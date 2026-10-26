@@ -21,7 +21,8 @@ class FamilyCardResource extends Resource
 {
     protected static ?string $model = FamilyCard::class;
 
-    protected static string|BackedEnum|null $navigationIcon =  'heroicon-o-user-group';
+    protected static string|BackedEnum|null $navigationIcon =
+        'heroicon-o-user-group';
 
     protected static ?int $navigationSort = 4;
 
@@ -39,6 +40,56 @@ class FamilyCardResource extends Resource
     public static function getRecordTitle($record): string
     {
         return 'بيانات البطاقة العائلية: ' . $record->card_number;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('family_cards.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('family_cards.create') ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can('family_cards.view') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('family_cards.update') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('family_cards.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('family_cards.delete') ?? false;
+    }
+
+    public static function canRestore($record): bool
+    {
+        return auth()->user()?->can('family_cards.restore') ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('family_cards.restore') ?? false;
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return auth()->user()?->can('family_cards.force_delete') ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('family_cards.force_delete') ?? false;
     }
 
     public static function form(Schema $schema): Schema

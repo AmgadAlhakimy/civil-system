@@ -196,16 +196,28 @@ class AppointmentsTable
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn ($record): bool =>
+                            auth()->user()?->can('appointments.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn ($record): bool =>
+                            auth()->user()?->can('appointments.update') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('appointments.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف المواعيد المحددة')
                         ->modalDescription(
@@ -215,6 +227,10 @@ class AppointmentsTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('appointments.restore') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('استعادة المواعيد')
                         ->modalDescription(
@@ -224,6 +240,10 @@ class AppointmentsTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('appointments.force_delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(

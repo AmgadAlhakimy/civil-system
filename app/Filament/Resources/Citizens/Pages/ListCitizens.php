@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Citizens\Pages;
 use App\Filament\Resources\Citizens\CitizenResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Auth;
 
 class ListCitizens extends ListRecords
 {
@@ -16,7 +17,10 @@ class ListCitizens extends ListRecords
             CreateAction::make()
                 ->label('إضافة مواطن')
                 ->icon('heroicon-o-user-plus')
-                ->size('lg'),
+                ->size('lg')
+                ->visible(
+                    fn (): bool => Auth::user()?->can('citizens.create') ?? false
+                ),
         ];
     }
 }

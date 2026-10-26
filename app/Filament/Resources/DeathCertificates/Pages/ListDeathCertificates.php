@@ -10,6 +10,16 @@ class ListDeathCertificates extends ListRecords
 {
     protected static string $resource = DeathCertificateResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('death_certificates.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'شهادات الوفاة';
@@ -20,7 +30,11 @@ class ListDeathCertificates extends ListRecords
         return [
             CreateAction::make()
                 ->label('إصدار شهادة وفاة')
-                ->icon('heroicon-o-document-plus'),
+                ->icon('heroicon-o-document-plus')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('death_certificates.create') ?? false
+                ),
         ];
     }
 }

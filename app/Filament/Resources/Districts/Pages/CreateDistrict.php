@@ -8,4 +8,14 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateDistrict extends CreateRecord
 {
     protected static string $resource = DistrictResource::class;
+
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('districts.create'),
+            403
+        );
+
+        parent::mount();
+    }
 }

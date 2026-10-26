@@ -10,13 +10,26 @@ class ListBranches extends ListRecords
 {
     protected static string $resource = BranchResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('branches.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             CreateAction::make()
                 ->label('إضافة فرع')
                 ->icon('heroicon-o-building-office-2')
-                ->size('lg'),
+                ->size('lg')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('branches.create') ?? false
+                ),
         ];
     }
 }

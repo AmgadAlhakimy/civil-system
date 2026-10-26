@@ -9,6 +9,16 @@ class CreateFamilyCard extends CreateRecord
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('family_cards.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'إصدار بطاقة عائلية';

@@ -2,20 +2,20 @@
 
 namespace App\Providers\Filament;
 
-use App\Services\SettingService;
-use App\Support\Themes;
+use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Widgets\BranchesOverview;
+use App\Filament\Widgets\RecentActivities;
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\TodayStats;
 use App\Filament\Widgets\TransactionsChart;
-use App\Filament\Widgets\BranchesOverview;
-use App\Filament\Widgets\RecentActivities;
+use App\Http\Middleware\EnsurePasswordChange;
+use App\Services\SettingService;
+use App\Support\Themes;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Filament\Pages\ChangePassword;
-use App\Http\Middleware\EnsurePasswordChange;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;

@@ -18,6 +18,16 @@ class EditIdentityCard extends EditRecord
         return 'تعديل البطاقة الشخصية';
     }
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('identity_cards.update'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         unset(
@@ -39,17 +49,29 @@ class EditIdentityCard extends EditRecord
         return [
             ViewAction::make()
                 ->label('عرض البطاقة')
-                ->icon('heroicon-o-eye'),
+                ->icon('heroicon-o-eye')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('identity_cards.view') ?? false
+                ),
 
             DeleteAction::make()
                 ->label('حذف البطاقة')
-                ->icon('heroicon-o-trash'),
+                ->icon('heroicon-o-trash')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('identity_cards.delete') ?? false
+                ),
 
             ForceDeleteAction::make()
-                ->label('حذف نهائي'),
+                ->label('حذف نهائي')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('identity_cards.force_delete') ?? false
+                ),
 
             RestoreAction::make()
-                ->label('استعادة البطاقة'),
+                ->label('استعادة البطاقة')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('identity_cards.restore') ?? false
+                ),
         ];
     }
 }

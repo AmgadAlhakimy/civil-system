@@ -19,10 +19,6 @@ class GovernoratesTable
     {
         return $table
             ->columns([
-
-                // ═══════════════════════════════════════════════
-                // الاسم بالعربية (العمود الرئيسي)
-                // ═══════════════════════════════════════════════
                 TextColumn::make('name_ar')
                     ->label('الاسم بالعربية')
                     ->searchable()
@@ -31,52 +27,34 @@ class GovernoratesTable
                     ->icon('heroicon-o-building-library')
                     ->iconColor('primary'),
 
-                // ═══════════════════════════════════════════════
-                // الاسم بالإنجليزية
-                // ═══════════════════════════════════════════════
                 TextColumn::make('name_en')
                     ->label('بالإنكليزية')
                     ->searchable()
                     ->toggleable()
                     ->color('gray'),
 
-                // ═══════════════════════════════════════════════
-                // الرمز (Badge)
-                // ═══════════════════════════════════════════════
                 TextColumn::make('code')
                     ->label('الرمز')
-                    ->badge()
                     ->color('info')
                     ->searchable()
                     ->copyable()
                     ->copyMessage('تم نسخ الرمز')
                     ->fontFamily('mono'),
 
-                // ═══════════════════════════════════════════════
-                // عدد المديريات
-                // ═══════════════════════════════════════════════
                 TextColumn::make('districts_count')
                     ->label('المديريات')
                     ->counts('districts')
-                    ->badge()
                     ->color('warning')
                     ->alignCenter()
                     ->sortable(),
 
-                // ═══════════════════════════════════════════════
-                // عدد الفروع
-                // ═══════════════════════════════════════════════
                 TextColumn::make('branches_count')
                     ->label('الفروع')
                     ->counts('branches')
-                    ->badge()
                     ->color('success')
                     ->alignCenter()
                     ->sortable(),
 
-                // ═══════════════════════════════════════════════
-                // الحالة
-                // ═══════════════════════════════════════════════
                 IconColumn::make('is_active')
                     ->label('الحالة')
                     ->boolean()
@@ -86,9 +64,6 @@ class GovernoratesTable
                     ->falseColor('danger')
                     ->alignCenter(),
 
-                // ═══════════════════════════════════════════════
-                // الترتيب
-                // ═══════════════════════════════════════════════
                 TextColumn::make('sort_order')
                     ->label('الترتيب')
                     ->numeric()
@@ -96,9 +71,6 @@ class GovernoratesTable
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                // ═══════════════════════════════════════════════
-                // التواريخ (مخفية افتراضياً)
-                // ═══════════════════════════════════════════════
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime('Y/m/d H:i')
@@ -121,8 +93,6 @@ class GovernoratesTable
             ->defaultSort('sort_order', 'asc')
             ->striped()
             ->filters([
-
-                // فلتر الحالة (مفعّلة / معطّلة)
                 TernaryFilter::make('is_active')
                     ->label('الحالة')
                     ->placeholder('الكل')
@@ -130,22 +100,53 @@ class GovernoratesTable
                     ->falseLabel('المعطّلة فقط')
                     ->native(false),
 
-                // فلتر المحذوفة
                 TrashedFilter::make()
                     ->label('المحذوفة'),
             ])
             ->recordActions([
                 EditAction::make()
-                    ->label('تعديل'),
+                    ->label('تعديل')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('governorates.update') ?? false
+                    ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->label('حذف'),
+                        ->label('حذف')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('governorates.delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('governorates.delete'),
+                                403
+                            );
+                        }),
+
                     ForceDeleteBulkAction::make()
-                        ->label('حذف نهائي'),
+                        ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('governorates.force_delete') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('governorates.force_delete'),
+                                403
+                            );
+                        }),
+
                     RestoreBulkAction::make()
-                        ->label('استعادة'),
+                        ->label('استعادة')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('governorates.restore') ?? false
+                        )
+                        ->before(function (): void {
+                            abort_unless(
+                                auth()->user()?->can('governorates.restore'),
+                                403
+                            );
+                        }),
                 ]),
             ])
             ->emptyStateHeading('لا توجد محافظات بعد')

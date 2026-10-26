@@ -9,6 +9,11 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return auth()->user()?->can('users.create') ?? false;
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['must_change_password'] = true;

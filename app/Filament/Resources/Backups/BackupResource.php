@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class BackupResource extends Resource
 {
@@ -34,6 +35,31 @@ class BackupResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return 'التقارير والإدارة';
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('backups.view') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('backups.create') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('backups.view') ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->can('backups.delete') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('backups.delete') ?? false;
     }
 
     public static function infolist(Schema $schema): Schema

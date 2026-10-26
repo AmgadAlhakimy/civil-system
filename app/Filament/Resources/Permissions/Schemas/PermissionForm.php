@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Permissions\Schemas;
 
-use Illuminate\Support\Str;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -15,20 +13,22 @@ class PermissionForm
     {
         return $schema
             ->components([
-
                 Grid::make(2)
                     ->schema([
-
                         TextInput::make('name')
-                            ->label('اسم الصلاحية')
+                            ->label('الاسم البرمجي للصلاحية')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(100)
+                            ->regex('/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/')
+                            ->validationMessages([
+                                'regex' => 'يجب أن يكون الاسم بصيغة مثل citizens.view أو passports.approve.',
+                            ])
                             ->placeholder('مثال: citizens.view')
-                            ->helperText('الاسم البرمجي للصلاحية'),
+                            ->helperText('يتكون من اسم الوحدة ثم نقطة ثم الإجراء.'),
 
                         TextInput::make('name_ar')
-                            ->label('اسم الصلاحية بالعربي')
+                            ->label('اسم الصلاحية بالعربية')
                             ->required()
                             ->maxLength(100)
                             ->placeholder('مثال: عرض المواطنين'),
@@ -37,12 +37,14 @@ class PermissionForm
                             ->label('الوحدة')
                             ->required()
                             ->maxLength(50)
+                            ->regex('/^[a-z][a-z0-9_]*$/')
                             ->placeholder('مثال: citizens'),
 
                         TextInput::make('action')
                             ->label('الإجراء')
                             ->required()
                             ->maxLength(50)
+                            ->regex('/^[a-z][a-z0-9_]*$/')
                             ->placeholder('مثال: view'),
 
                         TextInput::make('guard_name')
@@ -57,8 +59,7 @@ class PermissionForm
                             ->label('الوصف')
                             ->rows(3)
                             ->maxLength(500)
-                            ->placeholder('وصف الصلاحية'),
-
+                            ->placeholder('وصف الصلاحية واستخدامها'),
                     ])
                     ->columnSpanFull(),
             ]);

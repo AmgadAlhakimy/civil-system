@@ -5,10 +5,21 @@ namespace App\Filament\Resources\Citizens\Pages;
 use App\Filament\Resources\Citizens\CitizenResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class CreateCitizen extends CreateRecord
 {
     protected static string $resource = CitizenResource::class;
+
+    protected function authorizeAccess(): void
+    {
+        parent::authorizeAccess();
+
+        abort_unless(
+            Auth::user()?->can('citizens.create'),
+            403
+        );
+    }
 
     protected function getFormActions(): array
     {

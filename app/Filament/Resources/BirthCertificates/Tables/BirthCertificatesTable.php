@@ -183,7 +183,6 @@ class BirthCertificatesTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
             ])
-
             ->filters([
 
                 SelectFilter::make('status')
@@ -198,26 +197,33 @@ class BirthCertificatesTable
                     ->label('سلة المحذوفات'),
 
             ])
-
             ->recordActions([
 
                 ViewAction::make()
                     ->label('عرض')
                     ->icon('heroicon-o-eye')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('birth_certificates.view') ?? false
+                    ),
 
                 EditAction::make()
                     ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square'),
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn ($record): bool => auth()->user()?->can('birth_certificates.update') ?? false
+                    ),
 
             ])
-
             ->toolbarActions([
 
                 BulkActionGroup::make([
 
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('birth_certificates.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف شهادات الميلاد المحددة')
                         ->modalDescription(
@@ -227,6 +233,9 @@ class BirthCertificatesTable
 
                     RestoreBulkAction::make()
                         ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('birth_certificates.restore') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('استعادة الشهادات')
                         ->modalDescription(
@@ -236,6 +245,9 @@ class BirthCertificatesTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('birth_certificates.force_delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف نهائي')
                         ->modalDescription(
@@ -247,7 +259,6 @@ class BirthCertificatesTable
                     ->label('إجراءات جماعية'),
 
             ])
-
             ->defaultSort('created_at', 'desc');
     }
 }

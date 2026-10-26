@@ -13,7 +13,6 @@ use App\Models\Passport;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -26,20 +25,50 @@ class PassportResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'السجل المدني';
-    }
-
     protected static ?string $recordTitleAttribute = 'passport_number';
 
     protected static ?string $modelLabel = 'جواز';
 
     protected static ?string $pluralModelLabel = 'الجوازات';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
+
     public static function getRecordTitle($record): string
     {
         return 'بيانات الجواز: ' . $record->passport_number;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can("passports.view") ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->can("passports.view") ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can("passports.create") ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can("passports.edit") ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can("passports.delete") ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can("passports.delete") ?? false;
     }
 
     public static function form(Schema $schema): Schema

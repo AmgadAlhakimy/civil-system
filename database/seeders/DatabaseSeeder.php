@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Amjad',
                 'full_name' => 'مدير النظام',
                 'phone' => '777100001',
-                'password' => 'Pa$$w0rd',
+                'password' => 'password',
                 'must_change_password' => true,
                 'account_type' => 'employee',
                 'branch_id' => Branch::where('code', 'SNA-01')->value('id'),
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $admin->assignRole('admin');
+        $admin->assignRole('مدير النظام');
 
         $this->call([
             UserSeeder::class,

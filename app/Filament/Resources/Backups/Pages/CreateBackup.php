@@ -14,6 +14,16 @@ class CreateBackup extends CreateRecord
 {
     protected static string $resource = BackupResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('backups.create'),
+            403
+        );
+
+        parent::mount();
+    }
+
     protected function getCreateFormAction(): Action
     {
         return parent::getCreateFormAction()
@@ -30,6 +40,11 @@ class CreateBackup extends CreateRecord
 
     protected function handleRecordCreation(array $data): Backup
     {
+        abort_unless(
+            auth()->user()?->can('backups.create'),
+            403
+        );
+
         try {
             return app(BackupService::class)->create(
                 type: 'manual',

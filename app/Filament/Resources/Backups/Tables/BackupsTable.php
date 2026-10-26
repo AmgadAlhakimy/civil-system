@@ -102,20 +102,43 @@ class BackupsTable
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
-                    ->icon('heroicon-o-eye'),
+                    ->icon('heroicon-o-eye')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('backups.view') ?? false
+                    ),
 
                 Action::make('download')
                     ->label('تحميل')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->visible(
                         fn (Backup $record): bool =>
-                            $record->status === 'completed' &&
-                            filled($record->file_path) &&
-                            Storage::disk('local')->exists($record->file_path)
+                            (auth()->user()?->can('backups.download') ?? false)
+                            && $record->status === 'completed'
+                            && filled($record->file_path)
+                            && Storage::disk(
+                                config('backup.backup.destination.disks.0', 'local')
+                            )->exists($record->file_path)
                     )
                     ->action(function (Backup $record) {
+                        abort_unless(
+                            auth()->user()?->can('backups.download'),
+                            403
+                        );
+
+                        abort_unless(
+                            $record->status === 'completed'
+                            && filled($record->file_path),
+                            404
+                        );
+
                         $disk = Storage::disk(
                             config('backup.backup.destination.disks.0', 'local')
+                        );
+
+                        abort_unless(
+                            $disk->exists($record->file_path),
+                            404
                         );
 
                         return $disk->download(
@@ -128,6 +151,10 @@ class BackupsTable
                     ->label('حذف')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('backups.delete') ?? false
+                    )
                     ->requiresConfirmation()
                     ->modalHeading('حذف النسخة الاحتياطية')
                     ->modalDescription(
@@ -136,13 +163,18 @@ class BackupsTable
                     ->modalSubmitActionLabel('نعم، حذف')
                     ->modalCancelActionLabel('إلغاء')
                     ->action(function (Backup $record): void {
+                        abort_unless(
+                            auth()->user()?->can('backups.delete'),
+                            403
+                        );
+
                         $disk = Storage::disk(
                             config('backup.backup.destination.disks.0', 'local')
                         );
 
                         if (
-                            filled($record->file_path) &&
-                            $disk->exists($record->file_path)
+                            filled($record->file_path)
+                            && $disk->exists($record->file_path)
                         ) {
                             $disk->delete($record->file_path);
                         }
@@ -156,6 +188,10 @@ class BackupsTable
                         ->label('حذف المحدد')
                         ->icon('heroicon-o-trash')
                         ->color('danger')
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('backups.delete') ?? false
+                        )
                         ->requiresConfirmation()
                         ->modalHeading('حذف النسخ الاحتياطية')
                         ->modalDescription(
@@ -164,14 +200,19 @@ class BackupsTable
                         ->modalSubmitActionLabel('نعم، حذف')
                         ->modalCancelActionLabel('إلغاء')
                         ->action(function ($records): void {
+                            abort_unless(
+                                auth()->user()?->can('backups.delete'),
+                                403
+                            );
+
                             $disk = Storage::disk(
                                 config('backup.backup.destination.disks.0', 'local')
                             );
 
                             foreach ($records as $record) {
                                 if (
-                                    filled($record->file_path) &&
-                                    $disk->exists($record->file_path)
+                                    filled($record->file_path)
+                                    && $disk->exists($record->file_path)
                                 ) {
                                     $disk->delete($record->file_path);
                                 }

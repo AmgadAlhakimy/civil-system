@@ -10,6 +10,16 @@ class ListIdentityCards extends ListRecords
 {
     protected static string $resource = IdentityCardResource::class;
 
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->can('identity_cards.view'),
+            403
+        );
+
+        parent::mount();
+    }
+
     public function getTitle(): string
     {
         return 'البطاقات الشخصية';
@@ -21,7 +31,10 @@ class ListIdentityCards extends ListRecords
             CreateAction::make()
                 ->label('إصدار بطاقة شخصية')
                 ->icon('heroicon-o-document-plus')
-                ->size('lg'),
+                ->size('lg')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('identity_cards.create') ?? false
+                ),
         ];
     }
 }

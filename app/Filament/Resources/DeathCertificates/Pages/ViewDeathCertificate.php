@@ -13,6 +13,16 @@ class ViewDeathCertificate extends ViewRecord
 {
     protected static string $resource = DeathCertificateResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('death_certificates.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'بيانات شهادة الوفاة: ' . $this->record->certificate_number;
@@ -33,8 +43,17 @@ class ViewDeathCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        (auth()->user()?->can('death_certificates.approve') ?? false)
+                        && $this->record->status === 'pending'
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('death_certificates.approve'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن اعتماد الشهادة')
@@ -81,8 +100,17 @@ class ViewDeathCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، طباعة')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'active')
+                ->visible(
+                    fn (): bool =>
+                        (auth()->user()?->can('death_certificates.print') ?? false)
+                        && $this->record->status === 'active'
+                )
                 ->action(function () {
+                    abort_unless(
+                        auth()->user()?->can('death_certificates.print'),
+                        403
+                    );
+
                     if ($this->record->status !== 'active') {
                         Notification::make()
                             ->title('لا يمكن طباعة الشهادة')
@@ -145,8 +173,17 @@ class ViewDeathCertificate extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، إلغاء')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        (auth()->user()?->can('death_certificates.cancel') ?? false)
+                        && $this->record->status === 'pending'
+                )
                 ->action(function (): void {
+                    abort_unless(
+                        auth()->user()?->can('death_certificates.cancel'),
+                        403
+                    );
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن إلغاء الشهادة')
@@ -182,7 +219,11 @@ class ViewDeathCertificate extends ViewRecord
 
             EditAction::make()
                 ->label('تعديل الشهادة')
-                ->icon('heroicon-o-pencil-square'),
+                ->icon('heroicon-o-pencil-square')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('death_certificates.update') ?? false
+                ),
 
         ];
     }

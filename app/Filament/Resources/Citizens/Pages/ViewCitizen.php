@@ -15,6 +15,16 @@ class ViewCitizen extends ViewRecord
 {
     protected static string $resource = CitizenResource::class;
 
+    protected function authorizeAccess(): void
+    {
+        parent::authorizeAccess();
+
+        abort_unless(
+            Auth::user()?->can('citizens.view') ?? false,
+            403
+        );
+    }
+
     public function mount(int|string $record): void
     {
         parent::mount($record);
@@ -45,10 +55,17 @@ class ViewCitizen extends ViewRecord
                 ->modalDescription('هل أنت متأكد من اعتماد بيانات هذا المواطن؟')
                 ->modalSubmitActionLabel('تأكيد الاعتماد')
                 ->visible(
-                    fn (): bool => !$this->record->trashed()
+                    fn (): bool =>
+                        (Auth::user()?->can('citizens.approve') ?? false)
+                        && !$this->record->trashed()
                         && $this->record->verification_status === 'pending'
                 )
                 ->action(function (): void {
+                    abort_unless(
+                        Auth::user()?->can('citizens.approve') ?? false,
+                        403
+                    );
+
                     $this->record->update([
                         'verification_status' => 'approved',
                         'verified_by' => Auth::id(),
@@ -91,10 +108,17 @@ class ViewCitizen extends ViewRecord
                         ]),
                 ])
                 ->visible(
-                    fn (): bool => !$this->record->trashed()
+                    fn (): bool =>
+                        (Auth::user()?->can('citizens.reject') ?? false)
+                        && !$this->record->trashed()
                         && $this->record->verification_status === 'pending'
                 )
                 ->action(function (array $data): void {
+                    abort_unless(
+                        Auth::user()?->can('citizens.reject') ?? false,
+                        403
+                    );
+
                     $this->record->update([
                         'verification_status' => 'rejected',
                         'rejection_reason' => $data['rejection_reason'],
@@ -125,10 +149,17 @@ class ViewCitizen extends ViewRecord
                 ->modalDescription('تأكد من تصحيح البيانات المطلوبة قبل إعادتها للمراجعة.')
                 ->modalSubmitActionLabel('إعادة التقديم')
                 ->visible(
-                    fn (): bool => !$this->record->trashed()
+                    fn (): bool =>
+                        (Auth::user()?->can('citizens.resubmit') ?? false)
+                        && !$this->record->trashed()
                         && $this->record->verification_status === 'rejected'
                 )
                 ->action(function (): void {
+                    abort_unless(
+                        Auth::user()?->can('citizens.resubmit') ?? false,
+                        403
+                    );
+
                     $this->record->update([
                         'verification_status' => 'pending',
                         'rejection_reason' => null,
@@ -152,7 +183,11 @@ class ViewCitizen extends ViewRecord
 
             EditAction::make()
                 ->label('تعديل المواطن')
-                ->icon('heroicon-o-pencil-square'),
+                ->icon('heroicon-o-pencil-square')
+                ->visible(
+                    fn (): bool =>
+                        Auth::user()?->can('citizens.update') ?? false
+                ),
 
             DeleteAction::make()
                 ->label('حذف المواطن')
@@ -162,7 +197,11 @@ class ViewCitizen extends ViewRecord
                 ->modalHeading('حذف المواطن')
                 ->modalDescription('هل أنت متأكد من حذف هذا المواطن؟ سيتم نقله إلى سلة المحذوفات.')
                 ->modalSubmitActionLabel('تأكيد الحذف')
-                ->successNotificationTitle('تم حذف المواطن بنجاح'),
+                ->successNotificationTitle('تم حذف المواطن بنجاح')
+                ->visible(
+                    fn (): bool =>
+                        Auth::user()?->can('citizens.delete') ?? false
+                ),
         ];
     }
 }

@@ -13,6 +13,16 @@ class EditFamilyCard extends EditRecord
 {
     protected static string $resource = FamilyCardResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('family_cards.update'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'تعديل البطاقة العائلية';
@@ -38,16 +48,28 @@ class EditFamilyCard extends EditRecord
         return [
             ViewAction::make()
                 ->label('عرض')
-                ->icon('heroicon-o-eye'),
+                ->icon('heroicon-o-eye')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.view') ?? false
+                ),
 
             DeleteAction::make()
-                ->label('حذف البطاقة'),
+                ->label('حذف البطاقة')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.delete') ?? false
+                ),
 
             ForceDeleteAction::make()
-                ->label('حذف نهائي'),
+                ->label('حذف نهائي')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.force_delete') ?? false
+                ),
 
             RestoreAction::make()
-                ->label('استعادة البطاقة'),
+                ->label('استعادة البطاقة')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('family_cards.restore') ?? false
+                ),
         ];
     }
 }

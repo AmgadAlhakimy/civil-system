@@ -16,6 +16,16 @@ class ViewIdentityCard extends ViewRecord
 {
     protected static string $resource = IdentityCardResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(
+            auth()->user()?->can('identity_cards.view'),
+            403
+        );
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return 'بيانات البطاقة الشخصية: ' . $this->record->national_id;
@@ -52,8 +62,18 @@ class ViewIdentityCard extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('identity_cards.approve') ?? false)
+                )
                 ->action(function (): void {
+                    if (
+                        ! auth()->user()?->can('identity_cards.approve')
+                    ) {
+                        abort(403);
+                    }
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن اعتماد البطاقة')
@@ -107,8 +127,16 @@ class ViewIdentityCard extends ViewRecord
                 )
                 ->modalSubmitActionLabel('نعم، طباعة')
                 ->modalCancelActionLabel('إلغاء')
-                ->visible(fn (): bool => $this->record->status === 'active')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'active'
+                        && (auth()->user()?->can('identity_cards.print') ?? false)
+                )
                 ->action(function () {
+                    if (! auth()->user()?->can('identity_cards.print')) {
+                        abort(403);
+                    }
+
                     if ($this->record->status !== 'active') {
                         Notification::make()
                             ->title('لا يمكن طباعة البطاقة')
@@ -240,7 +268,11 @@ class ViewIdentityCard extends ViewRecord
                 ->label('رفض البطاقة')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn (): bool => $this->record->status === 'pending')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('identity_cards.reject') ?? false)
+                )
                 ->schema([
                     Textarea::make('rejection_reason')
                         ->label('سبب رفض البطاقة')
@@ -263,6 +295,10 @@ class ViewIdentityCard extends ViewRecord
                 ->modalSubmitActionLabel('تأكيد الرفض')
                 ->modalCancelActionLabel('إلغاء')
                 ->action(function (array $data): void {
+                    if (! auth()->user()?->can('identity_cards.reject')) {
+                        abort(403);
+                    }
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن رفض البطاقة')
@@ -306,7 +342,11 @@ class ViewIdentityCard extends ViewRecord
                 ->label('إعادة التقديم')
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
-                ->visible(fn (): bool => $this->record->status === 'rejected')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'rejected'
+                        && (auth()->user()?->can('identity_cards.resubmit') ?? false)
+                )
                 ->requiresConfirmation()
                 ->modalHeading('إعادة تقديم طلب البطاقة')
                 ->modalDescription(
@@ -315,6 +355,10 @@ class ViewIdentityCard extends ViewRecord
                 ->modalSubmitActionLabel('نعم، إعادة التقديم')
                 ->modalCancelActionLabel('إلغاء')
                 ->action(function (): void {
+                    if (! auth()->user()?->can('identity_cards.resubmit')) {
+                        abort(403);
+                    }
+
                     if ($this->record->status !== 'rejected') {
                         Notification::make()
                             ->title('لا يمكن إعادة التقديم')
@@ -354,12 +398,20 @@ class ViewIdentityCard extends ViewRecord
 
             EditAction::make()
                 ->label('تعديل البطاقة')
-                ->icon('heroicon-o-pencil-square'),
+                ->icon('heroicon-o-pencil-square')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('identity_cards.update') ?? false
+                ),
 
             DeleteAction::make()
                 ->label('حذف البطاقة')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('identity_cards.delete') ?? false
+                )
                 ->requiresConfirmation()
                 ->modalHeading('حذف البطاقة الشخصية')
                 ->modalDescription(
