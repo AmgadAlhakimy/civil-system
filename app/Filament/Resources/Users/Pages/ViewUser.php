@@ -25,7 +25,7 @@ class ViewUser extends ViewRecord
                 ->icon('heroicon-o-pencil-square')
                 ->color('primary')
                 ->visible(
-                    fn (): bool => auth()->user()?->can('users.edit') ?? false
+                    fn (): bool => auth()->user()?->can('users.update') ?? false
                 ),
 
             DeleteAction::make()

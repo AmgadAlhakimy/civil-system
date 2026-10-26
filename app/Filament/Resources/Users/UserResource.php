@@ -84,7 +84,7 @@ class UserResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can('users.edit') ?? false;
+        return auth()->user()?->can('users.update') ?? false;
     }
 
     public static function canDelete($record): bool

@@ -238,10 +238,10 @@ class ViewPassport extends ViewRecord
                 ->visible(
                     fn (): bool =>
                         $this->record->status === "rejected"
-                        && (auth()->user()?->can("passports.edit") ?? false)
+                        && (auth()->user()?->can("passports.update") ?? false)
                 )
                 ->action(function (): void {
-                    $this->authorizePassportAction("passports.edit");
+                    $this->authorizePassportAction("passports.update");
 
                     $resubmitted = DB::transaction(function (): bool {
                         $passport = Passport::query()
@@ -470,7 +470,7 @@ class ViewPassport extends ViewRecord
                 ->icon("heroicon-o-pencil-square")
                 ->visible(
                     fn (): bool =>
-                        auth()->user()?->can("passports.edit") ?? false
+                        auth()->user()?->can("passports.update") ?? false
                 ),
 
             DeleteAction::make()

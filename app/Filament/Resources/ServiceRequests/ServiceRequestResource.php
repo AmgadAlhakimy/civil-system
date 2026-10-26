@@ -145,7 +145,7 @@ class ServiceRequestResource extends Resource
     // عدد الطلبات المعلقة
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()
+        $count = ServiceRequest::query()
             ->where('status', 'pending')
             ->count();
 

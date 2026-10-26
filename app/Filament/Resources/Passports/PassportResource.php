@@ -58,7 +58,7 @@ class PassportResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can("passports.edit") ?? false;
+        return auth()->user()?->can("passports.update") ?? false;
     }
 
     public static function canDelete($record): bool

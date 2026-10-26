@@ -11,24 +11,19 @@ return new class extends Migration
         Schema::create('governorates', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
-            // رمز المحافظة (مثل: SNA, ADN)
             $table->string('code', 10)->unique();
 
-            // الأسماء
             $table->string('name_ar', 100);
             $table->string('name_en', 100);
 
-            // الحالة والترتيب
             $table->boolean('is_active')->default(true);
-            $table->integer('sort_order')->default(0);
 
             $table->timestamps();
             $table->softDeletes();
 
-            // Indexes
-            $table->index('code');
+            $table->index('name_ar');
+            $table->index('name_en');
             $table->index('is_active');
-            $table->index('sort_order');
         });
     }
 

@@ -2,18 +2,24 @@
 
 namespace App\Filament\Resources\Districts\Tables;
 
+use App\Models\District;
 use App\Models\Governorate;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DistrictsTable
 {
@@ -22,34 +28,30 @@ class DistrictsTable
         return $table
             ->columns([
                 TextColumn::make('name_ar')
-                    ->label('الاسم بالعربية')
+                    ->label('اسم المديرية بالعربية')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold')
-                    ->icon('heroicon-o-map-pin')
-                    ->iconColor('primary'),
+                    ->weight('bold'),
+
+                TextColumn::make('name_en')
+                    ->label('اسم المديرية بالإنجليزية')
+                    ->searchable()
+                    ->sortable()
+                    ->copyMessage('تم نسخ اسم المديرية بالإنجليزية'),
 
                 TextColumn::make('governorate.name_ar')
                     ->label('المحافظة')
-                    ->color('info')
                     ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('name_en')
-                    ->label('بالإنكليزية')
-                    ->searchable()
-                    ->toggleable()
-                    ->color('gray'),
+                    ->sortable()
+                    ->color('info'),
 
                 TextColumn::make('code')
-                    ->label('الرمز')
-                    ->color('gray')
+                    ->label('رمز المديرية')
                     ->searchable()
+                    ->sortable()
                     ->copyable()
-                    ->copyMessage('تم نسخ الرمز')
-                    ->fontFamily('mono')
-                    ->placeholder('—')
-                    ->toggleable(),
+                    ->copyMessage('تم نسخ رمز المديرية')
+                    ->fontFamily('mono'),
 
                 IconColumn::make('is_active')
                     ->label('الحالة')
@@ -58,14 +60,8 @@ class DistrictsTable
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
-                    ->alignCenter(),
-
-                TextColumn::make('sort_order')
-                    ->label('الترتيب')
-                    ->numeric()
                     ->sortable()
-                    ->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->alignCenter(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
@@ -92,8 +88,8 @@ class DistrictsTable
                 SelectFilter::make('governorate_id')
                     ->label('المحافظة')
                     ->options(
-                        fn () => Governorate::active()
-                            ->ordered()
+                        fn (): array => Governorate::query()
+                            ->orderBy('name_ar')
                             ->pluck('name_ar', 'id')
                             ->toArray()
                     )
@@ -109,25 +105,112 @@ class DistrictsTable
                     ->native(false),
 
                 TrashedFilter::make()
-                    ->label('المحذوفة'),
+                    ->label('حالة الحذف'),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->label('عرض')
+                    ->icon('heroicon-o-eye')
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('districts.view') ?? false
+                    ),
+
                 EditAction::make()
                     ->label('تعديل')
+                    ->icon('heroicon-o-pencil-square')
                     ->visible(
-                        fn ($record): bool => auth()->user()?->can('districts.update') ?? false
+                        fn (): bool => auth()->user()?->can('districts.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label('حذف')
+                    BulkAction::make('delete')
+                        ->label('حذف المحدد')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
                         ->visible(
-                            fn (): bool => auth()->user()?->can('districts.delete') ?? false
+                            fn (HasTable $livewire): bool =>
+                                (auth()->user()?->can('districts.delete') ?? false)
+                                && in_array(
+                                    $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                    [null, ''],
+                                    true
+                                )
+                        )
+                        ->requiresConfirmation()
+                        ->modalHeading('حذف المديريات المحددة')
+                        ->modalDescription(
+                            'سيتم حذف المديريات المحددة. المديريات المرتبطة بفروع سيتم تجاوزها.'
+                        )
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records): void {
+                            abort_unless(
+                                auth()->user()?->can('districts.delete') ?? false,
+                                403
+                            );
+
+                            $deleted = 0;
+                            $skipped = 0;
+
+                            DB::transaction(function () use (
+                                $records,
+                                &$deleted,
+                                &$skipped
+                            ): void {
+                                foreach ($records as $record) {
+                                    $district = District::withTrashed()
+                                        ->find($record->getKey());
+
+                                    if (! $district || $district->trashed()) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if (
+                                        method_exists($district, 'branches')
+                                        && $district->branches()->exists()
+                                    ) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if ($district->delete()) {
+                                        $deleted++;
+                                    }
+                                }
+                            });
+
+                            $notification = Notification::make()
+                                ->title(
+                                    $skipped > 0
+                                        ? 'اكتملت عملية الحذف'
+                                        : 'تم الحذف بنجاح'
+                                )
+                                ->body(
+                                    "تم حذف {$deleted} مديرية، "
+                                    . "وتجاوز {$skipped} مديرية لوجود ارتباطات أو لتعذر حذفها."
+                                );
+
+                            if ($skipped > 0) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->send();
+                        }),
+
+                    RestoreBulkAction::make()
+                        ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('districts.restore') ?? false
                         )
                         ->before(function (): void {
                             abort_unless(
-                                auth()->user()?->can('districts.delete'),
+                                auth()->user()?->can('districts.restore') ?? false,
                                 403
                             );
                         }),
@@ -137,28 +220,75 @@ class DistrictsTable
                         ->visible(
                             fn (): bool => auth()->user()?->can('districts.force_delete') ?? false
                         )
-                        ->before(function (): void {
-                            abort_unless(
-                                auth()->user()?->can('districts.force_delete'),
-                                403
-                            );
-                        }),
-
-                    RestoreBulkAction::make()
-                        ->label('استعادة')
-                        ->visible(
-                            fn (): bool => auth()->user()?->can('districts.restore') ?? false
+                        ->requiresConfirmation()
+                        ->modalHeading('الحذف النهائي للمديريات')
+                        ->modalDescription(
+                            'سيتم حذف المديريات المحددة نهائيًا. لا يمكن التراجع عن هذا الإجراء.'
                         )
-                        ->before(function (): void {
+                        ->modalSubmitActionLabel('نعم، حذف نهائي')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records): void {
                             abort_unless(
-                                auth()->user()?->can('districts.restore'),
+                                auth()->user()?->can('districts.force_delete') ?? false,
                                 403
                             );
+
+                            $deleted = 0;
+                            $skipped = 0;
+
+                            DB::transaction(function () use (
+                                $records,
+                                &$deleted,
+                                &$skipped
+                            ): void {
+                                foreach ($records as $record) {
+                                    $district = District::withTrashed()
+                                        ->find($record->getKey());
+
+                                    if (! $district) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if (
+                                        method_exists($district, 'branches')
+                                        && $district->branches()->withTrashed()->exists()
+                                    ) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if ($district->forceDelete()) {
+                                        $deleted++;
+                                    }
+                                }
+                            });
+
+                            $notification = Notification::make()
+                                ->title(
+                                    $skipped > 0
+                                        ? 'اكتملت عملية الحذف النهائي'
+                                        : 'تم الحذف النهائي بنجاح'
+                                )
+                                ->body(
+                                    "تم حذف {$deleted} مديرية نهائيًا، "
+                                    . "وتجاوز {$skipped} مديرية لوجود ارتباطات أو لتعذر حذفها."
+                                );
+
+                            if ($skipped > 0) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->send();
                         }),
-                ]),
+                ])->label('إجراءات جماعية'),
             ])
-            ->emptyStateHeading('لا توجد مديريات بعد')
-            ->emptyStateDescription('ابدأ بإضافة مديرية جديدة من زر "إنشاء".')
+            ->emptyStateHeading('لا توجد مديريات')
+            ->emptyStateDescription(
+                'يمكنك إضافة مديرية جديدة باستخدام زر الإضافة.'
+            )
             ->emptyStateIcon('heroicon-o-map');
     }
 }

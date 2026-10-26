@@ -2,16 +2,22 @@
 
 namespace App\Filament\Resources\Governorates\Tables;
 
+use App\Models\Governorate;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class GovernoratesTable
 {
@@ -20,38 +26,36 @@ class GovernoratesTable
         return $table
             ->columns([
                 TextColumn::make('name_ar')
-                    ->label('الاسم بالعربية')
+                    ->label('اسم المحافظة بالعربية')
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->icon('heroicon-o-building-library')
                     ->iconColor('primary'),
 
                 TextColumn::make('name_en')
-                    ->label('بالإنكليزية')
+                    ->label('اسم المحافظة بالإنجليزية')
                     ->searchable()
-                    ->toggleable()
-                    ->color('gray'),
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('تم نسخ اسم المحافظة بالإنجليزية'),
 
                 TextColumn::make('code')
                     ->label('الرمز')
-                    ->color('info')
                     ->searchable()
+                    ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ الرمز')
                     ->fontFamily('mono'),
 
                 TextColumn::make('districts_count')
-                    ->label('المديريات')
+                    ->label('عدد المديريات')
                     ->counts('districts')
-                    ->color('warning')
                     ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('branches_count')
-                    ->label('الفروع')
+                    ->label('عدد الفروع')
                     ->counts('branches')
-                    ->color('success')
                     ->alignCenter()
                     ->sortable(),
 
@@ -62,14 +66,8 @@ class GovernoratesTable
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
-                    ->alignCenter(),
-
-                TextColumn::make('sort_order')
-                    ->label('الترتيب')
-                    ->numeric()
                     ->sortable()
-                    ->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->alignCenter(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
@@ -90,7 +88,7 @@ class GovernoratesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('sort_order', 'asc')
+            ->defaultSort('name_ar', 'asc')
             ->striped()
             ->filters([
                 TernaryFilter::make('is_active')
@@ -101,25 +99,113 @@ class GovernoratesTable
                     ->native(false),
 
                 TrashedFilter::make()
-                    ->label('المحذوفة'),
+                    ->label('حالة الحذف'),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->label('عرض')
+                    ->icon('heroicon-o-eye')
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can('governorates.view') ?? false
+                    ),
+
                 EditAction::make()
                     ->label('تعديل')
+                    ->icon('heroicon-o-pencil-square')
                     ->visible(
                         fn (): bool => auth()->user()?->can('governorates.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label('حذف')
+                    BulkAction::make('delete')
+                        ->label('حذف المحدد')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
                         ->visible(
-                            fn (): bool => auth()->user()?->can('governorates.delete') ?? false
+                            fn (HasTable $livewire): bool =>
+                                (auth()->user()?->can('governorates.delete') ?? false)
+                                && in_array(
+                                    $livewire->getTableFilterState('trashed')['value'] ?? null,
+                                    [null, ''],
+                                    true
+                                )
+                        )
+                        ->requiresConfirmation()
+                        ->modalHeading('حذف المحافظات المحددة')
+                        ->modalDescription(
+                            'سيتم حذف المحافظات التي لا ترتبط بمديريات أو فروع. '
+                            . 'أما المحافظات المرتبطة بها فسيتم تجاوزها.'
+                        )
+                        ->modalSubmitActionLabel('نعم، حذف')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records): void {
+                            abort_unless(
+                                auth()->user()?->can('governorates.delete') ?? false,
+                                403
+                            );
+
+                            $deleted = 0;
+                            $skipped = 0;
+
+                            DB::transaction(function () use (
+                                $records,
+                                &$deleted,
+                                &$skipped
+                            ): void {
+                                foreach ($records as $record) {
+                                    $governorate = Governorate::withTrashed()
+                                        ->find($record->getKey());
+
+                                    if (! $governorate || $governorate->trashed()) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if (
+                                        $governorate->districts()->exists()
+                                        || $governorate->branches()->exists()
+                                    ) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if ($governorate->delete()) {
+                                        $deleted++;
+                                    }
+                                }
+                            });
+
+                            $notification = Notification::make()
+                                ->title(
+                                    $skipped > 0
+                                        ? 'اكتملت عملية الحذف'
+                                        : 'تم الحذف بنجاح'
+                                )
+                                ->body(
+                                    "تم حذف {$deleted} محافظة، "
+                                    . "وتجاوز {$skipped} محافظة لوجود ارتباطات أو لتعذر حذفها."
+                                );
+
+                            if ($skipped > 0) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->send();
+                        }),
+
+                    RestoreBulkAction::make()
+                        ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can('governorates.restore') ?? false
                         )
                         ->before(function (): void {
                             abort_unless(
-                                auth()->user()?->can('governorates.delete'),
+                                auth()->user()?->can('governorates.restore') ?? false,
                                 403
                             );
                         }),
@@ -129,28 +215,76 @@ class GovernoratesTable
                         ->visible(
                             fn (): bool => auth()->user()?->can('governorates.force_delete') ?? false
                         )
-                        ->before(function (): void {
-                            abort_unless(
-                                auth()->user()?->can('governorates.force_delete'),
-                                403
-                            );
-                        }),
-
-                    RestoreBulkAction::make()
-                        ->label('استعادة')
-                        ->visible(
-                            fn (): bool => auth()->user()?->can('governorates.restore') ?? false
+                        ->requiresConfirmation()
+                        ->modalHeading('الحذف النهائي للمحافظات')
+                        ->modalDescription(
+                            'سيتم حذف المحافظات المحددة نهائيًا. '
+                            . 'المحافظات المرتبطة بمديريات أو فروع سيتم تجاوزها.'
                         )
-                        ->before(function (): void {
+                        ->modalSubmitActionLabel('نعم، حذف نهائي')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records): void {
                             abort_unless(
-                                auth()->user()?->can('governorates.restore'),
+                                auth()->user()?->can('governorates.force_delete') ?? false,
                                 403
                             );
+
+                            $deleted = 0;
+                            $skipped = 0;
+
+                            DB::transaction(function () use (
+                                $records,
+                                &$deleted,
+                                &$skipped
+                            ): void {
+                                foreach ($records as $record) {
+                                    $governorate = Governorate::withTrashed()
+                                        ->find($record->getKey());
+
+                                    if (! $governorate) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if (
+                                        $governorate->districts()->withTrashed()->exists()
+                                        || $governorate->branches()->withTrashed()->exists()
+                                    ) {
+                                        $skipped++;
+                                        continue;
+                                    }
+
+                                    if ($governorate->forceDelete()) {
+                                        $deleted++;
+                                    }
+                                }
+                            });
+
+                            $notification = Notification::make()
+                                ->title(
+                                    $skipped > 0
+                                        ? 'اكتملت عملية الحذف النهائي'
+                                        : 'تم الحذف النهائي بنجاح'
+                                )
+                                ->body(
+                                    "تم حذف {$deleted} محافظة نهائيًا، "
+                                    . "وتجاوز {$skipped} محافظة لوجود ارتباطات أو لتعذر حذفها."
+                                );
+
+                            if ($skipped > 0) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->send();
                         }),
-                ]),
+                ])->label('إجراءات جماعية'),
             ])
-            ->emptyStateHeading('لا توجد محافظات بعد')
-            ->emptyStateDescription('ابدأ بإضافة محافظة جديدة من زر "إنشاء".')
+            ->emptyStateHeading('لا توجد محافظات')
+            ->emptyStateDescription(
+                'يمكنك إضافة محافظة جديدة باستخدام زر الإضافة.'
+            )
             ->emptyStateIcon('heroicon-o-building-library');
     }
 }

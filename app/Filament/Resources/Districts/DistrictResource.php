@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Districts;
 use App\Filament\Resources\Districts\Pages\CreateDistrict;
 use App\Filament\Resources\Districts\Pages\EditDistrict;
 use App\Filament\Resources\Districts\Pages\ListDistricts;
+use App\Filament\Resources\Districts\Pages\ViewDistrict;
 use App\Filament\Resources\Districts\Schemas\DistrictForm;
 use App\Filament\Resources\Districts\Tables\DistrictsTable;
 use App\Models\District;
@@ -26,7 +27,7 @@ class DistrictResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name_ar';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
 
     public static function canViewAny(): bool
     {
@@ -99,6 +100,7 @@ class DistrictResource extends Resource
             'index' => ListDistricts::route('/'),
             'create' => CreateDistrict::route('/create'),
             'edit' => EditDistrict::route('/{record}/edit'),
+            'view' => ViewDistrict::route('/{record}'),
         ];
     }
 
@@ -127,16 +129,6 @@ class DistrictResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'المواقع الجغرافية';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'warning';
+        return 'النظام';
     }
 }

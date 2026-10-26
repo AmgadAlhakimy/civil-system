@@ -13,64 +13,92 @@ class GovernorateForm
     {
         return $schema
             ->components([
-
-                // ═══════════════════════════════════════════════
-                // القسم 1: البيانات الأساسية
-                // ═══════════════════════════════════════════════
                 Section::make('البيانات الأساسية')
-                    ->description('الاسم والرمز التعريفي للمحافظة')
+                    ->description('اسم المحافظة بالعربية والإنجليزية ورمزها التعريفي')
                     ->icon('heroicon-o-building-library')
                     ->schema([
-                        TextInput::make('name_ar')
-                            ->label('الاسم بالعربية')
-                            ->placeholder('مثال: أمانة العاصمة، صنعاء، عدن')
-                            ->required()
-                            ->maxLength(100)
-                            ->autofocus(),
-
-                        TextInput::make('name_en')
-                            ->label('الاسم بالإنجليزية')
-                            ->placeholder('مثال: Sanaa, Aden')
-                            ->required()
-                            ->maxLength(100)
-                            ->rules(['alpha_spaces'])
-                            ->helperText('استخدم الحروف الإنجليزية فقط'),
-
                         TextInput::make('code')
                             ->label('رمز المحافظة')
-                            ->placeholder('مثال: SNA, ADN, TAIZ')
+                            ->placeholder('مثال: SNA')
                             ->required()
+                            ->minLength(2)
                             ->maxLength(10)
                             ->unique(ignoreRecord: true)
-                            ->rules(['alpha_num'])
-                            ->helperText('رمز قصير فريد (بالأحرف الكبيرة عادة)')
-                            ->disabledOn('edit'),
+                            ->regex('/^[A-Za-z0-9_-]+$/')
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? strtoupper(trim($state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل رمز المحافظة مطلوب',
+                                'min' => 'يجب ألا يقل الرمز عن حرفين',
+                                'max' => 'يجب ألا يتجاوز الرمز 10 أحرف',
+                                'unique' => 'رمز المحافظة مستخدم مسبقاً',
+                                'regex' => 'الرمز يقبل الأحرف الإنجليزية والأرقام والشرطة والشرطة السفلية فقط',
+                            ]),
+
+                        TextInput::make('name_ar')
+                            ->label('اسم المحافظة بالعربية')
+                            ->placeholder('مثال: صنعاء')
+                            ->required()
+                            ->minLength(2)
+                            ->maxLength(100)
+                            ->unique(ignoreRecord: true)
+                            ->autofocus()
+                            ->regex('/^[\p{Arabic}\s]+$/u')
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? trim(preg_replace('/\s+/u', ' ', $state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل اسم المحافظة بالعربية مطلوب',
+                                'min' => 'يجب ألا يقل اسم المحافظة عن حرفين',
+                                'max' => 'يجب ألا يتجاوز اسم المحافظة 100 حرف',
+                                'unique' => 'اسم المحافظة بالعربية موجود مسبقًا، يرجى اختيار اسم آخر',
+                                'regex' => 'اسم المحافظة بالعربية يجب أن يحتوي على حروف عربية ومسافات فقط',
+                            ]),
+
+                        TextInput::make('name_en')
+                            ->label('اسم المحافظة بالإنجليزية')
+                            ->placeholder('مثال: Sanaa')
+                            ->required()
+                            ->minLength(2)
+                            ->maxLength(100)
+                            ->unique(ignoreRecord: true)
+                            ->regex('/^[A-Za-z\s]+$/')
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? trim(preg_replace('/\s+/', ' ', $state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل اسم المحافظة بالإنجليزية مطلوب',
+                                'min' => 'يجب ألا يقل اسم المحافظة عن حرفين',
+                                'max' => 'يجب ألا يتجاوز اسم المحافظة 100 حرف',
+                                'unique' => 'اسم المحافظة بالإنجليزية موجود مسبقًا، يرجى اختيار اسم آخر',
+                                'regex' => 'اسم المحافظة بالإنجليزية يجب أن يحتوي على حروف إنجليزية ومسافات فقط',
+                            ]),
                     ])
-                    ->columns(2)
+                    ->columns(3)
                     ->columnSpanFull(),
 
-                // ═══════════════════════════════════════════════
-                // القسم 2: الحالة والترتيب
-                // ═══════════════════════════════════════════════
-                Section::make('الحالة والترتيب')
+                Section::make('حالة المحافظة')
+                    ->description('تحديد إمكانية استخدام المحافظة في النظام')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->schema([
                         Toggle::make('is_active')
-                            ->label('مفعّلة')
-                            ->helperText('عند الإيقاف، لن تظهر المحافظة في التطبيق')
+                            ->label('المحافظة مفعّلة')
+                            ->helperText(
+                                'المحافظات غير المفعّلة يمكن استبعادها من قوائم الاختيار'
+                            )
                             ->default(true)
+                            ->required()
                             ->onColor('success')
                             ->offColor('danger'),
-
-                        TextInput::make('sort_order')
-                            ->label('ترتيب العرض')
-                            ->helperText('الأرقام الأصغر تظهر أولاً')
-                            ->required()
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0),
                     ])
-                    ->columns(2),
+                    ->columnSpanFull(),
             ]);
     }
 }

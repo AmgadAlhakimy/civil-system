@@ -14,10 +14,18 @@ class RoleForm
 {
     public static function configure(Schema $schema): Schema
     {
+        /*
+        |--------------------------------------------------------------------------
+        | أسماء الوحدات باللغة العربية
+        |--------------------------------------------------------------------------
+        */
+
         $moduleLabels = [
             'users' => 'المستخدمون',
             'roles' => 'الأدوار والصلاحيات',
             'branches' => 'الفروع',
+            'governorates' => 'المحافظات',
+            'districts' => 'المديريات',
             'citizens' => 'المواطنون',
             'passports' => 'الجوازات',
             'identity_cards' => 'بطاقات الهوية',
@@ -25,14 +33,24 @@ class RoleForm
             'birth_certificates' => 'شهادات الميلاد',
             'death_certificates' => 'شهادات الوفاة',
             'appointments' => 'المواعيد',
+            'service_requests' => 'طلبات الخدمات',
+            'service_fees' => 'رسوم الخدمات',
             'reports' => 'التقارير',
             'backups' => 'النسخ الاحتياطية',
             'audit_logs' => 'سجل التدقيق',
+            'settings' => 'الإعدادات',
         ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | جلب الوحدات التي تحتوي على صلاحيات
+        |--------------------------------------------------------------------------
+        */
 
         $modules = Permission::query()
             ->where('guard_name', 'web')
             ->whereNotNull('module')
+            ->where('module', '!=', '')
             ->select('module')
             ->distinct()
             ->orderBy('module')
@@ -41,23 +59,44 @@ class RoleForm
 
         $sections = [];
 
+        /*
+        |--------------------------------------------------------------------------
+        | إنشاء قسم لكل وحدة وصلاحياتها
+        |--------------------------------------------------------------------------
+        */
+
         foreach ($modules as $index => $module) {
             $label = $moduleLabels[$module] ?? $module;
 
+            $permissions = Permission::query()
+                ->where('guard_name', 'web')
+                ->where('module', $module)
+                ->orderBy('name')
+                ->get(['id', 'name', 'name_ar']);
+
+            $options = [];
+
+            foreach ($permissions as $permission) {
+                $arabicName = trim((string) $permission->name_ar);
+
+                $options[$permission->id] = $arabicName !== ''
+                    ? $arabicName
+                    : $permission->name;
+            }
+
             $checkbox = CheckboxList::make("permissions_{$module}")
                 ->label('اختر الصلاحيات المطلوبة')
-                ->options(
-                    Permission::query()
-                        ->where('guard_name', 'web')
-                        ->where('module', $module)
-                        ->orderBy('name')
-                        ->pluck('name_ar', 'id')
-                        ->toArray()
-                )
+                ->options($options)
                 ->columns(2)
                 ->bulkToggleable()
                 ->live()
                 ->dehydrated(false);
+
+            /*
+            |--------------------------------------------------------------------------
+            | التحقق من اختيار صلاحية واحدة على الأقل
+            |--------------------------------------------------------------------------
+            */
 
             if ($index === 0) {
                 $checkbox->rules([
@@ -69,13 +108,14 @@ class RoleForm
                         ) use ($get): void {
                             $selected = false;
 
-                            foreach (
-                                Permission::query()
-                                    ->where('guard_name', 'web')
-                                    ->whereNotNull('module')
-                                    ->distinct()
-                                    ->pluck('module') as $module
-                            ) {
+                            $modules = Permission::query()
+                                ->where('guard_name', 'web')
+                                ->whereNotNull('module')
+                                ->where('module', '!=', '')
+                                ->distinct()
+                                ->pluck('module');
+
+                            foreach ($modules as $module) {
                                 $values = $get("permissions_{$module}");
 
                                 if (is_array($values) && count($values) > 0) {
@@ -94,6 +134,12 @@ class RoleForm
                 ]);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | إضافة القسم إلى النموذج
+            |--------------------------------------------------------------------------
+            */
+
             $sections[] = Section::make($label)
                 ->heading($label)
                 ->collapsible()
@@ -101,6 +147,12 @@ class RoleForm
                 ->schema([$checkbox])
                 ->columnSpanFull();
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | إرجاع النموذج
+        |--------------------------------------------------------------------------
+        */
 
         return $schema->components([
             Section::make('بيانات الدور')

@@ -172,9 +172,10 @@ class UsersTable
                     ->label('تعديل')
                     ->icon('heroicon-o-pencil-square')
                     ->visible(
-                        fn (): bool => auth()->user()?->can('users.edit') ?? false
+                        fn (): bool => auth()->user()?->can('users.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('delete')

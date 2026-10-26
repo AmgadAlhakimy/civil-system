@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Governorates;
 use App\Filament\Resources\Governorates\Pages\CreateGovernorate;
 use App\Filament\Resources\Governorates\Pages\EditGovernorate;
 use App\Filament\Resources\Governorates\Pages\ListGovernorates;
+use App\Filament\Resources\Governorates\Pages\ViewGovernorate;
 use App\Filament\Resources\Governorates\Schemas\GovernorateForm;
 use App\Filament\Resources\Governorates\Tables\GovernoratesTable;
 use App\Models\Governorate;
@@ -24,9 +25,9 @@ class GovernorateResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingLibrary;
 
-    protected static ?string $recordTitleAttribute = 'name_ar';
+    protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 4;
 
     public static function canViewAny(): bool
     {
@@ -90,9 +91,7 @@ class GovernorateResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -100,6 +99,7 @@ class GovernorateResource extends Resource
         return [
             'index' => ListGovernorates::route('/'),
             'create' => CreateGovernorate::route('/create'),
+            'view' => ViewGovernorate::route('/{record}'),
             'edit' => EditGovernorate::route('/{record}/edit'),
         ];
     }
@@ -129,16 +129,6 @@ class GovernorateResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'المواقع الجغرافية';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'primary';
+        return 'النظام';
     }
 }

@@ -13,7 +13,7 @@ class ListDistricts extends ListRecords
     public function mount(): void
     {
         abort_unless(
-            auth()->user()?->can('districts.view'),
+            auth()->user()?->can('districts.view') ?? false,
             403
         );
 
@@ -24,6 +24,9 @@ class ListDistricts extends ListRecords
     {
         return [
             CreateAction::make()
+                ->label('إضافة مديرية')
+                ->icon('heroicon-o-map-pin')
+                ->size('lg')
                 ->visible(
                     fn (): bool => auth()->user()?->can('districts.create') ?? false
                 ),
