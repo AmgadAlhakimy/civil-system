@@ -25,7 +25,7 @@ class AppointmentResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedCalendarDays;
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'appointment_date';
 
@@ -35,7 +35,7 @@ class AppointmentResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'السجل المدني';
+        return 'الخدمات والمعاملات';
     }
 
     public static function getRecordTitle($record): string

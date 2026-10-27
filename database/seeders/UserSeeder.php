@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         $aden = Branch::where('code', 'ADN-01')->first();
         $taiz = Branch::where('code', 'TIZ-01')->first();
 
-        User::updateOrCreate(
+        $employee01 = User::updateOrCreate(
             ['email' => 'employee01@civil.gov'],
             [
                 'name' => 'employee01',
@@ -27,7 +27,12 @@ class UserSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        $employee01->syncRoles([
+            'موظف التسجيل',
+            'المعتمد',
+        ]);
+
+        $employee02 = User::updateOrCreate(
             ['email' => 'employee02@civil.gov'],
             [
                 'name' => 'employee02',
@@ -40,5 +45,10 @@ class UserSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        $employee02->syncRoles([
+            'موظف الجوازات',
+            'المعتمد',
+        ]);
     }
 }

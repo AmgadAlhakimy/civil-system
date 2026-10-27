@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['email' => 'admin@civil.gov'],
             [
-                'name' => 'Amjad',
-                'full_name' => 'مدير النظام',
+                'name' => 'admin',
+                'full_name' => 'أمجد عبد الرقيب الحكيمي',
                 'phone' => '777100001',
                 'password' => 'password',
                 'must_change_password' => true,

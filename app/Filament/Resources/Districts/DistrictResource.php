@@ -27,7 +27,7 @@ class DistrictResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name_ar';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function canViewAny(): bool
     {
@@ -129,6 +129,6 @@ class DistrictResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'الإدارة الجغرافية';
     }
 }

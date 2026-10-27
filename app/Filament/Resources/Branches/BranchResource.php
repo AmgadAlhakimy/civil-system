@@ -25,7 +25,7 @@ class BranchResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingOffice2;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -139,6 +139,6 @@ class BranchResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'الإدارة الجغرافية';
     }
 }

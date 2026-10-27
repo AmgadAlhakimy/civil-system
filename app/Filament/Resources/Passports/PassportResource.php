@@ -33,7 +33,7 @@ class PassportResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'السجل المدني';
+        return 'خدمات الجوازات';
     }
 
     public static function getRecordTitle($record): string

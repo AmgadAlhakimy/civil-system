@@ -29,7 +29,7 @@ class ServiceRequestResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'request_number';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 1;
 
     // الصلاحيات الأساسية
     public static function canViewAny(): bool
@@ -82,7 +82,6 @@ class ServiceRequestResource extends Resource
         return auth()->user()?->can('service_requests.force_delete') ?? false;
     }
 
-    // النماذج والجداول
     public static function form(Schema $schema): Schema
     {
         return ServiceRequestForm::configure($schema);
@@ -139,7 +138,7 @@ class ServiceRequestResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'إدارة الخدمات';
+        return 'الخدمات والمعاملات';
     }
 
     // عدد الطلبات المعلقة

@@ -27,4 +27,12 @@ class Dashboard extends Page
     {
         return 'نظرة عامة على نظام السجل المدني';
     }
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user !== null
+            && $user->hasPermissionTo('access_dashboard', 'web');
+    }
 }

@@ -25,7 +25,7 @@ class DeathCertificateResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedRectangleStack;
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $recordTitleAttribute = 'certificate_number';
 

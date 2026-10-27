@@ -23,13 +23,13 @@ class Settings extends Page
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedCog6Tooth;
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 4;
 
     public ?array $data = [];
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'إدارة النظام';
     }
 
     public static function getNavigationLabel(): string

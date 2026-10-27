@@ -10,22 +10,22 @@ class ListServiceFees extends ListRecords
 {
     protected static string $resource = ServiceFeeResource::class;
 
-    public function mount(): void
+    public static function canAccess(array $parameters = []): bool
     {
-        abort_unless(
-            auth()->user()?->can('service_fees.view'),
-            403
-        );
-
-        parent::mount();
+        return auth()->user()?->can('service_fees.view') ?? false;
     }
 
     protected function getHeaderActions(): array
     {
         return [
             CreateAction::make()
-                ->visible(fn (): bool =>
-                    auth()->user()?->can('service_fees.create') ?? false
+                ->label('إضافة رسوم')
+                ->icon('heroicon-o-plus-circle')
+                ->size('lg')
+                ->visible(
+                    fn (): bool => auth()->user()?->can(
+                        'service_fees.create'
+                    ) ?? false
                 ),
         ];
     }

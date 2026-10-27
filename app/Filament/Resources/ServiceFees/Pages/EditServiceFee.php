@@ -4,41 +4,60 @@ namespace App\Filament\Resources\ServiceFees\Pages;
 
 use App\Filament\Resources\ServiceFees\ServiceFeeResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditServiceFee extends EditRecord
 {
     protected static string $resource = ServiceFeeResource::class;
 
-    public function mount(int|string $record): void
+    public static function canAccess(array $parameters = []): bool
     {
-        abort_unless(
-            auth()->user()?->can('service_fees.update'),
-            403
-        );
-
-        parent::mount($record);
+        return auth()->user()?->can('service_fees.update') ?? false;
     }
 
     protected function getHeaderActions(): array
     {
         return [
+            ViewAction::make()
+                ->label('عرض الرسوم')
+                ->icon('heroicon-o-eye')
+                ->color('primary')
+                ->visible(
+                    fn (): bool => auth()->user()?->can(
+                        'service_fees.view'
+                    ) ?? false
+                ),
+
             DeleteAction::make()
-                ->visible(fn (): bool =>
-                    auth()->user()?->can('service_fees.delete') ?? false
-                ),
-
-            ForceDeleteAction::make()
-                ->visible(fn (): bool =>
-                    auth()->user()?->can('service_fees.force_delete') ?? false
-                ),
-
-            RestoreAction::make()
-                ->visible(fn (): bool =>
-                    auth()->user()?->can('service_fees.restore') ?? false
-                ),
+                ->label('حذف الرسوم')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(
+                    fn (): bool => auth()->user()?->can(
+                        'service_fees.delete'
+                    ) ?? false
+                )
+                ->requiresConfirmation()
+                ->modalHeading('حذف الرسوم')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف هذه الرسوم؟'
+                )
+                ->modalSubmitActionLabel('نعم، حذف'),
         ];
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['updated_by'] = auth()->id();
+
+        return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return ServiceFeeResource::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
     }
 }

@@ -27,7 +27,7 @@ class GovernorateResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     public static function canViewAny(): bool
     {
@@ -129,6 +129,6 @@ class GovernorateResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'الإدارة الجغرافية';
     }
 }

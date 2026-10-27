@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
 
 class ServiceFeesTable
@@ -24,52 +25,35 @@ class ServiceFeesTable
                     ->label('اسم الخدمة')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold')
                     ->wrap(),
 
-                TextColumn::make('service_key')
-                    ->label('المفتاح')
-                    ->searchable()
-                    ->copyable()
-                    ->copyMessage('تم نسخ المفتاح')
-                    ->fontFamily('mono')
-                    ->size('xs')
-                    ->color('gray')
-                    ->toggleable(),
-
                 TextColumn::make('category')
-                    ->label('الفئة')
-                    ->color(fn (string $state): string => match ($state) {
-                        'id_card' => 'primary',
-                        'passport' => 'success',
-                        'family_card' => 'warning',
-                        'certificate' => 'info',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'id_card' => 'بطاقة شخصية',
-                        'passport' => 'جواز سفر',
-                        'family_card' => 'بطاقة عائلية',
-                        'certificate' => 'شهادات',
-                        default => $state,
-                    })
-                    ->sortable(),
+                    ->label('تصنيف الخدمة')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'identity_card' => 'بطاقة شخصية',
+                            'passport' => 'جواز سفر',
+                            'family_card' => 'بطاقة عائلية',
+                            'birth_certificate' => 'شهادة ميلاد',
+                            'death_certificate' => 'شهادة وفاة',
+                            'other' => 'خدمات أخرى',
+                            default => 'غير محدد',
+                        }
+                    )
+                    ->sortable()
+                    ->searchable(),
 
                 TextColumn::make('amount')
-                    ->label('الرسوم')
-                    ->numeric(decimalPlaces: 0)
+                    ->label('قيمة الرسوم')
+                    ->numeric(decimalPlaces: 2)
                     ->sortable()
-                    ->weight('bold')
                     ->color('success')
-                    ->icon('heroicon-o-banknotes')
-                    ->formatStateUsing(function ($state, $record) {
-                        return number_format((float) $state, 0) . ' ' . $record->currency;
-                    }),
-
-                TextColumn::make('currency')
-                    ->label('العملة')
-                    ->color('gray')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->formatStateUsing(
+                        fn ($state): string => number_format(
+                                (float) $state,
+                                2
+                            ) . ' ريال يمني'
+                    ),
 
                 IconColumn::make('is_active')
                     ->label('الحالة')
@@ -81,12 +65,21 @@ class ServiceFeesTable
                     ->alignCenter()
                     ->sortable(),
 
+                TextColumn::make('updatedBy.full_name')
+                    ->label('آخر تعديل بواسطة')
+                    ->placeholder('غير محدد')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updated_at')
                     ->label('آخر تحديث')
                     ->dateTime('Y/m/d H:i')
-                    ->since()
                     ->sortable()
-                    ->tooltip(fn ($record) => $record->updated_at?->format('Y/m/d H:i')),
+                    ->placeholder('لا يوجد')
+                    ->tooltip(
+                        fn ($record): ?string => $record->updated_at
+                            ?->format('Y/m/d H:i')
+                    ),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
@@ -104,39 +97,56 @@ class ServiceFeesTable
             ->striped()
             ->filters([
                 SelectFilter::make('category')
-                    ->label('الفئة')
+                    ->label('تصنيف الخدمة')
                     ->options([
-                        'id_card' => 'بطاقة شخصية',
+                        'identity_card' => 'بطاقة شخصية',
                         'passport' => 'جواز سفر',
                         'family_card' => 'بطاقة عائلية',
-                        'certificate' => 'شهادات',
+                        'birth_certificate' => 'شهادة ميلاد',
+                        'death_certificate' => 'شهادة وفاة',
+                        'other' => 'خدمات أخرى',
                     ])
                     ->native(false)
                     ->multiple(),
 
                 TernaryFilter::make('is_active')
-                    ->label('الحالة')
-                    ->placeholder('الكل')
-                    ->trueLabel('مفعّلة فقط')
-                    ->falseLabel('معطّلة فقط')
+                    ->label('حالة الخدمة')
+                    ->placeholder('جميع الخدمات')
+                    ->trueLabel('الخدمات المفعّلة')
+                    ->falseLabel('الخدمات المعطّلة')
                     ->native(false),
 
                 TrashedFilter::make()
-                    ->label('المحذوفة'),
+                    ->label('سلة المحذوفات'),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->label('عرض')
+                    ->icon('heroicon-o-eye')
+                    ->color('primary')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can(
+                            'service_fees.view'
+                        ) ?? false
+                    ),
+
                 EditAction::make()
                     ->label('تعديل')
-                    ->visible(fn (): bool =>
-                        auth()->user()?->can('service_fees.update') ?? false
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(
+                        fn (): bool => auth()->user()?->can(
+                            'service_fees.update'
+                        ) ?? false
                     ),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->label('حذف')
-                        ->visible(fn (): bool =>
-                            auth()->user()?->can('service_fees.delete') ?? false
+                        ->label('حذف المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can(
+                                'service_fees.delete'
+                            ) ?? false
                         )
                         ->before(function (): void {
                             abort_unless(
@@ -147,20 +157,26 @@ class ServiceFeesTable
 
                     ForceDeleteBulkAction::make()
                         ->label('حذف نهائي')
-                        ->visible(fn (): bool =>
-                            auth()->user()?->can('service_fees.force_delete') ?? false
+                        ->visible(
+                            fn (): bool => auth()->user()?->can(
+                                'service_fees.force_delete'
+                            ) ?? false
                         )
                         ->before(function (): void {
                             abort_unless(
-                                auth()->user()?->can('service_fees.force_delete'),
+                                auth()->user()?->can(
+                                    'service_fees.force_delete'
+                                ),
                                 403
                             );
                         }),
 
                     RestoreBulkAction::make()
-                        ->label('استعادة')
-                        ->visible(fn (): bool =>
-                            auth()->user()?->can('service_fees.restore') ?? false
+                        ->label('استعادة المحدد')
+                        ->visible(
+                            fn (): bool => auth()->user()?->can(
+                                'service_fees.restore'
+                            ) ?? false
                         )
                         ->before(function (): void {
                             abort_unless(
@@ -171,7 +187,9 @@ class ServiceFeesTable
                 ]),
             ])
             ->emptyStateHeading('لا توجد رسوم بعد')
-            ->emptyStateDescription('ابدأ بإضافة خدمة جديدة من زر "إنشاء".')
+            ->emptyStateDescription(
+                'ابدأ بإضافة خدمة جديدة من زر «إنشاء».'
+            )
             ->emptyStateIcon('heroicon-o-banknotes');
     }
 }
