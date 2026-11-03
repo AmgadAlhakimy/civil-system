@@ -35,7 +35,7 @@ class CitizenFactory extends Factory
             'middle_name_en' => null,
             'last_name_en' => null,
 
-            'photo' => 'citizens/photos/01KZRJ6N0ZCQ1B69ZRDCEHX4FF.jpeg',
+            'photo' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
 
             'birth_date' => $this->faker
                 ->dateTimeBetween('-70 years', '-18 years')
