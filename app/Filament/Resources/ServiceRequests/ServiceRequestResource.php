@@ -23,7 +23,6 @@ class ServiceRequestResource extends Resource
 {
     protected static ?string $model = ServiceRequest::class;
 
-    // الأيقونة والترتيب
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedClipboardDocumentList;
 
@@ -31,7 +30,6 @@ class ServiceRequestResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    // الصلاحيات الأساسية
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('service_requests.view') ?? false;
@@ -120,7 +118,6 @@ class ServiceRequestResource extends Resource
             ]);
     }
 
-    // التسميات العربية
     public static function getModelLabel(): string
     {
         return 'طلب';
@@ -141,10 +138,11 @@ class ServiceRequestResource extends Resource
         return 'الخدمات والمعاملات';
     }
 
-    // عدد الطلبات المعلقة
     public static function getNavigationBadge(): ?string
     {
-        $count = ServiceRequest::query()
+        $model = static::getModel();
+
+        $count = $model::query()
             ->where('status', 'pending')
             ->count();
 

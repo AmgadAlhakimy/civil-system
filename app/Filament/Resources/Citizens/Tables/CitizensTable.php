@@ -23,16 +23,8 @@ class CitizensTable
             ->columns([
                 ImageColumn::make('photo')
                     ->label('الصورة')
-                    ->getStateUsing(
-                        fn ($record) => $record->photo
-                            ? route(
-                                'citizens.photo',
-                                [
-                                    'path' => basename($record->photo),
-                                ]
-                            )
-                            : null
-                    )
+                    ->disk('public')
+                    ->visibility('public')
                     ->circular()
                     ->size(45)
                     ->defaultImageUrl(url('/images/default-avatar.png')),
