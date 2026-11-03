@@ -7,86 +7,116 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use App\Services\SmsGatewayService;
+
 class AuthController extends Controller
 {
     // ═══════════════════════════════════════════════════════════
     // تسجيل حساب جديد
     // ═══════════════════════════════════════════════════════════
+    public function register(Request $request, SmsGatewayService $sms)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|min:3',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^7[0-9]{8}$/',
+                Rule::unique('users', 'phone')->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
+            'password' => 'required|string|min:8',
+        ], [
+            'name.required' => 'الاسم مطلوب',
+            'name.min' => 'الاسم يجب أن يكون 3 أحرف على الأقل',
+            'phone.required' => 'رقم الهاتف مطلوب',
+            'phone.unique' => 'رقم الهاتف مسجل بالفعل',
+            'phone.regex' => 'رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
+            'email.email' => 'البريد الإلكتروني غير صحيح',
+            'email.unique' => 'البريد الإلكتروني مسجل بالفعل',
+            'password.required' => 'كلمة المرور مطلوبة',
+            'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-public function register(Request $request, SmsGatewayService $sms)
-{
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255|min:3',
-        'phone' => ['required', 'string', 'regex:/^7[0-9]{8}$/', 'unique:users,phone'],
-        'email' => 'nullable|email|unique:users,email',
-        'password' => 'required|string|min:8',
-    ], [
-        'name.required' => 'الاسم مطلوب',
-        'name.min' => 'الاسم يجب أن يكون 3 أحرف على الأقل',
-        'phone.required' => 'رقم الهاتف مطلوب',
-        'phone.unique' => 'رقم الهاتف مسجل بالفعل',
-        'phone.regex' => 'رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
-        'email.email' => 'البريد الإلكتروني غير صحيح',
-        'email.unique' => 'البريد الإلكتروني مسجل بالفعل',
-        'password.required' => 'كلمة المرور مطلوبة',
-        'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'بيانات غير صحيحة',
-            'errors' => $validator->errors(),
-        ], 422);
-    }
-
-    $otpCode = str_pad(
-        (string) random_int(0, 999999),
-        6,
-        '0',
-        STR_PAD_LEFT
-    );
-
-    $user = User::create([
-        'name' => $request->name,
-        'phone' => $request->phone,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'otp_code' => $otpCode,
-        'otp_expires_at' => now()->addMinutes(10),
-        'is_verified' => false,
-        'status' => 'active',
-    ]);
-
-    try {
-        $sms->send(
-            '+967' . $user->phone,
-            "رمز التحقق: {$otpCode}. صالح لمدة 10 دقائق."
+        $otpCode = str_pad(
+            (string) random_int(0, 999999),
+            6,
+            '0',
+            STR_PAD_LEFT
         );
-    } catch (\Throwable $e) {
-        report($e);
 
-        // لا نترك حسابًا غير موثق بلا إمكانية واضحة لإعادة المحاولة.
-        $user->delete();
+        // ✅ إعادة استخدام مستخدم قديم غير موثق بنفس الرقم
+        $existing = User::where('phone', $request->phone)
+            ->where('is_verified', false)
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'otp_code' => $otpCode,
+                'otp_expires_at' => now()->addMinutes(10),
+                'account_type' => 'citizen',
+            ]);
+            $user = $existing;
+        } else {
+            $user = User::create([
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'otp_code' => $otpCode,
+                'otp_expires_at' => now()->addMinutes(10),
+                'is_verified' => false,
+                'status' => 'active',
+                'account_type' => 'citizen',
+            ]);
+        }
+
+        try {
+            $sms->send(
+                '+967' . $user->phone,
+                "رمز التحقق: {$otpCode}. صالح لمدة 10 دقائق."
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            // ✅ نترك المستخدم موجوداً — يقدر يعيد إرسال OTP لاحقاً
+            return response()->json([
+                'status' => 'error',
+                'message' => 'تم إنشاء الحساب لكن تعذر إرسال رمز التحقق. '
+                           . 'استخدم "إعادة إرسال الرمز" لاحقاً.',
+                'data' => [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                    'can_resend' => true,
+                ],
+            ], 502);
+        }
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'تعذر إرسال رمز التحقق. حاول مرة أخرى لاحقًا.',
-        ], 502);
+            'status' => 'success',
+            'message' => 'تم إنشاء الحساب وإرسال رمز التحقق إلى هاتفك.',
+            'data' => [
+                'user_id' => $user->id,
+                'phone' => $user->phone,
+            ],
+        ], 201);
     }
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'تم إنشاء الحساب وإرسال رمز التحقق إلى هاتفك.',
-        'data' => [
-            'user_id' => $user->id,
-            'phone' => $user->phone,
-        ],
-    ], 201);
-}
-
 
     // ═══════════════════════════════════════════════════════════
     // التحقق من OTP
@@ -128,7 +158,6 @@ public function register(Request $request, SmsGatewayService $sms)
             'otp_expires_at' => null,
         ]);
 
-        // ✅ إنشاء توكن Sanctum
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -144,79 +173,73 @@ public function register(Request $request, SmsGatewayService $sms)
     // ═══════════════════════════════════════════════════════════
     // إعادة إرسال OTP
     // ═══════════════════════════════════════════════════════════
-    
-public function resendOtp(
-    Request $request,
-    SmsGatewayService $sms
-) {
-    $validator = Validator::make($request->all(), [
-        'phone' => 'required|string|regex:/^7[0-9]{8}$/|exists:users,phone',
-    ], [
-        'phone.required' => 'رقم الهاتف مطلوب',
-        'phone.regex' => 'رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
-        'phone.exists' => 'رقم الهاتف غير مسجل',
-    ]);
+    public function resendOtp(Request $request, SmsGatewayService $sms)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|regex:/^7[0-9]{8}$/|exists:users,phone',
+        ], [
+            'phone.required' => 'رقم الهاتف مطلوب',
+            'phone.regex' => 'رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام',
+            'phone.exists' => 'رقم الهاتف غير مسجل',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'بيانات غير صحيحة',
-            'errors' => $validator->errors(),
-        ], 422);
-    }
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-    $user = User::where('phone', $request->phone)
-        ->where('is_verified', false)
-        ->first();
+        $user = User::where('phone', $request->phone)
+            ->where('is_verified', false)
+            ->first();
 
-    if (!$user) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'لا يوجد حساب غير موثق لهذا الرقم.',
-        ], 422);
-    }
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'لا يوجد حساب غير موثق لهذا الرقم.',
+            ], 422);
+        }
 
-    $otpCode = str_pad(
-        (string) random_int(0, 999999),
-        6,
-        '0',
-        STR_PAD_LEFT
-    );
-
-    $user->update([
-        'otp_code' => $otpCode,
-        'otp_expires_at' => now()->addMinutes(10),
-    ]);
-
-    try {
-        $sms->send(
-            '+967' . $user->phone,
-            "رمز التحقق: {$otpCode}. صالح لمدة 10 دقائق."
+        $otpCode = str_pad(
+            (string) random_int(0, 999999),
+            6,
+            '0',
+            STR_PAD_LEFT
         );
-    } catch (\Throwable $e) {
-        report($e);
+
+        $user->update([
+            'otp_code' => $otpCode,
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        try {
+            $sms->send(
+                '+967' . $user->phone,
+                "رمز التحقق: {$otpCode}. صالح لمدة 10 دقائق."
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'تعذر إرسال رمز التحقق. حاول لاحقًا.',
+            ], 502);
+        }
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'تعذر إرسال رمز التحقق. حاول لاحقًا.',
-        ], 502);
+            'status' => 'success',
+            'message' => 'تم إرسال رمز تحقق جديد إلى هاتفك.',
+            'data' => [
+                'phone' => $user->phone,
+            ],
+        ]);
     }
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'تم إرسال رمز تحقق جديد إلى هاتفك.',
-        'data' => [
-            'phone' => $user->phone,
-        ],
-    ]);
-}
-
-
-
-
-    /**
-     * تسجيل الدخول
-     */
+    // ═══════════════════════════════════════════════════════════
+    // تسجيل الدخول
+    // ═══════════════════════════════════════════════════════════
     public function login(Request $request, SmsGatewayService $sms)
     {
         $validator = Validator::make($request->all(), [
@@ -243,6 +266,15 @@ public function resendOtp(
                 'status' => 'error',
                 'message' => 'رقم الهاتف أو كلمة المرور غير صحيحة.',
             ], 401);
+        }
+
+        // ✅ منع الموظفين/الأدمن من الدخول للتطبيق
+        if ($user->account_type === 'employee') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'هذا الحساب مخصص للنظام الإداري. '
+                           . 'يرجى استخدام بوابة النظام.',
+            ], 403);
         }
 
         if (!$user->is_verified) {
@@ -395,7 +427,6 @@ public function resendOtp(
             'password' => Hash::make($request->new_password),
         ]);
 
-        // ✅ حذف جميع التوكنات (إجبار إعادة تسجيل الدخول)
         $user->tokens()->delete();
 
         return response()->json([

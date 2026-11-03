@@ -29,16 +29,8 @@ class CitizenInfolist
                                     ->schema([
                                         ImageEntry::make('photo')
                                             ->label('الصورة الشخصية')
-                                            ->getStateUsing(
-                                                fn ($record) => $record->photo
-                                                    ? route(
-                                                        'citizens.photo',
-                                                        [
-                                                            'path' => basename($record->photo),
-                                                        ]
-                                                    )
-                                                    : null
-                                            )
+                                            ->disk('public')
+                                            ->visibility('public')
                                             ->circular()
                                             ->imageSize(170)
                                             ->defaultImageUrl(url('/images/default-avatar.png'))
@@ -62,8 +54,7 @@ class CitizenInfolist
                                             ->weight('bold')
                                             ->size('xl')
                                             ->icon('heroicon-o-user')
-                                        ->columnSpanFull(),
-
+                                            ->columnSpanFull(),
 
                                         TextEntry::make('blood_type')
                                             ->label('فصيلة الدم')

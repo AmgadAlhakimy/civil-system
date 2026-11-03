@@ -143,14 +143,20 @@ class ServiceRequestResource extends Resource
     }
 
     // عدد الطلبات المعلقة
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()
-            ->where('status', 'pending')
-            ->count();
 
-        return $count > 0 ? (string) $count : null;
-    }
+
+    public static function getNavigationBadge(): ?string
+{
+    $model = static::getModel();
+
+    $count = $model::query()
+        ->where('status', 'pending')
+        ->count();
+
+    return $count > 0 ? (string) $count : null;
+}
+
+
 
     public static function getNavigationBadgeColor(): ?string
     {

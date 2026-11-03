@@ -19,7 +19,6 @@ class CitizenForm
 {
     public static function configure(Schema $schema): Schema
     {
-
         return $schema
             ->components([
                 Wizard::make([
@@ -149,8 +148,9 @@ class CitizenForm
                                         ->imageEditor()
                                         ->imagePreviewHeight('220')
                                         ->maxSize(2048)
-                                        ->disk('local')
+                                        ->disk('public')
                                         ->directory('citizens/photos')
+                                        ->visibility('public')
                                         ->required()
                                         ->validationMessages([
                                             'required' => 'الصورة الشخصية مطلوبة',
@@ -237,7 +237,7 @@ class CitizenForm
                                                     'AB-' => 'AB-',
                                                     'O+' => 'O+',
                                                     'O-' => 'O-',
-                                        ])
+                                                ])
                                                 ->placeholder('اختر فصيلة الدم ')
                                                 ->native(false)
                                                 ->required()

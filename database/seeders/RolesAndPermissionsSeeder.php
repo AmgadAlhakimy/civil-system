@@ -1053,7 +1053,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $registrationOfficer->syncPermissions([
             'citizens.view',
             'citizens.create',
-            'citizens.edit',
+            'citizens.update',
         ]);
 
         // Passport Officer
