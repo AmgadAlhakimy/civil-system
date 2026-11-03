@@ -8,7 +8,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +21,7 @@ class EditPassport extends EditRecord
     {
         parent::authorizeAccess();
 
-        if (! auth()->user()?->can("passports.edit")) {
+        if (! auth()->user()?->can("passports.update")) {
             throw new AuthorizationException(
                 "ليس لديك صلاحية تعديل بيانات الجواز."
             );

@@ -17,7 +17,9 @@ class Governorate extends Model
     protected $table = 'governorates';
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -25,14 +27,12 @@ class Governorate extends Model
         'name_ar',
         'name_en',
         'is_active',
-        'sort_order',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
-            'sort_order' => 'integer',
         ];
     }
 
@@ -44,10 +44,6 @@ class Governorate extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // العلاقات
-    // ═══════════════════════════════════════════════════════════
-
     public function districts(): HasMany
     {
         return $this->hasMany(District::class);
@@ -58,10 +54,6 @@ class Governorate extends Model
         return $this->hasMany(Branch::class);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // Scopes
-    // ═══════════════════════════════════════════════════════════
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -69,6 +61,6 @@ class Governorate extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order')->orderBy('name_ar');
+        return $query->orderBy('name_ar');
     }
 }

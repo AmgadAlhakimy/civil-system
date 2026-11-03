@@ -82,8 +82,12 @@ HTML
             ->sidebarWidth('240px')
             ->globalSearch()
             ->navigationGroups([
-                'النظام',
                 'السجل المدني',
+                'خدمات الجوازات',
+                'الخدمات والمعاملات',
+                'الإدارة الجغرافية',
+                'التقارير والرقابة',
+                'إدارة النظام',
             ])
             ->discoverResources(
                 in: app_path('Filament/Resources'),

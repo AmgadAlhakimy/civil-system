@@ -36,7 +36,7 @@ class ReportResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'التقارير والإدارة';
+        return 'التقارير والرقابة';
     }
 
     public static function canViewAny(): bool

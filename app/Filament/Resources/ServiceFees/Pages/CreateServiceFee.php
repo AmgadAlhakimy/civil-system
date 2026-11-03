@@ -9,13 +9,13 @@ class CreateServiceFee extends CreateRecord
 {
     protected static string $resource = ServiceFeeResource::class;
 
-    public function mount(): void
+    public static function canAccess(array $parameters = []): bool
     {
-        abort_unless(
-            auth()->user()?->can('service_fees.create'),
-            403
-        );
+        return auth()->user()?->can('service_fees.create') ?? false;
+    }
 
-        parent::mount();
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

@@ -23,15 +23,13 @@ class ServiceRequestResource extends Resource
 {
     protected static ?string $model = ServiceRequest::class;
 
-    // الأيقونة والترتيب
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedClipboardDocumentList;
 
     protected static ?string $recordTitleAttribute = 'request_number';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 1;
 
-    // الصلاحيات الأساسية
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('service_requests.view') ?? false;
@@ -82,7 +80,6 @@ class ServiceRequestResource extends Resource
         return auth()->user()?->can('service_requests.force_delete') ?? false;
     }
 
-    // النماذج والجداول
     public static function form(Schema $schema): Schema
     {
         return ServiceRequestForm::configure($schema);
@@ -121,7 +118,6 @@ class ServiceRequestResource extends Resource
             ]);
     }
 
-    // التسميات العربية
     public static function getModelLabel(): string
     {
         return 'طلب';
@@ -139,24 +135,19 @@ class ServiceRequestResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'إدارة الخدمات';
+        return 'الخدمات والمعاملات';
     }
 
-    // عدد الطلبات المعلقة
-
-
     public static function getNavigationBadge(): ?string
-{
-    $model = static::getModel();
+    {
+        $model = static::getModel();
 
-    $count = $model::query()
-        ->where('status', 'pending')
-        ->count();
+        $count = $model::query()
+            ->where('status', 'pending')
+            ->count();
 
-    return $count > 0 ? (string) $count : null;
-}
-
-
+        return $count > 0 ? (string) $count : null;
+    }
 
     public static function getNavigationBadgeColor(): ?string
     {

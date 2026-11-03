@@ -13,98 +13,111 @@ class BranchInfolist
     {
         return $schema
             ->components([
-
                 Section::make('البيانات الأساسية')
-                    ->description('المعلومات الأساسية للفرع')
+                    ->description('المعلومات التعريفية وبيانات التواصل الخاصة بالفرع')
                     ->icon('heroicon-o-building-office-2')
                     ->schema([
-                        Grid::make(3)
+                        Grid::make([
+                            'default' => 1,
+                            'md' => 2,
+                            'xl' => 3,
+                        ])
                             ->schema([
-
                                 TextEntry::make('code')
                                     ->label('رمز الفرع')
                                     ->icon('heroicon-o-hashtag')
                                     ->copyable()
-                                    ->badge()
-                                    ->color('info'),
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('name')
                                     ->label('اسم الفرع')
                                     ->icon('heroicon-o-building-office')
                                     ->weight('bold')
-                                    ->size('lg'),
+                                    ->placeholder('غير محدد'),
 
-                                // ✅ المحافظة
                                 TextEntry::make('governorate.name_ar')
                                     ->label('المحافظة')
                                     ->icon('heroicon-o-building-library')
-                                    ->badge()
-                                    ->color('warning')
                                     ->placeholder('غير محددة'),
 
                                 TextEntry::make('address')
-                                    ->label('العنوان')
+                                    ->label('عنوان الفرع')
                                     ->icon('heroicon-o-map-pin')
-                                    ->columnSpanFull(),
+                                    ->copyable()
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('phone')
                                     ->label('رقم الهاتف')
                                     ->icon('heroicon-o-phone')
-                                    ->copyable(),
+                                    ->copyable()
+                                    ->placeholder('غير محدد'),
 
                                 TextEntry::make('email')
                                     ->label('البريد الإلكتروني')
                                     ->icon('heroicon-o-envelope')
                                     ->copyable()
                                     ->placeholder('غير محدد'),
-
                             ]),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('إدارة الفرع')
-                    ->description('معلومات المدير والحالة')
+                    ->description('بيانات المدير المسؤول وحالة تشغيل الفرع')
                     ->icon('heroicon-o-user-group')
                     ->schema([
-                        Grid::make(2)
+                        Grid::make([
+                            'default' => 1,
+                            'md' => 2,
+                        ])
                             ->schema([
-
                                 TextEntry::make('manager.full_name')
                                     ->label('مدير الفرع')
                                     ->icon('heroicon-o-user')
-                                    ->weight('bold')
-                                    ->placeholder('غير محدد'),
+                                    ->weight('medium')
+                                    ->placeholder('لم يتم تعيين مدير'),
 
                                 TextEntry::make('is_active')
                                     ->label('حالة الفرع')
                                     ->icon(
-                                        fn (bool $state): string => $state
+                                        fn ($state): string => (bool) $state
                                             ? 'heroicon-o-check-circle'
                                             : 'heroicon-o-x-circle'
                                     )
                                     ->iconColor(
-                                        fn (bool $state): string => $state
+                                        fn ($state): string => (bool) $state
                                             ? 'success'
                                             : 'danger'
                                     )
                                     ->formatStateUsing(
-                                        fn (bool $state): string => $state
+                                        fn ($state): string => (bool) $state
                                             ? 'نشط'
                                             : 'غير نشط'
-                                    )
-                                    ->badge(),
+                                    ),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
 
+                Section::make('معلومات السجل')
+                    ->description('التواريخ المرتبطة بإنشاء بيانات الفرع وتحديثها')
+                    ->icon('heroicon-o-clock')
+                    ->collapsed()
+                    ->schema([
+                        Grid::make([
+                            'default' => 1,
+                            'md' => 2,
+                        ])
+                            ->schema([
                                 TextEntry::make('created_at')
                                     ->label('تاريخ الإنشاء')
                                     ->icon('heroicon-o-calendar-days')
-                                    ->dateTime('Y/m/d H:i'),
+                                    ->dateTime('Y/m/d - H:i')
+                                    ->placeholder('غير متوفر'),
 
                                 TextEntry::make('updated_at')
                                     ->label('آخر تحديث')
                                     ->icon('heroicon-o-arrow-path')
-                                    ->dateTime('Y/m/d H:i')
-                                    ->since(),
-
+                                    ->dateTime('Y/m/d - H:i')
+                                    ->placeholder('غير متوفر'),
                             ]),
                     ])
                     ->columnSpanFull(),

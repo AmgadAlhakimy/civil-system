@@ -18,4 +18,9 @@ class CreateGovernorate extends CreateRecord
 
         parent::mount();
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

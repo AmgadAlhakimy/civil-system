@@ -7,6 +7,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Validation\Rules\Unique;
 
 class DistrictForm
 {
@@ -14,80 +16,129 @@ class DistrictForm
     {
         return $schema
             ->components([
-
-                // ═══════════════════════════════════════════════
-                // القسم 1: المحافظة التابعة لها
-                // ═══════════════════════════════════════════════
-                Section::make('المحافظة')
-                    ->description('المديرية تتبع محافظة واحدة')
-                    ->icon('heroicon-o-building-library')
+                Section::make('البيانات الأساسية')
+                    ->description('بيانات المديرية والمحافظة التابعة لها')
+                    ->icon('heroicon-o-map')
                     ->schema([
                         Select::make('governorate_id')
                             ->label('المحافظة')
-                            ->relationship('governorate', 'name_ar')
+                            ->relationship(
+                                name: 'governorate',
+                                titleAttribute: 'name_ar',
+                                modifyQueryUsing: fn ($query) => $query
+                                    ->where('is_active', true)
+                                    ->orderBy('name_ar')
+                            )
                             ->searchable()
                             ->preload()
                             ->required()
                             ->native(false)
                             ->placeholder('اختر المحافظة')
-                            ->helperText('ابحث بالاسم لتسهيل الوصول'),
-                    ])
-                    ->columnSpanFull(),
-
-                // ═══════════════════════════════════════════════
-                // القسم 2: البيانات الأساسية
-                // ═══════════════════════════════════════════════
-                Section::make('البيانات الأساسية')
-                    ->description('الاسم والرمز التعريفي')
-                    ->icon('heroicon-o-map')
-                    ->schema([
-                        TextInput::make('name_ar')
-                            ->label('الاسم بالعربية')
-                            ->placeholder('مثال: صنعاء القديمة، المنصورة')
-                            ->required()
-                            ->maxLength(150)
-                            ->autofocus(),
-
-                        TextInput::make('name_en')
-                            ->label('الاسم بالإنجليزية')
-                            ->placeholder('مثال: Old Sanaa, Mansoura')
-                            ->required()
-                            ->maxLength(150)
-                            ->rules(['alpha_spaces']),
+                            ->validationMessages([
+                                'required' => 'يرجى اختيار المحافظة التابعة لها المديرية',
+                            ]),
 
                         TextInput::make('code')
-                            ->label('رمز المديرية (اختياري)')
+                            ->label('رمز المديرية')
                             ->placeholder('مثال: SNA-OLD')
-                            ->maxLength(20)
+                            ->required()
+                            ->minLength(2)
+                            ->maxLength(10)
                             ->unique(ignoreRecord: true)
-                            ->rules(['alpha_dash'])
-                            ->helperText('اتركه فارغاً إن لم يكن هناك رمز رسمي'),
+                            ->regex('/^[A-Za-z0-9_-]+$/')
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? strtoupper(trim($state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل رمز المديرية مطلوب',
+                                'min' => 'يجب ألا يقل رمز المديرية عن حرفين',
+                                'max' => 'يجب ألا يتجاوز الرمز 10 أحرف',
+                                'unique' => 'رمز المديرية مستخدم مسبقًا',
+                                'regex' => 'الرمز يقبل الأحرف الإنجليزية والأرقام والشرطة والشرطة السفلية فقط',
+                            ]),
+                        TextInput::make('name_ar')
+                            ->label('اسم المديرية بالعربية')
+                            ->placeholder('مثال: صنعاء القديمة')
+                            ->required()
+                            ->minLength(2)
+                            ->maxLength(150)
+                            ->autofocus()
+                            ->regex('/^[\p{Arabic}\s]+$/u')
+                            ->unique(
+                                modifyRuleUsing: fn (
+                                    Unique $rule,
+                                    Get $get
+                                ) => $rule->where(
+                                    'governorate_id',
+                                    $get('governorate_id')
+                                ),
+                                ignoreRecord: true,
+                            )
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? trim(preg_replace('/\s+/u', ' ', $state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل اسم المديرية بالعربية مطلوب',
+                                'min' => 'يجب ألا يقل اسم المديرية عن حرفين',
+                                'max' => 'يجب ألا يتجاوز اسم المديرية 150 حرفًا',
+                                'regex' => 'اسم المديرية يجب أن يحتوي على حروف عربية ومسافات فقط',
+                                'unique' => 'اسم المديرية بالعربية موجود مسبقًا في هذه المحافظة',
+                            ]),
+
+                        TextInput::make('name_en')
+                            ->label('اسم المديرية بالإنجليزية')
+                            ->placeholder('مثال: Old Sanaa')
+                            ->required()
+                            ->minLength(2)
+                            ->maxLength(150)
+                            ->regex('/^[A-Za-z\s]+$/')
+                            ->unique(
+                                modifyRuleUsing: fn (
+                                    Unique $rule,
+                                    Get $get
+                                ) => $rule->where(
+                                    'governorate_id',
+                                    $get('governorate_id')
+                                ),
+                                ignoreRecord: true,
+                            )
+                            ->dehydrateStateUsing(
+                                fn (?string $state): ?string => $state !== null
+                                    ? trim(preg_replace('/\s+/', ' ', $state))
+                                    : null
+                            )
+                            ->validationMessages([
+                                'required' => 'حقل اسم المديرية بالإنجليزية مطلوب',
+                                'min' => 'يجب ألا يقل اسم المديرية عن حرفين',
+                                'max' => 'يجب ألا يتجاوز اسم المديرية 150 حرفًا',
+                                'regex' => 'اسم المديرية يجب أن يحتوي على حروف إنجليزية ومسافات فقط',
+                                'unique' => 'اسم المديرية بالإنجليزية موجود مسبقًا في هذه المحافظة',
+                            ]),
+
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                // ═══════════════════════════════════════════════
-                // القسم 3: الحالة والترتيب
-                // ═══════════════════════════════════════════════
-                Section::make('الحالة والترتيب')
+                Section::make('حالة المديرية')
+                    ->description('تحديد إمكانية استخدام المديرية في النظام')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->schema([
                         Toggle::make('is_active')
-                            ->label('مفعّلة')
-                            ->helperText('عند الإيقاف، لن تظهر المديرية في التطبيق')
+                            ->label('المديرية مفعّلة')
+                            ->helperText(
+                                'يمكن استبعاد المديريات غير المفعّلة من قوائم الاختيار'
+                            )
                             ->default(true)
+                            ->required()
                             ->onColor('success')
                             ->offColor('danger'),
-
-                        TextInput::make('sort_order')
-                            ->label('ترتيب العرض')
-                            ->helperText('الأرقام الأصغر تظهر أولاً')
-                            ->required()
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0),
                     ])
-                    ->columns(2),
+                    ->columnSpanFull(),
             ]);
     }
 }

@@ -17,6 +17,13 @@ return new class extends Migration
             $table->string('code', 20)->unique();
             $table->string('name', 100);
 
+            $table->uuid('governorate_id')->nullable();
+
+            $table->foreign('governorate_id')
+                ->references('id')
+                ->on('governorates')
+                ->nullOnDelete();
+
             $table->text('address');
             $table->string('phone', 20);
             $table->string('email', 100)->nullable();
@@ -26,7 +33,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Index
+            // Indexes
+            $table->index('governorate_id');
             $table->index('is_active');
         });
     }

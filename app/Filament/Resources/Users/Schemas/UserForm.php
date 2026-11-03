@@ -20,10 +20,10 @@ class UserForm
                     ->icon('heroicon-o-user')
                     ->schema([
                         Select::make('account_type')
-                            ->label('نوع الحساب')
-                            ->placeholder('اختر نوع الحساب')
+                            ->label('نوع المستخدم')
+                            ->placeholder('اختر نوع المستخدم')
                             ->options([
-                                'employee' => 'موظف السجل المدني',
+                                'employee' => 'موظف',
                                 'external' => 'جهة خاصة',
                             ])
                             ->default('employee')
@@ -31,7 +31,7 @@ class UserForm
                             ->live()
                             ->native(false)
                             ->validationMessages([
-                                'required' => 'يرجى اختيار نوع الحساب',
+                                'required' => 'يرجى اختيار نوع المستخدم',
                             ]),
 
                         Grid::make(2)

@@ -26,13 +26,13 @@ class RoleResource extends Resource
 
     protected static ?string $modelLabel = 'دور';
 
-    protected static ?string $pluralModelLabel = 'الأدوار';
+    protected static ?string $pluralModelLabel = 'الأدوار والصلاحيات';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'إدارة النظام';
     }
 
     public static function getRecordTitle($record): string

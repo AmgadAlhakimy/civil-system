@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\Schemas;
 
+use App\Models\Governorate;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -9,6 +10,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class BranchForm
 {
@@ -16,17 +18,12 @@ class BranchForm
     {
         return $schema
             ->components([
-
-                // ═══════════════════════════════════════════════
-                // القسم 1: بيانات الفرع
-                // ═══════════════════════════════════════════════
                 Section::make('بيانات الفرع')
                     ->description('المعلومات الأساسية للفرع')
                     ->icon('heroicon-o-building-office-2')
                     ->schema([
                         Grid::make(2)
                             ->schema([
-
                                 TextInput::make('code')
                                     ->label('رمز الفرع')
                                     ->required()
@@ -36,7 +33,7 @@ class BranchForm
                                     ->maxLength(20)
                                     ->regex('/^[A-Za-z0-9-]+$/')
                                     ->dehydrateStateUsing(
-                                        fn (?string $state): ?string => $state
+                                        fn (?string $state): ?string => $state !== null
                                             ? strtoupper(trim($state))
                                             : null
                                     )
@@ -54,7 +51,7 @@ class BranchForm
                                     ->minLength(3)
                                     ->maxLength(100)
                                     ->dehydrateStateUsing(
-                                        fn (?string $state): ?string => $state
+                                        fn (?string $state): ?string => $state !== null
                                             ? trim(preg_replace('/\s+/u', ' ', $state))
                                             : null
                                     )
@@ -64,17 +61,24 @@ class BranchForm
                                         'max' => 'يجب ألا يتجاوز اسم الفرع 100 حرف',
                                     ]),
 
-                                // ✅ المحافظة (جديد)
                                 Select::make('governorate_id')
                                     ->label('المحافظة')
-                                    ->relationship('governorate', 'name_ar')
+                                    ->options(
+                                        fn (): array => Governorate::query()
+                                            ->where('is_active', true)
+                                            ->orderBy('name_ar')
+                                            ->pluck('name_ar', 'id')
+                                            ->toArray()
+                                    )
                                     ->searchable()
                                     ->preload()
                                     ->required()
                                     ->native(false)
                                     ->placeholder('اختر المحافظة')
-                                    ->helperText('الفرع يتبع محافظة واحدة')
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->validationMessages([
+                                        'required' => 'يرجى اختيار المحافظة التابعة للفرع',
+                                    ]),
 
                                 Textarea::make('address')
                                     ->label('عنوان الفرع')
@@ -84,7 +88,7 @@ class BranchForm
                                     ->rows(3)
                                     ->columnSpanFull()
                                     ->dehydrateStateUsing(
-                                        fn (?string $state): ?string => $state
+                                        fn (?string $state): ?string => $state !== null
                                             ? trim(preg_replace('/\s+/u', ' ', $state))
                                             : null
                                     )
@@ -122,21 +126,16 @@ class BranchForm
                                         'email' => 'صيغة البريد الإلكتروني غير صحيحة',
                                         'unique' => 'البريد الإلكتروني مستخدم مسبقاً',
                                     ]),
-
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                // ═══════════════════════════════════════════════
-                // القسم 2: إدارة الفرع
-                // ═══════════════════════════════════════════════
                 Section::make('إدارة الفرع')
                     ->description('حالة الفرع والمدير المسؤول')
                     ->icon('heroicon-o-user-group')
                     ->schema([
                         Grid::make(3)
                             ->schema([
-
                                 Toggle::make('is_active')
                                     ->label('الفرع نشط')
                                     ->default(true)
@@ -151,19 +150,14 @@ class BranchForm
                                     ->relationship(
                                         name: 'manager',
                                         titleAttribute: 'full_name',
-                                        modifyQueryUsing: function ($query, $livewire) {
-                                            $branch = $livewire->getRecord();
-                                            if (! $branch) {
-                                                return $query->whereRaw('1 = 0');
-                                            }
-                                            return $query->where('branch_id', $branch->id);
-                                        },
+                                        modifyQueryUsing: fn (Builder $query) => $query
+                                            ->where('account_type', 'employee')
+                                            ->orderBy('full_name')
                                     )
                                     ->searchable()
                                     ->preload()
                                     ->nullable()
                                     ->columnSpan(2),
-
                             ]),
                     ])
                     ->columnSpanFull(),

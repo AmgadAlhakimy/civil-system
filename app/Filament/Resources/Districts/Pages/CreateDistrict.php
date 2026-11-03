@@ -12,10 +12,15 @@ class CreateDistrict extends CreateRecord
     public function mount(): void
     {
         abort_unless(
-            auth()->user()?->can('districts.create'),
+            auth()->user()?->can('districts.create') ?? false,
             403
         );
 
         parent::mount();
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

@@ -139,16 +139,6 @@ class BranchResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'المواقع الجغرافية';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'success';
+        return 'الإدارة الجغرافية';
     }
 }

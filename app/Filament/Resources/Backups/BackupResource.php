@@ -22,7 +22,7 @@ class BackupResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedCircleStack;
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -34,7 +34,7 @@ class BackupResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'التقارير والإدارة';
+        return 'إدارة النظام';
     }
 
     public static function canViewAny(): bool

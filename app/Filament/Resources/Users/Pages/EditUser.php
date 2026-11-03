@@ -14,7 +14,7 @@ class EditUser extends EditRecord
 
     public static function canAccess(array $parameters = []): bool
     {
-        return auth()->user()?->can('users.edit') ?? false;
+        return auth()->user()?->can('users.update') ?? false;
     }
 
     protected function getHeaderActions(): array

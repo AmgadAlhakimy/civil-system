@@ -24,7 +24,12 @@ class ListGovernorates extends ListRecords
     {
         return [
             CreateAction::make()
-                ->visible(fn (): bool => auth()->user()?->can('governorates.create') ?? false),
+                ->label('إضافة محافظة')
+                ->icon('heroicon-o-building-library')
+                ->size('lg')
+                ->visible(
+                    fn (): bool => auth()->user()?->can('governorates.create') ?? false
+                ),
         ];
     }
 }

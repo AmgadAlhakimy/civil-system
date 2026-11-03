@@ -33,7 +33,7 @@ class PassportResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'السجل المدني';
+        return 'خدمات الجوازات';
     }
 
     public static function getRecordTitle($record): string
@@ -58,7 +58,7 @@ class PassportResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can("passports.edit") ?? false;
+        return auth()->user()?->can("passports.update") ?? false;
     }
 
     public static function canDelete($record): bool

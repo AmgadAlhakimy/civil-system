@@ -17,7 +17,9 @@ class District extends Model
     protected $table = 'districts';
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -26,14 +28,12 @@ class District extends Model
         'name_ar',
         'name_en',
         'is_active',
-        'sort_order',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
-            'sort_order' => 'integer',
         ];
     }
 
@@ -45,18 +45,10 @@ class District extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // العلاقات
-    // ═══════════════════════════════════════════════════════════
-
     public function governorate(): BelongsTo
     {
         return $this->belongsTo(Governorate::class);
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // Scopes
-    // ═══════════════════════════════════════════════════════════
 
     public function scopeActive($query)
     {
@@ -65,6 +57,6 @@ class District extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order')->orderBy('name_ar');
+        return $query->orderBy('name_ar');
     }
 }

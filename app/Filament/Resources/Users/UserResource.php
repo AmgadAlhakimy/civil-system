@@ -24,7 +24,7 @@ class UserResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         'heroicon-o-user-circle';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -34,7 +34,7 @@ class UserResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'النظام';
+        return 'إدارة النظام';
     }
 
     public static function getRecordTitle($record): string
@@ -84,7 +84,7 @@ class UserResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can('users.edit') ?? false;
+        return auth()->user()?->can('users.update') ?? false;
     }
 
     public static function canDelete($record): bool
