@@ -48,6 +48,57 @@ class ViewIdentityCard extends ViewRecord
         return $arabic->utf8Glyphs($text);
     }
 
+    protected function performCardOperation(
+        string $expectedStatus,
+        string $operationLabel
+    ): void {
+        if (! auth()->user()?->can('identity_cards.update')) {
+            abort(403);
+        }
+
+        $this->record->refresh();
+
+        if ($this->record->status !== $expectedStatus) {
+            Notification::make()
+                ->title('لا يمكن تنفيذ العملية')
+                ->body('حالة البطاقة تغيرت ولم تعد تسمح بتنفيذ هذه العملية.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $issueDate = now();
+
+        $expiryDate = $issueDate
+            ->copy()
+            ->addYears($this->record->validityYears());
+
+        $this->record->update([
+            'status' => 'active',
+            'issue_date' => $issueDate->toDateString(),
+            'expiry_date' => $expiryDate->toDateString(),
+        ]);
+
+        $this->record->refresh();
+
+        $this->refreshFormData([
+            'status',
+            'issue_date',
+            'expiry_date',
+        ]);
+
+        Notification::make()
+            ->title('تمت العملية بنجاح')
+            ->body(
+                'تم تنفيذ عملية ' . $operationLabel .
+                ' وأصبحت البطاقة سارية لمدة ' .
+                $this->record->validityYears() . ' سنوات.'
+            )
+            ->success()
+            ->send();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -58,7 +109,7 @@ class ViewIdentityCard extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد البطاقة الشخصية')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد هذه البطاقة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 5 سنوات، وستصبح البطاقة سارية.'
+                    'هل أنت متأكد من اعتماد هذه البطاقة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وتكون مدة الصلاحية 10 سنوات، وستصبح البطاقة سارية.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
@@ -68,11 +119,11 @@ class ViewIdentityCard extends ViewRecord
                         && (auth()->user()?->can('identity_cards.approve') ?? false)
                 )
                 ->action(function (): void {
-                    if (
-                        ! auth()->user()?->can('identity_cards.approve')
-                    ) {
+                    if (! auth()->user()?->can('identity_cards.approve')) {
                         abort(403);
                     }
+
+                    $this->record->refresh();
 
                     if ($this->record->status !== 'pending') {
                         Notification::make()
@@ -93,7 +144,7 @@ class ViewIdentityCard extends ViewRecord
                         'issue_date' => $issueDate->toDateString(),
                         'expiry_date' => $issueDate
                             ->copy()
-                            ->addYears(5)
+                            ->addYears($this->record->validityYears())
                             ->toDateString(),
                         'rejection_reason' => null,
                     ]);
@@ -111,7 +162,7 @@ class ViewIdentityCard extends ViewRecord
 
                     Notification::make()
                         ->title('تم اعتماد البطاقة بنجاح')
-                        ->body('تم إصدار البطاقة وأصبحت سارية لمدة 5 سنوات.')
+                        ->body('تم إصدار البطاقة وأصبحت سارية لمدة 10 سنوات.')
                         ->success()
                         ->send();
                 }),
@@ -264,6 +315,75 @@ class ViewIdentityCard extends ViewRecord
                     );
                 }),
 
+            Action::make('renew')
+                ->label('تجديد البطاقة')
+                ->icon('heroicon-o-arrow-path')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('تجديد البطاقة الشخصية')
+                ->modalDescription(
+                    'هل أنت متأكد من تجديد البطاقة؟ سيتم تحديث تاريخ الإصدار والانتهاء، وستصبح البطاقة سارية لمدة 10 سنوات.'
+                )
+                ->modalSubmitActionLabel('نعم، تجديد البطاقة')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'expired'
+                        && (auth()->user()?->can('identity_cards.update') ?? false)
+                )
+                ->action(
+                    fn () => $this->performCardOperation(
+                        'expired',
+                        'تجديد البطاقة'
+                    )
+                ),
+
+            Action::make('replaceLost')
+                ->label('بدل فاقد')
+                ->icon('heroicon-o-document-plus')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('إصدار بدل فاقد')
+                ->modalDescription(
+                    'هل أنت متأكد من إصدار بدل فاقد لهذه البطاقة؟ ستبقى البطاقة بنفس الرقم الوطني، وسيتم تحديث تاريخ الإصدار والانتهاء لمدة 10 سنوات.'
+                )
+                ->modalSubmitActionLabel('نعم، إصدار بدل فاقد')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'lost'
+                        && (auth()->user()?->can('identity_cards.update') ?? false)
+                )
+                ->action(
+                    fn () => $this->performCardOperation(
+                        'lost',
+                        'إصدار بدل فاقد'
+                    )
+                ),
+
+            Action::make('replaceDamaged')
+                ->label('بدل تالف')
+                ->icon('heroicon-o-document-check')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('إصدار بدل تالف')
+                ->modalDescription(
+                    'هل أنت متأكد من إصدار بدل تالف لهذه البطاقة؟ ستبقى البطاقة بنفس الرقم الوطني، وسيتم تحديث تاريخ الإصدار والانتهاء لمدة 10 سنوات.'
+                )
+                ->modalSubmitActionLabel('نعم، إصدار بدل تالف')
+                ->modalCancelActionLabel('إلغاء')
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status === 'damaged'
+                        && (auth()->user()?->can('identity_cards.update') ?? false)
+                )
+                ->action(
+                    fn () => $this->performCardOperation(
+                        'damaged',
+                        'إصدار بدل تالف'
+                    )
+                ),
+
             Action::make('reject')
                 ->label('رفض البطاقة')
                 ->icon('heroicon-o-x-circle')
@@ -279,12 +399,12 @@ class ViewIdentityCard extends ViewRecord
                         ->placeholder('اكتب سبب رفض البطاقة بالتفصيل')
                         ->required()
                         ->minLength(5)
-                        ->maxLength(2000)
+                        ->maxLength(100)
                         ->rows(4)
                         ->validationMessages([
                             'required' => 'يجب كتابة سبب رفض البطاقة.',
                             'min' => 'يجب ألا يقل سبب الرفض عن 5 أحرف.',
-                            'max' => 'يجب ألا يتجاوز سبب الرفض 2000 حرف.',
+                            'max' => 'يجب ألا يتجاوز سبب الرفض 100 حرف.',
                         ]),
                 ])
                 ->requiresConfirmation()
@@ -298,6 +418,8 @@ class ViewIdentityCard extends ViewRecord
                     if (! auth()->user()?->can('identity_cards.reject')) {
                         abort(403);
                     }
+
+                    $this->record->refresh();
 
                     if ($this->record->status !== 'pending') {
                         Notification::make()
@@ -358,6 +480,8 @@ class ViewIdentityCard extends ViewRecord
                     if (! auth()->user()?->can('identity_cards.resubmit')) {
                         abort(403);
                     }
+
+                    $this->record->refresh();
 
                     if ($this->record->status !== 'rejected') {
                         Notification::make()

@@ -6,6 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class IdentityCardForm
@@ -18,8 +19,9 @@ class IdentityCardForm
                     ->description('المعلومات الأساسية للبطاقة الشخصية')
                     ->icon('heroicon-o-identification')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
+                        Grid::make()
+                            ->columns(fn (string $operation): int => $operation === 'edit' ? 3 : 2)
+                        ->schema([
                                 Select::make('citizen_id')
                                     ->label('المواطن')
                                     ->relationship(
@@ -90,6 +92,56 @@ class IdentityCardForm
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الفرع المُصدِر للبطاقة',
                                     ]),
+
+                                Select::make('status')
+                                    ->label('الإجراء')
+                                    ->options([
+                                        'lost' => 'مفقودة',
+                                        'damaged' => 'تالفة',
+                                        'cancelled' => 'ملغاة',
+                                    ])
+                                    ->placeholder('اختر الإجراء')
+                                    ->native(false)
+                                    ->live()
+                                    ->visible(
+                                        fn (string $operation): bool => $operation === 'edit'
+                                    )
+                                    ->afterStateHydrated(
+                                        function (Select $component, $state): void {
+                                            if (! in_array($state, [
+                                                'lost',
+                                                'damaged',
+                                                'cancelled',
+                                            ], true)) {
+                                                $component->state(null);
+                                            }
+                                        }
+                                    )
+                                    ->dehydrated(
+                                        fn ($state): bool => filled($state)
+                                    ),
+
+                                Textarea::make('rejection_reason')
+                                    ->label('سبب الإجراء')
+                                    ->placeholder('اكتب سبب الإجراء')
+                                    ->rows(3)
+                                    ->maxLength(1000)
+                                    ->visible(
+                                        fn (Get $get, string $operation): bool => $operation === 'edit'
+                                            && in_array($get('status'), [
+                                                'lost',
+                                                'damaged',
+                                                'cancelled',
+                                            ], true)
+                                    )
+                                    ->required(
+                                        fn (Get $get): bool => in_array($get('status'), [
+                                            'lost',
+                                            'damaged',
+                                            'cancelled',
+                                        ], true)
+                                    )
+                                    ->columnSpanFull(),
                             ]),
                     ])
                     ->columnSpanFull(),

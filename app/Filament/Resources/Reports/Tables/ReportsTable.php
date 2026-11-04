@@ -214,6 +214,7 @@ class ReportsTable
                         );
                     }),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

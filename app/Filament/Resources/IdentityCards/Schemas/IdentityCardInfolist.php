@@ -106,10 +106,15 @@ class IdentityCardInfolist
                                     ->columnSpanFull(),
 
                                 TextEntry::make('rejection_reason')
-                                    ->label('سبب رفض البطاقة')
-                                    ->placeholder('لا يوجد سبب رفض')
+                                    ->label('سبب الإجراء')
+                                    ->placeholder('لا يوجد سبب مسجل')
                                     ->visible(
-                                        fn ($record): bool => $record->status === 'rejected'
+                                        fn ($record): bool => in_array($record->status, [
+                                            'rejected',
+                                            'lost',
+                                            'damaged',
+                                            'cancelled',
+                                        ], true)
                                     )
                                     ->columnSpanFull(),
 

@@ -11,10 +11,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            GovernorateDistrictSeeder::class,
             BranchSeeder::class,
-        ]);
-
-        $this->call([
             RolesAndPermissionsSeeder::class,
         ]);
 
@@ -45,7 +43,6 @@ class DatabaseSeeder extends Seeder
             DeathCertificateSeeder::class,
             AppointmentSeeder::class,
             SettingSeeder::class,
-            GovernorateDistrictSeeder::class,
             ServiceFeeSeeder::class,
         ]);
     }

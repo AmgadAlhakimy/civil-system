@@ -74,7 +74,5 @@ class BranchSeeder extends Seeder
                 ]
             );
         }
-
-        $this->command?->info('تمت معالجة بيانات الفروع بنجاح.');
     }
 }

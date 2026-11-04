@@ -4,8 +4,6 @@ namespace App\Filament\Resources\IdentityCards\Pages;
 
 use App\Filament\Resources\IdentityCards\IdentityCardResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -37,11 +35,17 @@ class EditIdentityCard extends EditRecord
             $data['expiry_date'],
             $data['approved_by'],
             $data['approved_at'],
-            $data['print_count'],
-            $data['status']
+            $data['print_count']
         );
 
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return IdentityCardResource::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
     }
 
     protected function getHeaderActions(): array
@@ -59,18 +63,6 @@ class EditIdentityCard extends EditRecord
                 ->icon('heroicon-o-trash')
                 ->visible(
                     fn (): bool => auth()->user()?->can('identity_cards.delete') ?? false
-                ),
-
-            ForceDeleteAction::make()
-                ->label('حذف نهائي')
-                ->visible(
-                    fn (): bool => auth()->user()?->can('identity_cards.force_delete') ?? false
-                ),
-
-            RestoreAction::make()
-                ->label('استعادة البطاقة')
-                ->visible(
-                    fn (): bool => auth()->user()?->can('identity_cards.restore') ?? false
                 ),
         ];
     }

@@ -215,6 +215,7 @@ class BirthCertificatesTable
                     ),
 
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
 
                 BulkActionGroup::make([

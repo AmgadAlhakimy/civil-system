@@ -26,7 +26,8 @@ class FamilyCardsTable
                     ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ رقم البطاقة')
-                    ->weight('bold')
+                    ->fontFamily('mono')
+                    ->size('md')
                     ->icon('heroicon-o-rectangle-stack'),
 
                 TextColumn::make('head')
@@ -170,6 +171,7 @@ class FamilyCardsTable
                     ),
 
             ])
+            ->recordActionsColumnLabel('العمليات')
 
             ->toolbarActions([
 

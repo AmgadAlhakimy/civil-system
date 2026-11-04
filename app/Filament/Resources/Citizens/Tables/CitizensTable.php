@@ -247,6 +247,7 @@ class CitizensTable
                         fn (): bool => auth()->user()?->can('citizens.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

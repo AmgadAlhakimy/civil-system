@@ -182,6 +182,7 @@ class PassportsTable
                         fn ($record): bool => auth()->user()?->can('passports.edit') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

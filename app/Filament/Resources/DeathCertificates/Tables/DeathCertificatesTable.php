@@ -179,6 +179,7 @@ class DeathCertificatesTable
                     ),
 
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
 
                 BulkActionGroup::make([

@@ -75,6 +75,7 @@ class PermissionsTable
                 EditAction::make()
                     ->label('تعديل'),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

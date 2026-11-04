@@ -75,6 +75,33 @@ class IdentityCardsTable
                             default => $state ?? 'غير محدد',
                         }
                     )
+                    ->searchable(
+                        query: function ($query, string $search): void {
+                            $statuses = [
+                                'pending' => ['pending', 'قيد الانتظار'],
+                                'approved' => ['approved', 'معتمدة'],
+                                'rejected' => ['rejected', 'مرفوضة'],
+                                'active' => ['active', 'سارية'],
+                                'expired' => ['expired', 'منتهية'],
+                                'cancelled' => ['cancelled', 'ملغاة'],
+                                'lost' => ['lost', 'مفقودة'],
+                                'damaged' => ['damaged', 'تالفة'],
+                            ];
+
+                            $matchedStatuses = collect($statuses)
+                                ->filter(
+                                    fn (array $labels): bool => collect($labels)
+                                        ->contains(
+                                            fn (string $label): bool =>
+                                            str_contains($label, $search)
+                                        )
+                                )
+                                ->keys()
+                                ->all();
+
+                            $query->whereIn('status', $matchedStatuses);
+                        }
+                    )
                     ->sortable(),
 
                 TextColumn::make('branch.name')
@@ -166,6 +193,7 @@ class IdentityCardsTable
                             auth()->user()?->can('identity_cards.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
 
             ->toolbarActions([
                 BulkActionGroup::make([

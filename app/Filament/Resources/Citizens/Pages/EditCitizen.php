@@ -4,8 +4,6 @@ namespace App\Filament\Resources\Citizens\Pages;
 
 use App\Filament\Resources\Citizens\CitizenResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -42,18 +40,6 @@ class EditCitizen extends EditRecord
                 ->size('lg')
                 ->visible(
                     fn (): bool => Auth::user()?->can('citizens.delete') ?? false
-                ),
-
-            ForceDeleteAction::make()
-                ->label('حذف المواطن نهائياً')
-                ->visible(
-                    fn (): bool => Auth::user()?->can('citizens.force_delete') ?? false
-                ),
-
-            RestoreAction::make()
-                ->label('استعادة المواطن')
-                ->visible(
-                    fn (): bool => Auth::user()?->can('citizens.restore') ?? false
                 ),
         ];
     }

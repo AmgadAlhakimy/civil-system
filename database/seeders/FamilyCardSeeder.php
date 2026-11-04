@@ -23,9 +23,21 @@ class FamilyCardSeeder extends Seeder
         }
 
         for ($i = 0; $i < 5; $i++) {
+            do {
+                $cardNumber = '';
+
+                for ($j = 0; $j < 11; $j++) {
+                    $cardNumber .= (string) random_int(0, 9);
+                }
+            } while (
+                FamilyCard::withTrashed()
+                    ->where('card_number', $cardNumber)
+                    ->exists()
+            );
+
             FamilyCard::create([
                 'head_id' => $citizens[$i * 4]->id,
-                'card_number' => '1000000000' . ($i + 1),
+                'card_number' => $cardNumber,
                 'issue_date' => null,
                 'expiry_date' => null,
                 'status' => 'pending',

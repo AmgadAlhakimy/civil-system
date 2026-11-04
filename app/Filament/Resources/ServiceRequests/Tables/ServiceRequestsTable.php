@@ -260,6 +260,7 @@ class ServiceRequestsTable
                             ->send();
                     }),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

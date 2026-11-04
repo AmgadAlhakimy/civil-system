@@ -89,4 +89,9 @@ class CreateIdentityCard extends CreateRecord
     {
         return 'تم إصدار البطاقة الشخصية بنجاح';
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return IdentityCardResource::getUrl('index');
+    }
 }

@@ -210,6 +210,7 @@ class AppointmentsTable
                             auth()->user()?->can('appointments.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

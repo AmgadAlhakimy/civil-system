@@ -50,6 +50,7 @@ class RolesTable
                             auth()->user()?->can('roles.update') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
