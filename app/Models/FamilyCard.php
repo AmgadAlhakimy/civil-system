@@ -17,6 +17,7 @@ class FamilyCard extends Model
 
     protected $fillable = [
         'head_id',
+        'branch_id',
         'card_number',
         'issue_date',
         'expiry_date',
@@ -36,6 +37,32 @@ class FamilyCard extends Model
         'print_count' => 'integer',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (FamilyCard $card): void {
+            if (filled($card->card_number)) {
+                return;
+            }
+
+            do {
+                $cardNumber = '';
+
+                for ($i = 0; $i < 11; $i++) {
+                    $cardNumber .= (string) random_int(0, 9);
+                }
+            } while (
+                static::withTrashed()
+                    ->where('card_number', $cardNumber)
+                    ->exists()
+            );
+
+            $card->card_number = $cardNumber;
+        });
+    }
+    public function validityYears(): int
+    {
+        return 10;
+    }
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -47,6 +74,11 @@ class FamilyCard extends Model
     public function head(): BelongsTo
     {
         return $this->belongsTo(Citizen::class, 'head_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function members(): HasMany

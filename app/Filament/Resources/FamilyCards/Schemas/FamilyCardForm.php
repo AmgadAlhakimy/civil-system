@@ -9,6 +9,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class FamilyCardForm
@@ -22,8 +23,8 @@ class FamilyCardForm
                     ->description('المعلومات الأساسية للبطاقة العائلية')
                     ->icon('heroicon-o-rectangle-stack')
                     ->schema([
-
-                        Grid::make(2)
+                        Grid::make()
+                            ->columns(fn (string $operation): int => $operation === 'edit' ? 3 : 2)
                             ->schema([
 
                                 Select::make('head_id')
@@ -68,25 +69,76 @@ class FamilyCardForm
                                     ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
+                                    ->disabled(
+                                        fn ($record, string $operation): bool => $operation === 'edit'
+                                    )
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار رب الأسرة',
                                     ]),
-
-                                TextInput::make('card_number')
-                                    ->label('رقم البطاقة العائلية')
-                                    ->required()
-                                    ->maxLength(11)
-                                    ->rule('regex:/^[0-9]{11}$/')
-                                    ->unique(
-                                        table: 'family_cards',
-                                        column: 'card_number',
-                                        ignoreRecord: true,
+                                Select::make('branch_id')
+                                    ->label('جهة الإصدار')
+                                    ->relationship(
+                                        name: 'branch',
+                                        titleAttribute: 'name',
                                     )
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->native(false)
                                     ->validationMessages([
-                                        'required' => 'رقم البطاقة العائلية مطلوب',
-                                        'regex' => 'رقم البطاقة العائلية يجب أن يتكون من 11 رقمًا بالضبط',
-                                        'unique' => 'رقم البطاقة العائلية مسجل مسبقًا',
+                                        'required' => 'يرجى اختيار الفرع المُصدِر للبطاقة',
                                     ]),
+
+                                Select::make('status')
+                                    ->label('الإجراء')
+                                    ->options([
+                                        'lost' => 'مفقودة',
+                                        'damaged' => 'تالفة',
+                                        'cancelled' => 'ملغاة',
+                                    ])
+                                    ->placeholder('اختر الإجراء')
+                                    ->native(false)
+                                    ->live()
+                                    ->visible(
+                                        fn (string $operation): bool => $operation === 'edit'
+                                    )
+                                    ->afterStateHydrated(
+                                        function (Select $component, $state): void {
+                                            if (! in_array($state, [
+                                                'lost',
+                                                'damaged',
+                                                'cancelled',
+                                            ], true)) {
+                                                $component->state(null);
+                                            }
+                                        }
+                                    )
+                                    ->dehydrated(
+                                        fn ($state): bool => filled($state)
+                                    ),
+
+                                Textarea::make('rejection_reason')
+                                    ->label('سبب الإجراء')
+                                    ->placeholder('اكتب سبب الإجراء')
+                                    ->rows(3)
+                                    ->maxLength(1000)
+                                    ->visible(
+                                        fn (Get $get, string $operation): bool => $operation === 'edit'
+                                            && in_array($get('status'), [
+                                                'lost',
+                                                'damaged',
+                                                'cancelled',
+                                            ], true)
+                                    )
+                                    ->required(
+                                        fn (Get $get): bool => in_array($get('status'), [
+                                            'lost',
+                                            'damaged',
+                                            'cancelled',
+                                        ], true)
+                                    )
+                                    ->columnSpanFull(),
 
                             ]),
                     ])
@@ -108,7 +160,7 @@ class FamilyCardForm
                             ])
                             ->schema([
 
-                                Grid::make(3)
+                                Grid::make(2)
                                     ->schema([
 
                                         Select::make('citizen_id')
@@ -182,16 +234,6 @@ class FamilyCardForm
                                                 'required' => 'يرجى تحديد صلة القرابة',
                                             ]),
 
-                                        Select::make('is_active')
-                                            ->label('الحالة')
-                                            ->options([
-                                                true => 'فعال',
-                                                false => 'غير فعال',
-                                            ])
-                                            ->default(true)
-                                            ->required()
-                                            ->native(false),
-
                                         Textarea::make('notes')
                                             ->label('ملاحظات')
                                             ->rows(2)
@@ -247,7 +289,6 @@ class FamilyCardForm
                                     ->label('ملاحظات')
                                     ->rows(4)
                                     ->maxLength(1000),
-
                             ]),
                     ])
                     ->columnSpanFull(),

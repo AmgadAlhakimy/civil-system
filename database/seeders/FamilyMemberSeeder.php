@@ -19,16 +19,13 @@ class FamilyMemberSeeder extends Seeder
             ->limit(5)
             ->get();
 
-        if (! $user || $familyCards->count() < 5) {
-            return;
-        }
-
         $citizens = Citizen::query()
+            ->where('verification_status', 'approved')
             ->orderBy('created_at')
             ->limit(20)
             ->get();
 
-        if ($citizens->count() < 20) {
+        if (! $user || $familyCards->count() < 5 || $citizens->count() < 20) {
             return;
         }
 

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\Citizen;
 use App\Models\FamilyCard;
 use App\Models\User;
@@ -13,12 +14,15 @@ class FamilyCardSeeder extends Seeder
     {
         $user = User::query()->first();
 
+        $branch = Branch::query()->first();
+
         $citizens = Citizen::query()
+            ->where('verification_status', 'approved')
             ->orderBy('created_at')
-            ->limit(20)
+            ->limit(17)
             ->get();
 
-        if (! $user || $citizens->count() < 20) {
+        if (! $user || ! $branch || $citizens->count() < 17) {
             return;
         }
 
@@ -37,6 +41,7 @@ class FamilyCardSeeder extends Seeder
 
             FamilyCard::create([
                 'head_id' => $citizens[$i * 4]->id,
+                'branch_id' => $branch->id,
                 'card_number' => $cardNumber,
                 'issue_date' => null,
                 'expiry_date' => null,

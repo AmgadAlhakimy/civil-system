@@ -95,6 +95,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'family_cards.approve', 'name_ar' => 'اعتماد البطاقات العائلية', 'module' => 'family_cards', 'action' => 'approve', 'description' => 'اعتماد طلبات البطاقات العائلية وتحديد تواريخ الإصدار والانتهاء'],
             ['name' => 'family_cards.reject', 'name_ar' => 'رفض البطاقات العائلية', 'module' => 'family_cards', 'action' => 'reject', 'description' => 'رفض طلبات إصدار البطاقات العائلية'],
             ['name' => 'family_cards.print', 'name_ar' => 'طباعة البطاقات العائلية', 'module' => 'family_cards', 'action' => 'print', 'description' => 'طباعة البطاقات العائلية بصيغة PDF وتسجيل عدد مرات الطباعة'],
+            ['name' => 'family_cards.resubmit', 'name_ar' => 'إعادة تقديم البطاقات العائلية', 'module' => 'family_cards', 'action' => 'resubmit', 'description' => 'إعادة تقديم طلبات البطاقات العائلية المرفوضة'],
 
             /*
             |--------------------------------------------------------------------------

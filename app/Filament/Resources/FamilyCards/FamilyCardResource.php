@@ -13,6 +13,7 @@ use App\Models\FamilyCard;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -22,14 +23,9 @@ class FamilyCardResource extends Resource
     protected static ?string $model = FamilyCard::class;
 
     protected static string|BackedEnum|null $navigationIcon =
-        'heroicon-o-user-group';
+        Heroicon::OutlinedUserGroup;
 
     protected static ?int $navigationSort = 3;
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'السجل المدني';
-    }
 
     protected static ?string $recordTitleAttribute = 'card_number';
 
@@ -37,9 +33,19 @@ class FamilyCardResource extends Resource
 
     protected static ?string $pluralModelLabel = 'البطاقات العائلية';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'السجل المدني';
+    }
+
     public static function getRecordTitle($record): string
     {
         return 'بيانات البطاقة العائلية: ' . $record->card_number;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['card_number'];
     }
 
     public static function canViewAny(): bool

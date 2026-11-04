@@ -42,6 +42,19 @@ class BirthCertificateSeeder extends Seeder
         }
 
         for ($i = 0; $i < 20; $i++) {
+
+            do {
+                $certificateNumber = '';
+
+                for ($j = 0; $j < 11; $j++) {
+                    $certificateNumber .= (string) random_int(0, 9);
+                }
+            } while (
+                BirthCertificate::withTrashed()
+                    ->where('certificate_number', $certificateNumber)
+                    ->exists()
+            );
+
             $child = $children[$i];
 
             $father = $fathers->firstWhere('id', '!=', $child->id);
@@ -55,7 +68,7 @@ class BirthCertificateSeeder extends Seeder
                 'child_id' => $child->id,
                 'father_id' => $father->id,
                 'mother_id' => $mother->id,
-                'certificate_number' => '1000000000' . ($i + 1),
+                'certificate_number' =>$certificateNumber,
                 'issue_date' => null,
                 'status' => 'pending',
                 'notes' => null,

@@ -12,11 +12,13 @@ return new class extends Migration
             $table->uuid('id')->primary();
 
             $table->uuid('head_id');
+            $table->uuid('branch_id');
 
             $table->string('card_number', 11)->unique();
 
             $table->enum('status', [
                 'pending',
+                'approved',
                 'rejected',
                 'active',
                 'expired',
@@ -45,6 +47,11 @@ return new class extends Migration
                 ->on('citizens')
                 ->onDelete('cascade');
 
+            $table->foreign('branch_id')
+                ->references('id')
+                ->on('branches')
+                ->onDelete('restrict');
+
             $table->foreign('issued_by')
                 ->references('id')
                 ->on('users')
@@ -59,6 +66,7 @@ return new class extends Migration
             $table->index('issue_date');
             $table->index('expiry_date');
             $table->index('head_id');
+            $table->index('branch_id');
         });
     }
 

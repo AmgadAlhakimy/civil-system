@@ -26,7 +26,8 @@ class BirthCertificatesTable
                     ->sortable()
                     ->copyable()
                     ->copyMessage('تم نسخ رقم شهادة الميلاد')
-                    ->weight('bold')
+                   ->fontFamily('mono')
+                    ->size('md')
                     ->icon('heroicon-o-document-text'),
 
                 TextColumn::make('child')

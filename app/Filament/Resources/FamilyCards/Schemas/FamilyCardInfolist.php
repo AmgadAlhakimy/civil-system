@@ -23,7 +23,7 @@ class FamilyCardInfolist
                             ->schema([
 
                                 TextEntry::make('card_number')
-                                    ->label('رقم البطاقة')
+                                    ->label('رقم البطاقة العائلية')
                                     ->weight('bold')
                                     ->copyable()
                                     ->copyMessage('تم نسخ رقم البطاقة'),
