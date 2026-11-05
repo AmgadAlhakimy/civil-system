@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'admin',
                 'full_name' => 'أمجد عبد الرقيب الحكيمي',
                 'phone' => '777100001',
-                'password' => 'password',
+                'password' => 'password@123',
                 'must_change_password' => true,
                 'account_type' => 'employee',
                 'branch_id' => Branch::where('code', 'SNA-01')->value('id'),

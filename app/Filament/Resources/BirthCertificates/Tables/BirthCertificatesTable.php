@@ -20,16 +20,6 @@ class BirthCertificatesTable
         return $table
             ->columns([
 
-                TextColumn::make('certificate_number')
-                    ->label('رقم شهادة الميلاد')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->copyMessage('تم نسخ رقم شهادة الميلاد')
-                   ->fontFamily('mono')
-                    ->size('md')
-                    ->icon('heroicon-o-document-text'),
-
                 TextColumn::make('child')
                     ->label('الطفل')
                     ->getStateUsing(
@@ -62,6 +52,12 @@ class BirthCertificatesTable
                             );
                         }
                     ),
+
+                TextColumn::make('child.birth_date')
+                    ->label('تاريخ الميلاد')
+                    ->date('Y-m-d')
+                    ->placeholder('غير محدد')
+                    ->sortable(),
 
                 TextColumn::make('father')
                     ->label('الأب')
@@ -129,12 +125,19 @@ class BirthCertificatesTable
                         }
                     ),
 
+                TextColumn::make('branch.name')
+                    ->label('الفرع')
+                    ->placeholder('غير محدد')
+                    ->sortable(),
+
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
-                            'active' => 'سارية',
+                            'approved' => 'معتمدة',
+                            'rejected' => 'مرفوضة',
+                            'issued' => 'سارية',
                             'cancelled' => 'ملغاة',
                             default => $state ?? 'غير محدد',
                         }
@@ -147,13 +150,13 @@ class BirthCertificatesTable
                     ->placeholder('لم يتم الإصدار')
                     ->sortable(),
 
-                TextColumn::make('issuedBy.name')
+                TextColumn::make('issuedBy.full_name')
                     ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('approvedBy.name')
+                TextColumn::make('approvedBy.full_name')
                     ->label('تم الاعتماد بواسطة')
                     ->sortable()
                     ->placeholder('لم يتم الاعتماد')
@@ -190,7 +193,9 @@ class BirthCertificatesTable
                     ->label('حالة الشهادة')
                     ->options([
                         'pending' => 'قيد الانتظار',
-                        'active' => 'سارية',
+                        'approved' => 'معتمدة',
+                        'rejected' => 'مرفوضة',
+                        'issued' => 'سارية',
                         'cancelled' => 'ملغاة',
                     ]),
 

@@ -22,12 +22,11 @@ class BirthCertificateResource extends Resource
 {
     protected static ?string $model = BirthCertificate::class;
 
-    protected static string|BackedEnum|null $navigationIcon =
-        Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'lucide-baby';
 
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $recordTitleAttribute = 'certificate_number';
+    protected static ?string $recordTitleAttribute = 'child_id';
 
     protected static ?string $modelLabel = 'شهادة ميلاد';
 
@@ -40,7 +39,7 @@ class BirthCertificateResource extends Resource
 
     public static function getRecordTitle($record): string
     {
-        return 'بيانات شهادة الميلاد: ' . $record->certificate_number;
+        return 'شهادة ميلاد: ' . $record->child?->full_name;
     }
 
     public static function canViewAny(): bool

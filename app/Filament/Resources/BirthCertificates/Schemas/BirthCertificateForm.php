@@ -4,7 +4,6 @@ namespace App\Filament\Resources\BirthCertificates\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -30,6 +29,7 @@ class BirthCertificateForm
                                         name: 'child',
                                         titleAttribute: 'first_name',
                                         modifyQueryUsing: fn ($query) => $query
+                                            ->where('verification_status', 'approved')
                                             ->orderBy('first_name')
                                             ->orderBy('father_name')
                                             ->orderBy('middle_name')
@@ -50,33 +50,34 @@ class BirthCertificateForm
                                         'father_name',
                                         'middle_name',
                                         'last_name',
-                                        'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم الطفل')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->live()
+                                    ->disabled(
+                                        fn (string $operation): bool => $operation === 'edit'
+                                    )
+                                    ->dehydrated()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الطفل',
                                         'exists' => 'الطفل المحدد غير صالح',
                                     ]),
 
-                                TextInput::make('certificate_number')
-                                    ->label('رقم شهادة الميلاد')
-                                    ->required()
-                                    ->maxLength(11)
-                                    ->rules([
-                                        'digits:11',
-                                    ])
-                                    ->unique(
-                                        table: 'birth_certificates',
-                                        column: 'certificate_number',
-                                        ignoreRecord: true,
+                                Select::make('branch_id')
+                                    ->label('جهة الإصدار')
+                                    ->relationship(
+                                        name: 'branch',
+                                        titleAttribute: 'name',
                                     )
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->native(false)
                                     ->validationMessages([
-                                        'required' => 'رقم شهادة الميلاد مطلوب',
-                                        'digits' => 'يجب أن يتكون رقم شهادة الميلاد من 11 رقمًا بالضبط',
-                                        'unique' => 'رقم شهادة الميلاد مسجل مسبقًا',
+                                        'required' => 'يرجى اختيار الفرع المُصدِر للشهادة',
                                     ]),
 
                             ]),
@@ -99,13 +100,15 @@ class BirthCertificateForm
                                         modifyQueryUsing: function ($query, $get) {
                                             $childId = $get('child_id');
 
-                                            $query->where('gender', 'male');
+                                            $query
+                                                ->where('verification_status', 'approved')
+                                                ->where('gender', 'male');
 
                                             if ($childId) {
                                                 $query->where('id', '!=', $childId);
                                             }
 
-                                            $query
+                                            return $query
                                                 ->orderBy('first_name')
                                                 ->orderBy('father_name')
                                                 ->orderBy('middle_name')
@@ -127,15 +130,16 @@ class BirthCertificateForm
                                         'father_name',
                                         'middle_name',
                                         'last_name',
-                                        'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم الأب')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->live()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الأب',
-                                        'exists' => 'لا يمكن اختيار الطفل نفسه كأب',
+                                        'exists' => 'الأب المحدد غير صالح',
                                     ]),
 
                                 Select::make('mother_id')
@@ -146,13 +150,15 @@ class BirthCertificateForm
                                         modifyQueryUsing: function ($query, $get) {
                                             $childId = $get('child_id');
 
-                                            $query->where('gender', 'female');
+                                            $query
+                                                ->where('verification_status', 'approved')
+                                                ->where('gender', 'female');
 
                                             if ($childId) {
                                                 $query->where('id', '!=', $childId);
                                             }
 
-                                            $query
+                                            return $query
                                                 ->orderBy('first_name')
                                                 ->orderBy('father_name')
                                                 ->orderBy('middle_name')
@@ -174,15 +180,16 @@ class BirthCertificateForm
                                         'father_name',
                                         'middle_name',
                                         'last_name',
-                                        'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم الأم')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->live()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الأم',
-                                        'exists' => 'لا يمكن اختيار الطفل نفسه كأم',
+                                        'exists' => 'الأم المحددة غير صالحة',
                                     ]),
 
                             ]),
@@ -194,11 +201,13 @@ class BirthCertificateForm
                     ->icon('heroicon-o-information-circle')
                     ->schema([
 
-                        Textarea::make('notes')
-                            ->label('ملاحظات')
-                            ->rows(4)
-                            ->maxLength(1000)
-                            ->columnSpanFull(),
+                        Grid::make(1)
+                            ->schema([
+                                Textarea::make('notes')
+                                    ->label('ملاحظات')
+                                    ->rows(4)
+                                    ->maxLength(1000),
+                            ]),
 
                     ])
                     ->columnSpanFull(),

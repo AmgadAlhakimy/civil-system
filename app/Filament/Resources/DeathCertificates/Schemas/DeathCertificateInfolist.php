@@ -21,21 +21,19 @@ class DeathCertificateInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('certificate_number')
-                                    ->label('رقم شهادة الوفاة')
-                                    ->copyable()
-                                    ->copyMessage('تم نسخ رقم شهادة الوفاة'),
-
                                 TextEntry::make('status')
                                     ->label('حالة الشهادة')
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pending' => 'قيد الانتظار',
-                                            'active' => 'سارية',
+                                            'approved' => 'معتمدة',
+                                            'rejected' => 'مرفوضة',
+                                            'issued' => 'سارية',
                                             'cancelled' => 'ملغاة',
                                             default => 'غير محدد',
                                         }
-                                    ),
+                                    )
+                                ->columnSpanFull(),
 
                                 TextEntry::make('death_date')
                                     ->label('تاريخ الوفاة')
@@ -76,11 +74,8 @@ class DeathCertificateInfolist
                                         ])
                                             ->filter()
                                             ->join(' ') ?: 'غير محدد'
-                                    ),
-
-                                TextEntry::make('deceased.national_id')
-                                    ->label('الرقم الوطني')
-                                    ->placeholder('غير محدد'),
+                                    )
+                                    ->columnSpanFull(),
 
                                 TextEntry::make('deceased.birth_date')
                                     ->label('تاريخ الميلاد')
@@ -116,11 +111,11 @@ class DeathCertificateInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('issuedBy.name')
-                                    ->label('تم إنشاء الطلب بواسطة')
+                                TextEntry::make('issuedBy.full_name')
+                                    ->label('تم الإصدار بواسطة')
                                     ->placeholder('غير محدد'),
 
-                                TextEntry::make('approvedBy.name')
+                                TextEntry::make('approvedBy.full_name')
                                     ->label('تم الاعتماد بواسطة')
                                     ->placeholder('لم يتم الاعتماد بعد'),
 
@@ -145,6 +140,11 @@ class DeathCertificateInfolist
                         TextEntry::make('notes')
                             ->label('ملاحظات')
                             ->placeholder('لا توجد ملاحظات')
+                            ->columnSpanFull(),
+
+                        TextEntry::make('rejection_reason')
+                            ->label('سبب الرفض')
+                            ->placeholder('لا يوجد سبب رفض')
                             ->columnSpanFull(),
 
                         TextEntry::make('qr_code')

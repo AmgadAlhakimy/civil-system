@@ -5,7 +5,9 @@ namespace App\Filament\Resources\DeathCertificates\Pages;
 use App\Filament\Resources\DeathCertificates\DeathCertificateResource;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -25,7 +27,7 @@ class ViewDeathCertificate extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'بيانات شهادة الوفاة: ' . $this->record->certificate_number;
+        return 'بيانات شهادة الوفاة';
     }
 
     protected function getHeaderActions(): array
@@ -39,20 +41,22 @@ class ViewDeathCertificate extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد شهادة الوفاة')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد هذه الشهادة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وستصبح الشهادة سارية.'
+                    'هل أنت متأكد من اعتماد هذه الشهادة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وستصبح الشهادة معتمدة.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(
                     fn (): bool =>
-                        (auth()->user()?->can('death_certificates.approve') ?? false)
-                        && $this->record->status === 'pending'
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('death_certificates.approve') ?? false)
                 )
                 ->action(function (): void {
                     abort_unless(
                         auth()->user()?->can('death_certificates.approve'),
                         403
                     );
+
+                    $this->record->refresh();
 
                     if ($this->record->status !== 'pending') {
                         Notification::make()
@@ -67,17 +71,12 @@ class ViewDeathCertificate extends ViewRecord
                     $issueDate = now();
 
                     $this->record->update([
-                        'status' => 'active',
+                        'status' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => $issueDate,
                         'issue_date' => $issueDate->toDateString(),
+                        'rejection_reason' => null,
                     ]);
-
-                    Notification::make()
-                        ->title('تم اعتماد الشهادة بنجاح')
-                        ->body('تم إصدار شهادة الوفاة وأصبحت سارية.')
-                        ->success()
-                        ->send();
 
                     $this->record->refresh();
 
@@ -86,7 +85,14 @@ class ViewDeathCertificate extends ViewRecord
                         'approved_by',
                         'approved_at',
                         'issue_date',
+                        'rejection_reason',
                     ]);
+
+                    Notification::make()
+                        ->title('تم اعتماد الشهادة بنجاح')
+                        ->body('تم اعتماد شهادة الوفاة وتحديد تاريخ إصدارها.')
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('print')
@@ -102,8 +108,8 @@ class ViewDeathCertificate extends ViewRecord
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(
                     fn (): bool =>
-                        (auth()->user()?->can('death_certificates.print') ?? false)
-                        && $this->record->status === 'active'
+                        in_array($this->record->status, ['approved', 'issued'], true)
+                        && (auth()->user()?->can('death_certificates.print') ?? false)
                 )
                 ->action(function () {
                     abort_unless(
@@ -111,10 +117,12 @@ class ViewDeathCertificate extends ViewRecord
                         403
                     );
 
-                    if ($this->record->status !== 'active') {
+                    $this->record->refresh();
+
+                    if (! in_array($this->record->status, ['approved', 'issued'], true)) {
                         Notification::make()
                             ->title('لا يمكن طباعة الشهادة')
-                            ->body('يجب أن تكون الشهادة سارية قبل طباعتها.')
+                            ->body('يجب أن تكون الشهادة معتمدة أو سارية قبل طباعتها.')
                             ->warning()
                             ->send();
 
@@ -158,35 +166,45 @@ class ViewDeathCertificate extends ViewRecord
 
                     return response()->streamDownload(
                         fn () => print($pdf->output()),
-                        'death-certificate-' . $this->record->certificate_number . '.pdf'
+                        'death-certificate-' . $this->record->id . '.pdf'
                     );
                 }),
 
-            Action::make('cancel')
-                ->label('إلغاء الشهادة')
+            Action::make('reject')
+                ->label('رفض الشهادة')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('إلغاء شهادة الوفاة')
+                ->schema([
+                    Textarea::make('rejection_reason')
+                        ->label('سبب الرفض')
+                        ->required()
+                        ->minLength(3)
+                        ->maxLength(1000)
+                        ->rows(4)
+                        ->columnSpanFull(),
+                ])
+                ->modalHeading('رفض شهادة الوفاة')
                 ->modalDescription(
-                    'هل أنت متأكد من إلغاء طلب شهادة الوفاة؟'
+                    'يرجى كتابة سبب رفض شهادة الوفاة قبل تأكيد العملية.'
                 )
-                ->modalSubmitActionLabel('نعم، إلغاء')
+                ->modalSubmitActionLabel('نعم، رفض الشهادة')
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(
                     fn (): bool =>
-                        (auth()->user()?->can('death_certificates.cancel') ?? false)
-                        && $this->record->status === 'pending'
+                        $this->record->status === 'pending'
+                        && (auth()->user()?->can('death_certificates.reject') ?? false)
                 )
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     abort_unless(
-                        auth()->user()?->can('death_certificates.cancel'),
+                        auth()->user()?->can('death_certificates.reject'),
                         403
                     );
 
+                    $this->record->refresh();
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
-                            ->title('لا يمكن إلغاء الشهادة')
+                            ->title('لا يمكن رفض الشهادة')
                             ->body('حالة الشهادة تغيرت ولم يعد الطلب قيد الانتظار.')
                             ->warning()
                             ->send();
@@ -195,26 +213,28 @@ class ViewDeathCertificate extends ViewRecord
                     }
 
                     $this->record->update([
-                        'status' => 'cancelled',
+                        'status' => 'rejected',
+                        'rejection_reason' => trim($data['rejection_reason']),
                         'approved_by' => null,
                         'approved_at' => null,
                         'issue_date' => null,
                     ]);
 
-                    Notification::make()
-                        ->title('تم إلغاء الشهادة')
-                        ->body('تم تغيير حالة شهادة الوفاة إلى ملغاة.')
-                        ->danger()
-                        ->send();
-
                     $this->record->refresh();
 
                     $this->refreshFormData([
                         'status',
+                        'rejection_reason',
                         'approved_by',
                         'approved_at',
                         'issue_date',
                     ]);
+
+                    Notification::make()
+                        ->title('تم رفض الشهادة')
+                        ->body('تم رفض شهادة الوفاة وحفظ سبب الرفض.')
+                        ->danger()
+                        ->send();
                 }),
 
             EditAction::make()
@@ -224,6 +244,22 @@ class ViewDeathCertificate extends ViewRecord
                     fn (): bool =>
                         auth()->user()?->can('death_certificates.update') ?? false
                 ),
+
+            DeleteAction::make()
+                ->label('حذف الشهادة')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('death_certificates.delete') ?? false
+                )
+                ->requiresConfirmation()
+                ->modalHeading('حذف شهادة الوفاة')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف شهادة الوفاة؟ سيتم نقلها إلى سلة المحذوفات ويمكن استعادتها لاحقًا.'
+                )
+                ->modalSubmitActionLabel('نعم، حذف')
+                ->modalCancelActionLabel('إلغاء'),
 
         ];
     }

@@ -31,18 +31,18 @@ class DeathCertificateForm
                                         name: 'deceased',
                                         titleAttribute: 'first_name',
                                         modifyQueryUsing: function ($query, $record) {
-                                            $query->where(function ($query) use ($record) {
-                                                $query->whereDoesntHave('deathCertificates');
-
-                                                if ($record?->deceased_id) {
-                                                    $query->orWhere(
-                                                        'id',
-                                                        $record->deceased_id
-                                                    );
-                                                }
-                                            });
-
                                             $query
+                                                ->where('verification_status', 'approved')
+                                                ->where(function ($query) use ($record) {
+                                                    $query->whereDoesntHave('deathCertificates');
+
+                                                    if ($record?->deceased_id) {
+                                                        $query->orWhere(
+                                                            'id',
+                                                            $record->deceased_id
+                                                        );
+                                                    }
+                                                })
                                                 ->orderBy('first_name')
                                                 ->orderBy('father_name')
                                                 ->orderBy('middle_name')
@@ -64,33 +64,16 @@ class DeathCertificateForm
                                         'father_name',
                                         'middle_name',
                                         'last_name',
-                                        'national_id',
                                     ])
-                                    ->preload()
+                                    ->searchPrompt('ابحث باسم المتوفى')
+                                    ->searchDebounce(500)
+                                    ->optionsLimit(50)
                                     ->required()
                                     ->native(false)
                                     ->live()
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار المتوفى',
                                         'exists' => 'المواطن المحدد غير صالح',
-                                    ]),
-
-                                TextInput::make('certificate_number')
-                                    ->label('رقم شهادة الوفاة')
-                                    ->required()
-                                    ->maxLength(11)
-                                    ->rules([
-                                        'digits:11',
-                                    ])
-                                    ->unique(
-                                        table: 'death_certificates',
-                                        column: 'certificate_number',
-                                        ignoreRecord: true,
-                                    )
-                                    ->validationMessages([
-                                        'required' => 'رقم شهادة الوفاة مطلوب',
-                                        'digits' => 'يجب أن يتكون رقم شهادة الوفاة من 11 رقمًا بالضبط',
-                                        'unique' => 'رقم شهادة الوفاة مسجل مسبقًا',
                                     ]),
 
                                 DatePicker::make('death_date')

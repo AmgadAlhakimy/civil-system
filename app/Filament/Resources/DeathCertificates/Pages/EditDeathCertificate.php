@@ -4,8 +4,6 @@ namespace App\Filament\Resources\DeathCertificates\Pages;
 
 use App\Filament\Resources\DeathCertificates\DeathCertificateResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -28,36 +26,42 @@ class EditDeathCertificate extends EditRecord
         return 'تعديل شهادة الوفاة';
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        unset(
+            $data['issued_by'],
+            $data['issue_date'],
+            $data['approved_by'],
+            $data['approved_at'],
+            $data['print_count'],
+            $data['status']
+        );
+
+        return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return DeathCertificateResource::getUrl('view', [
+            'record' => $this->getRecord(),
+        ]);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             ViewAction::make()
-                ->label('عرض')
+                ->label('عرض الشهادة')
                 ->icon('heroicon-o-eye')
                 ->visible(
-                    fn (): bool =>
-                        auth()->user()?->can('death_certificates.view') ?? false
+                    fn (): bool => auth()->user()?->can('death_certificates.view') ?? false
                 ),
 
             DeleteAction::make()
-                ->label('حذف')
+                ->label('حذف الشهادة')
+                ->icon('heroicon-o-trash')
                 ->visible(
-                    fn (): bool =>
-                        auth()->user()?->can('death_certificates.delete') ?? false
-                ),
-
-            ForceDeleteAction::make()
-                ->label('حذف نهائي')
-                ->visible(
-                    fn (): bool =>
-                        auth()->user()?->can('death_certificates.force_delete') ?? false
-                ),
-
-            RestoreAction::make()
-                ->label('استعادة')
-                ->visible(
-                    fn (): bool =>
-                        auth()->user()?->can('death_certificates.restore') ?? false
+                    fn (): bool => auth()->user()?->can('death_certificates.delete') ?? false
                 ),
         ];
     }

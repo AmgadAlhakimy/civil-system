@@ -5,7 +5,9 @@ namespace App\Filament\Resources\BirthCertificates\Pages;
 use App\Filament\Resources\BirthCertificates\BirthCertificateResource;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -25,7 +27,7 @@ class ViewBirthCertificate extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'بيانات شهادة الميلاد: ' . $this->record->certificate_number;
+        return 'بيانات شهادة الميلاد';
     }
 
     protected function getHeaderActions(): array
@@ -39,7 +41,7 @@ class ViewBirthCertificate extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('اعتماد شهادة الميلاد')
                 ->modalDescription(
-                    'هل أنت متأكد من اعتماد هذه الشهادة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وستصبح الشهادة سارية.'
+                    'هل أنت متأكد من اعتماد هذه الشهادة؟ سيتم تحديد تاريخ الإصدار تلقائيًا، وستصبح الشهادة معتمدة.'
                 )
                 ->modalSubmitActionLabel('نعم، اعتماد')
                 ->modalCancelActionLabel('إلغاء')
@@ -54,6 +56,8 @@ class ViewBirthCertificate extends ViewRecord
                         403
                     );
 
+                    $this->record->refresh();
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
                             ->title('لا يمكن اعتماد الشهادة')
@@ -67,17 +71,12 @@ class ViewBirthCertificate extends ViewRecord
                     $issueDate = now();
 
                     $this->record->update([
-                        'status' => 'active',
+                        'status' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => $issueDate,
                         'issue_date' => $issueDate->toDateString(),
+                        'rejection_reason' => null,
                     ]);
-
-                    Notification::make()
-                        ->title('تم اعتماد الشهادة بنجاح')
-                        ->body('تم إصدار شهادة الميلاد وأصبحت سارية.')
-                        ->success()
-                        ->send();
 
                     $this->record->refresh();
 
@@ -86,7 +85,14 @@ class ViewBirthCertificate extends ViewRecord
                         'approved_by',
                         'approved_at',
                         'issue_date',
+                        'rejection_reason',
                     ]);
+
+                    Notification::make()
+                        ->title('تم اعتماد الشهادة بنجاح')
+                        ->body('تم اعتماد شهادة الميلاد وتحديد تاريخ إصدارها.')
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('print')
@@ -102,7 +108,7 @@ class ViewBirthCertificate extends ViewRecord
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(
                     fn (): bool =>
-                        $this->record->status === 'active'
+                        in_array($this->record->status, ['approved', 'issued'], true)
                         && (auth()->user()?->can('birth_certificates.print') ?? false)
                 )
                 ->action(function () {
@@ -111,10 +117,12 @@ class ViewBirthCertificate extends ViewRecord
                         403
                     );
 
-                    if ($this->record->status !== 'active') {
+                    $this->record->refresh();
+
+                    if (! in_array($this->record->status, ['approved', 'issued'], true)) {
                         Notification::make()
                             ->title('لا يمكن طباعة الشهادة')
-                            ->body('يجب أن تكون الشهادة سارية قبل طباعتها.')
+                            ->body('يجب أن تكون الشهادة معتمدة أو سارية قبل طباعتها.')
                             ->warning()
                             ->send();
 
@@ -160,35 +168,45 @@ class ViewBirthCertificate extends ViewRecord
 
                     return response()->streamDownload(
                         fn () => print($pdf->output()),
-                        'birth-certificate-' . $this->record->certificate_number . '.pdf'
+                        'birth-certificate-' . $this->record->id . '.pdf'
                     );
                 }),
 
-            Action::make('cancel')
-                ->label('إلغاء الشهادة')
+            Action::make('reject')
+                ->label('رفض الشهادة')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('إلغاء شهادة الميلاد')
+                ->schema([
+                    Textarea::make('rejection_reason')
+                        ->label('سبب الرفض')
+                        ->required()
+                        ->minLength(3)
+                        ->maxLength(1000)
+                        ->rows(4)
+                        ->columnSpanFull(),
+                ])
+                ->modalHeading('رفض شهادة الميلاد')
                 ->modalDescription(
-                    'هل أنت متأكد من إلغاء طلب شهادة الميلاد؟'
+                    'يرجى كتابة سبب رفض شهادة الميلاد قبل تأكيد العملية.'
                 )
-                ->modalSubmitActionLabel('نعم، إلغاء')
+                ->modalSubmitActionLabel('نعم، رفض الشهادة')
                 ->modalCancelActionLabel('إلغاء')
                 ->visible(
                     fn (): bool =>
                         $this->record->status === 'pending'
-                        && (auth()->user()?->can('birth_certificates.cancel') ?? false)
+                        && (auth()->user()?->can('birth_certificates.reject') ?? false)
                 )
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     abort_unless(
-                        auth()->user()?->can('birth_certificates.cancel'),
+                        auth()->user()?->can('birth_certificates.reject'),
                         403
                     );
 
+                    $this->record->refresh();
+
                     if ($this->record->status !== 'pending') {
                         Notification::make()
-                            ->title('لا يمكن إلغاء الشهادة')
+                            ->title('لا يمكن رفض الشهادة')
                             ->body('حالة الشهادة تغيرت ولم يعد الطلب قيد الانتظار.')
                             ->warning()
                             ->send();
@@ -197,34 +215,53 @@ class ViewBirthCertificate extends ViewRecord
                     }
 
                     $this->record->update([
-                        'status' => 'cancelled',
+                        'status' => 'rejected',
+                        'rejection_reason' => trim($data['rejection_reason']),
                         'approved_by' => null,
                         'approved_at' => null,
                         'issue_date' => null,
                     ]);
 
-                    Notification::make()
-                        ->title('تم إلغاء الشهادة')
-                        ->body('تم تغيير حالة شهادة الميلاد إلى ملغاة.')
-                        ->danger()
-                        ->send();
-
                     $this->record->refresh();
 
                     $this->refreshFormData([
                         'status',
+                        'rejection_reason',
                         'approved_by',
                         'approved_at',
                         'issue_date',
                     ]);
+
+                    Notification::make()
+                        ->title('تم رفض الشهادة')
+                        ->body('تم رفض شهادة الميلاد وحفظ سبب الرفض.')
+                        ->danger()
+                        ->send();
                 }),
 
             EditAction::make()
                 ->label('تعديل الشهادة')
                 ->icon('heroicon-o-pencil-square')
                 ->visible(
-                    fn (): bool => auth()->user()?->can('birth_certificates.update') ?? false
+                    fn (): bool =>
+                        auth()->user()?->can('birth_certificates.update') ?? false
                 ),
+
+            DeleteAction::make()
+                ->label('حذف الشهادة')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(
+                    fn (): bool =>
+                        auth()->user()?->can('birth_certificates.delete') ?? false
+                )
+                ->requiresConfirmation()
+                ->modalHeading('حذف شهادة الميلاد')
+                ->modalDescription(
+                    'هل أنت متأكد من حذف شهادة الميلاد؟ سيتم نقلها إلى سلة المحذوفات ويمكن استعادتها لاحقًا.'
+                )
+                ->modalSubmitActionLabel('نعم، حذف')
+                ->modalCancelActionLabel('إلغاء'),
 
         ];
     }

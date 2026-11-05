@@ -14,38 +14,32 @@ return new class extends Migration
             $table->uuid('deceased_id');
 
             $table->date('death_date');
-
             $table->string('cause_of_death', 200);
-
             $table->string('place_of_death', 100);
-
-            $table->string('certificate_number', 20)->unique();
 
             $table->date('issue_date')->nullable();
 
-            $table->string('status')->default('pending');
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'rejected',
+                'issued',
+                'cancelled',
+            ])->default('pending');
 
             $table->text('notes')->nullable();
-
+            $table->text('rejection_reason')->nullable();
             $table->text('qr_code')->nullable();
 
             $table->unsignedInteger('print_count')->default(0);
 
             $table->uuid('issued_by');
-
             $table->uuid('approved_by')->nullable();
-
             $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
 
             $table->softDeletes();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Foreign Keys
-            |--------------------------------------------------------------------------
-            */
 
             $table->foreign('deceased_id')
                 ->references('id')
@@ -62,18 +56,9 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Indexes
-            |--------------------------------------------------------------------------
-            */
-
             $table->index('deceased_id');
-
             $table->index('death_date');
-
             $table->index('issue_date');
-
             $table->index('status');
         });
     }

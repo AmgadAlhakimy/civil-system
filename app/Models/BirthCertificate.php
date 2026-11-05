@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\Citizen;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class BirthCertificate extends Model
 {
-    use HasUuids, SoftDeletes, LogsActivity;
+    use HasFactory, HasUuids, SoftDeletes, LogsActivity;
 
     protected $keyType = 'string';
 
@@ -23,10 +22,11 @@ class BirthCertificate extends Model
         'child_id',
         'father_id',
         'mother_id',
-        'certificate_number',
+        'branch_id',
         'issue_date',
         'status',
         'notes',
+        'rejection_reason',
         'qr_code',
         'print_count',
         'issued_by',
@@ -61,6 +61,11 @@ class BirthCertificate extends Model
     public function mother(): BelongsTo
     {
         return $this->belongsTo(Citizen::class, 'mother_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function issuedBy(): BelongsTo

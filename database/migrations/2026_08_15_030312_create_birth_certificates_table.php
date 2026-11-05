@@ -14,14 +14,20 @@ return new class extends Migration
             $table->uuid('child_id');
             $table->uuid('father_id');
             $table->uuid('mother_id');
-
-            $table->string('certificate_number', 20)->unique();
+            $table->uuid('branch_id');
 
             $table->date('issue_date')->nullable();
 
-            $table->string('status')->default('pending');
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'rejected',
+                'issued',
+                'cancelled',
+            ])->default('pending');
 
             $table->text('notes')->nullable();
+            $table->text('rejection_reason')->nullable();
             $table->text('qr_code')->nullable();
 
             $table->unsignedInteger('print_count')->default(0);
@@ -48,6 +54,11 @@ return new class extends Migration
                 ->on('citizens')
                 ->onDelete('restrict');
 
+            $table->foreign('branch_id')
+                ->references('id')
+                ->on('branches')
+                ->onDelete('restrict');
+
             $table->foreign('issued_by')
                 ->references('id')
                 ->on('users')
@@ -61,6 +72,7 @@ return new class extends Migration
             $table->index('child_id');
             $table->index('father_id');
             $table->index('mother_id');
+            $table->index('branch_id');
             $table->index('issue_date');
             $table->index('status');
         });

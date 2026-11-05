@@ -3,7 +3,11 @@
 namespace App\Filament\Resources\DeathCertificates\Pages;
 
 use App\Filament\Resources\DeathCertificates\DeathCertificateResource;
+use App\Models\Citizen;
+use App\Models\DeathCertificate;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\DB;
 
 class CreateDeathCertificate extends CreateRecord
 {
@@ -24,25 +28,66 @@ class CreateDeathCertificate extends CreateRecord
         return 'إصدار شهادة وفاة';
     }
 
-    protected function mutateFormDataBeforeCreate(array $data): array
+    protected function handleRecordCreation(array $data): DeathCertificate
     {
-        $data['issued_by'] = auth()->id();
+        return DB::transaction(function () use ($data): DeathCertificate {
+            $deceased = Citizen::query()
+                ->whereKey($data['deceased_id'])
+                ->where('verification_status', 'approved')
+                ->first();
 
-        $data['status'] = 'pending';
+            if (! $deceased) {
+                Notification::make()
+                    ->danger()
+                    ->title('لا يمكن إصدار شهادة الوفاة')
+                    ->body('يجب أن تكون بيانات المتوفى معتمدة قبل إصدار الشهادة.')
+                    ->send();
 
-        $data['print_count'] = 0;
+                $this->halt();
+            }
 
-        $data['issue_date'] = null;
+            $certificateExists = DeathCertificate::query()
+                ->where('deceased_id', $data['deceased_id'])
+                ->lockForUpdate()
+                ->exists();
 
-        $data['approved_by'] = null;
+            if ($certificateExists) {
+                Notification::make()
+                    ->danger()
+                    ->title('لا يمكن إصدار شهادة الوفاة')
+                    ->body('توجد شهادة وفاة مسجلة لهذا المواطن بالفعل.')
+                    ->persistent()
+                    ->send();
 
-        $data['approved_at'] = null;
+                $this->halt();
+            }
 
-        return $data;
+            $certificate = new DeathCertificate();
+
+            $certificate->fill($data);
+
+            $issueDate = now();
+
+            $certificate->status = 'issued';
+            $certificate->issued_by = auth()->id();
+            $certificate->print_count = 0;
+            $certificate->issue_date = $issueDate;
+            $certificate->approved_by = auth()->id();
+            $certificate->approved_at = $issueDate;
+
+            $certificate->save();
+
+            return $certificate;
+        });
     }
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'تم إنشاء طلب شهادة الوفاة بنجاح';
+        return 'تم إصدار شهادة الوفاة بنجاح';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return DeathCertificateResource::getUrl('index');
     }
 }

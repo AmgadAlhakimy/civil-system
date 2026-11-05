@@ -11,17 +11,18 @@ class DeathCertificateSeeder extends Seeder
 {
     public function run(): void
     {
-        $citizens = Citizen::query()
-            ->where('is_active', true)
-            ->where('verification_status', 'approved')
-            ->take(10)
-            ->get();
-
         $user = User::first();
 
         if (! $user) {
             return;
         }
+
+        $citizens = Citizen::query()
+            ->where('is_active', true)
+            ->where('verification_status', 'approved')
+            ->whereNotIn('id', DeathCertificate::query()->select('deceased_id'))
+            ->take(10)
+            ->get();
 
         foreach ($citizens as $index => $citizen) {
             DeathCertificate::create([
@@ -40,28 +41,13 @@ class DeathCertificateSeeder extends Seeder
                 ][$index % 5],
 
                 'place_of_death' => 'صنعاء',
-
-                'certificate_number' => 'DC' . str_pad(
-                        $index + 1,
-                        8,
-                        '0',
-                        STR_PAD_LEFT
-                    ),
-
                 'issue_date' => null,
-
                 'status' => 'pending',
-
                 'approved_by' => null,
-
                 'approved_at' => null,
-
                 'notes' => null,
-
                 'qr_code' => null,
-
                 'print_count' => 0,
-
                 'issued_by' => $user->id,
             ]);
         }

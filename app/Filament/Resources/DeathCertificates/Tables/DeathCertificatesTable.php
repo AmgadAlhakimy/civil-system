@@ -20,15 +20,6 @@ class DeathCertificatesTable
         return $table
             ->columns([
 
-                TextColumn::make('certificate_number')
-                    ->label('رقم شهادة الوفاة')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->copyMessage('تم نسخ رقم شهادة الوفاة')
-                    ->weight('bold')
-                    ->icon('heroicon-o-document-text'),
-
                 TextColumn::make('deceased')
                     ->label('المتوفى')
                     ->getStateUsing(
@@ -48,8 +39,7 @@ class DeathCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                             });
                         }
                     )
@@ -70,12 +60,6 @@ class DeathCertificatesTable
                         }
                     ),
 
-                TextColumn::make('deceased.national_id')
-                    ->label('الرقم الوطني')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 TextColumn::make('death_date')
                     ->label('تاريخ الوفاة')
                     ->date('Y-m-d')
@@ -95,7 +79,9 @@ class DeathCertificatesTable
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
                             'pending' => 'قيد الانتظار',
-                            'active' => 'سارية',
+                            'approved' => 'معتمدة',
+                            'rejected' => 'مرفوضة',
+                            'issued' => 'سارية',
                             'cancelled' => 'ملغاة',
                             default => $state ?? 'غير محدد',
                         }
@@ -108,13 +94,13 @@ class DeathCertificatesTable
                     ->sortable()
                     ->placeholder('لم يتم الإصدار'),
 
-                TextColumn::make('issuedBy.name')
+                TextColumn::make('issuedBy.full_name')
                     ->label('تم إنشاء الطلب بواسطة')
                     ->sortable()
                     ->placeholder('غير محدد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('approvedBy.name')
+                TextColumn::make('approvedBy.full_name')
                     ->label('تم الاعتماد بواسطة')
                     ->sortable()
                     ->placeholder('لم يتم الاعتماد')
@@ -151,7 +137,9 @@ class DeathCertificatesTable
                     ->label('حالة الشهادة')
                     ->options([
                         'pending' => 'قيد الانتظار',
-                        'active' => 'سارية',
+                        'approved' => 'معتمدة',
+                        'rejected' => 'مرفوضة',
+                        'issued' => 'سارية',
                         'cancelled' => 'ملغاة',
                     ]),
 

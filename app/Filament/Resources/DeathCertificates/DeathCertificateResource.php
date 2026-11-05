@@ -13,7 +13,6 @@ use App\Models\DeathCertificate;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -22,12 +21,11 @@ class DeathCertificateResource extends Resource
 {
     protected static ?string $model = DeathCertificate::class;
 
-    protected static string|BackedEnum|null $navigationIcon =
-        Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'lucide-tombstone';
 
     protected static ?int $navigationSort = 5;
 
-    protected static ?string $recordTitleAttribute = 'certificate_number';
+    protected static ?string $recordTitleAttribute = 'deceased_id';
 
     protected static ?string $modelLabel = 'شهادة وفاة';
 
@@ -40,7 +38,7 @@ class DeathCertificateResource extends Resource
 
     public static function getRecordTitle($record): string
     {
-        return 'بيانات شهادة الوفاة: ' . $record->certificate_number;
+        return 'شهادة وفاة: ' . $record->deceased?->full_name;
     }
 
     public static function canViewAny(): bool

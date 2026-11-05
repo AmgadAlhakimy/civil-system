@@ -41,7 +41,6 @@ class CreateFamilyCard extends CreateRecord
                     ->danger()
                     ->title('لا يمكن إصدار البطاقة')
                     ->body('لا يمكن إصدار بطاقة عائلية إلا لمواطن تم اعتماد بياناته.')
-                    ->persistent()
                     ->send();
 
                 $this->halt();

@@ -13,39 +13,6 @@ class BirthCertificateInfolist
     {
         return $schema
             ->components([
-
-                Section::make('بيانات شهادة الميلاد')
-                    ->description('المعلومات الأساسية لشهادة الميلاد')
-                    ->icon('heroicon-o-document-text')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-
-                                TextEntry::make('certificate_number')
-                                    ->label('رقم شهادة الميلاد')
-                                    ->copyable()
-                                    ->copyMessage('تم نسخ رقم شهادة الميلاد'),
-
-                                TextEntry::make('status')
-                                    ->label('حالة الشهادة')
-                                    ->formatStateUsing(
-                                        fn (?string $state): string => match ($state) {
-                                            'pending' => 'قيد الانتظار',
-                                            'active' => 'سارية',
-                                            'cancelled' => 'ملغاة',
-                                            default => 'غير محدد',
-                                        }
-                                    ),
-
-                                TextEntry::make('issue_date')
-                                    ->label('تاريخ الإصدار')
-                                    ->date('Y-m-d')
-                                    ->placeholder('لم يتم الإصدار بعد'),
-
-                            ]),
-                    ])
-                    ->columnSpanFull(),
-
                 Section::make('بيانات الطفل')
                     ->description('بيانات الطفل صاحب شهادة الميلاد')
                     ->icon('heroicon-o-user')
@@ -56,7 +23,7 @@ class BirthCertificateInfolist
                                 TextEntry::make('child')
                                     ->label('اسم الطفل')
                                     ->formatStateUsing(
-                                        fn ($record): string => collect([
+                                        fn($record): string => collect([
                                             $record->child?->first_name,
                                             $record->child?->father_name,
                                             $record->child?->middle_name,
@@ -65,10 +32,37 @@ class BirthCertificateInfolist
                                             ->filter()
                                             ->join(' ')
                                     )
+                                    ->columnSpanFull()
+                                    ->weight('bold')
                                     ->placeholder('غير محدد'),
 
-                                TextEntry::make('child.national_id')
-                                    ->label('الرقم الوطني')
+
+                                TextEntry::make('father')
+                                    ->label('الأب')
+                                    ->formatStateUsing(
+                                        fn($record): string => collect([
+                                            $record->father?->first_name,
+                                            $record->father?->father_name,
+                                            $record->father?->middle_name,
+                                            $record->father?->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
+                                    ->placeholder('غير محدد'),
+
+                                TextEntry::make('mother')
+                                    ->label('الأم')
+                                    ->formatStateUsing(
+                                        fn($record): string => collect([
+                                            $record->mother?->first_name,
+                                            $record->mother?->father_name,
+                                            $record->mother?->middle_name,
+                                            $record->mother?->last_name,
+                                        ])
+                                            ->filter()
+                                            ->join(' ')
+                                    )
                                     ->placeholder('غير محدد'),
 
                                 TextEntry::make('child.birth_date')
@@ -80,52 +74,23 @@ class BirthCertificateInfolist
                                     ->label('مكان الميلاد')
                                     ->placeholder('غير محدد'),
 
-                            ]),
-                    ])
-                    ->columnSpanFull(),
+                                TextEntry::make('issue_date')
+                                    ->label('تاريخ الإصدار')
+                                    ->date('Y-m-d')
+                                    ->placeholder('لم يتم الإصدار بعد'),
 
-                Section::make('بيانات الوالدين')
-                    ->description('بيانات والد ووالدة الطفل')
-                    ->icon('heroicon-o-users')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-
-                                TextEntry::make('father')
-                                    ->label('الأب')
+                                TextEntry::make('status')
+                                    ->label('حالة الشهادة')
                                     ->formatStateUsing(
-                                        fn ($record): string => collect([
-                                            $record->father?->first_name,
-                                            $record->father?->father_name,
-                                            $record->father?->middle_name,
-                                            $record->father?->last_name,
-                                        ])
-                                            ->filter()
-                                            ->join(' ')
-                                    )
-                                    ->placeholder('غير محدد'),
-
-                                TextEntry::make('father.national_id')
-                                    ->label('الرقم الوطني للأب')
-                                    ->placeholder('غير محدد'),
-
-                                TextEntry::make('mother')
-                                    ->label('الأم')
-                                    ->formatStateUsing(
-                                        fn ($record): string => collect([
-                                            $record->mother?->first_name,
-                                            $record->mother?->father_name,
-                                            $record->mother?->middle_name,
-                                            $record->mother?->last_name,
-                                        ])
-                                            ->filter()
-                                            ->join(' ')
-                                    )
-                                    ->placeholder('غير محدد'),
-
-                                TextEntry::make('mother.national_id')
-                                    ->label('الرقم الوطني للأم')
-                                    ->placeholder('غير محدد'),
+                                        fn(?string $state): string => match ($state) {
+                                            'pending' => 'قيد الانتظار',
+                                            'approved' => 'معتمدة',
+                                            'rejected' => 'مرفوضة',
+                                            'issued' => 'سارية',
+                                            'cancelled' => 'ملغاة',
+                                            default => 'غير محدد',
+                                        }
+                                    ),
 
                             ]),
                     ])
@@ -138,11 +103,11 @@ class BirthCertificateInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('issuedBy.name')
-                                    ->label('تم إنشاء الطلب بواسطة')
+                                TextEntry::make('issuedBy.full_name')
+                                    ->label('تم الإصدار بواسطة')
                                     ->placeholder('غير محدد'),
 
-                                TextEntry::make('approvedBy.name')
+                                TextEntry::make('approvedBy.full_name')
                                     ->label('تم الاعتماد بواسطة')
                                     ->placeholder('لم يتم الاعتماد بعد'),
 

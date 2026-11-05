@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\BirthCertificate;
+use App\Models\Branch;
 use App\Models\Citizen;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -13,9 +14,7 @@ class BirthCertificateSeeder extends Seeder
     {
         $user = User::query()->first();
 
-        if (! $user) {
-            return;
-        }
+        $branch = Branch::query()->first();
 
         $children = Citizen::query()
             ->whereNotNull('birth_date')
@@ -34,6 +33,8 @@ class BirthCertificateSeeder extends Seeder
             ->get();
 
         if (
+            ! $user ||
+            ! $branch ||
             $children->count() < 20 ||
             $fathers->isEmpty() ||
             $mothers->isEmpty()
@@ -41,24 +42,22 @@ class BirthCertificateSeeder extends Seeder
             return;
         }
 
-        for ($i = 0; $i < 20; $i++) {
-
-            do {
-                $certificateNumber = '';
-
-                for ($j = 0; $j < 11; $j++) {
-                    $certificateNumber .= (string) random_int(0, 9);
-                }
-            } while (
+        foreach ($children as $child) {
+            if (
                 BirthCertificate::withTrashed()
-                    ->where('certificate_number', $certificateNumber)
+                    ->where('child_id', $child->id)
                     ->exists()
+            ) {
+                continue;
+            }
+
+            $father = $fathers->first(
+                fn ($citizen) => $citizen->id !== $child->id
             );
 
-            $child = $children[$i];
-
-            $father = $fathers->firstWhere('id', '!=', $child->id);
-            $mother = $mothers->firstWhere('id', '!=', $child->id);
+            $mother = $mothers->first(
+                fn ($citizen) => $citizen->id !== $child->id
+            );
 
             if (! $father || ! $mother) {
                 continue;
@@ -68,10 +67,11 @@ class BirthCertificateSeeder extends Seeder
                 'child_id' => $child->id,
                 'father_id' => $father->id,
                 'mother_id' => $mother->id,
-                'certificate_number' =>$certificateNumber,
+                'branch_id' => $branch->id,
                 'issue_date' => null,
                 'status' => 'pending',
                 'notes' => null,
+                'rejection_reason' => null,
                 'qr_code' => null,
                 'print_count' => 0,
                 'issued_by' => $user->id,

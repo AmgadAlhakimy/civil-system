@@ -22,12 +22,6 @@ class FamilyCardInfolist
                         Grid::make(2)
                             ->schema([
 
-                                TextEntry::make('card_number')
-                                    ->label('رقم البطاقة العائلية')
-                                    ->weight('bold')
-                                    ->copyable()
-                                    ->copyMessage('تم نسخ رقم البطاقة'),
-
                                 TextEntry::make('head')
                                     ->label('رب الأسرة')
                                     ->formatStateUsing(
@@ -40,7 +34,14 @@ class FamilyCardInfolist
                                             ->filter()
                                             ->join(' ')
                                     )
+                                    ->columnSpanFull()
                                     ->placeholder('غير محدد'),
+
+                                TextEntry::make('card_number')
+                                    ->label('رقم البطاقة العائلية')
+                                    ->weight('bold')
+                                    ->copyable()
+                                    ->copyMessage('تم نسخ رقم البطاقة'),
 
                                 TextEntry::make('status')
                                     ->label('حالة البطاقة')

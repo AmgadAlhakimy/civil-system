@@ -112,6 +112,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'birth_certificates.approve', 'name_ar' => 'اعتماد شهادات الميلاد', 'module' => 'birth_certificates', 'action' => 'approve', 'description' => 'اعتماد طلبات شهادات الميلاد وتحديد تاريخ الإصدار'],
             ['name' => 'birth_certificates.print', 'name_ar' => 'طباعة شهادات الميلاد', 'module' => 'birth_certificates', 'action' => 'print', 'description' => 'طباعة شهادات الميلاد بصيغة PDF وتسجيل عدد مرات الطباعة'],
             ['name' => 'birth_certificates.cancel', 'name_ar' => 'إلغاء شهادات الميلاد', 'module' => 'birth_certificates', 'action' => 'cancel', 'description' => 'إلغاء طلب شهادة الميلاد وتغيير حالته إلى ملغاة'],
+            ['name' => 'birth_certificates.reject', 'name_ar' => 'رفض شهادات الميلاد', 'module' => 'birth_certificates', 'action' => 'reject', 'description' => 'رفض طلبات إصدار شهادات الميلاد'],
 
             /*
             |--------------------------------------------------------------------------
@@ -128,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'death_certificates.approve', 'name_ar' => 'اعتماد شهادات الوفاة', 'module' => 'death_certificates', 'action' => 'approve', 'description' => 'اعتماد طلبات شهادات الوفاة وتحديد تاريخ الإصدار'],
             ['name' => 'death_certificates.print', 'name_ar' => 'طباعة شهادات الوفاة', 'module' => 'death_certificates', 'action' => 'print', 'description' => 'طباعة شهادات الوفاة بصيغة PDF وتسجيل عدد مرات الطباعة'],
             ['name' => 'death_certificates.cancel', 'name_ar' => 'إلغاء شهادات الوفاة', 'module' => 'death_certificates', 'action' => 'cancel', 'description' => 'إلغاء طلب شهادة الوفاة وتغيير حالته إلى ملغاة'],
+            ['name' => 'death_certificates.reject', 'name_ar' => 'رفض شهادات الوفاة', 'module' => 'death_certificates', 'action' => 'reject', 'description' => 'رفض طلبات إصدار شهادات الوفاة'],
 
             /*
             |--------------------------------------------------------------------------
