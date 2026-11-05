@@ -30,6 +30,7 @@ class ReportInfolist
                                         fn (?string $state): string => match ($state) {
                                             'citizens' => 'تقرير المواطنين',
                                             'birth_certificates' => 'تقرير شهادات الميلاد',
+                                            'death_certificates' => 'تقرير شهادات الوفاة',
                                             'identity_cards' => 'تقرير البطاقات الشخصية',
                                             'family_cards' => 'تقرير البطاقات العائلية',
                                             'passports' => 'تقرير الجوازات',
@@ -43,7 +44,7 @@ class ReportInfolist
                                     ->formatStateUsing(
                                         fn (?string $state): string => match ($state) {
                                             'pdf' => 'PDF',
-                                            'excel' => 'Excel',
+                                            'xlsx', 'excel' => 'Excel',
                                             default => 'غير محدد',
                                         }
                                     ),
@@ -182,7 +183,7 @@ class ReportInfolist
                     ->description('المستخدم الذي قام بإنشاء التقرير')
                     ->icon('heroicon-o-user')
                     ->schema([
-                        TextEntry::make('user.name')
+                        TextEntry::make('user.full_name')
                             ->label('أنشأ التقرير')
                             ->placeholder('غير محدد')
                             ->weight('bold'),

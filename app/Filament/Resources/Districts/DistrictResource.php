@@ -25,7 +25,7 @@ class DistrictResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedMap;
 
-    protected static ?string $recordTitleAttribute = 'name_ar';
+    protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?int $navigationSort = 2;
 

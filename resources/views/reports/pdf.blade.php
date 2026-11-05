@@ -6,25 +6,32 @@
 
     <style>
         @page {
-            margin: 30px 25px;
+            size: A4 landscape;
+            margin: 25px 20px;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
             font-family: DejaVu Sans, sans-serif;
             direction: rtl;
             text-align: right;
-            font-size: 10px;
+            font-size: 9px;
             unicode-bidi: embed;
+            margin: 0;
+            padding: 0;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .header h1 {
-            font-size: 18px;
-            margin: 0 0 8px;
+            font-size: 17px;
+            margin: 0 0 7px;
             text-align: center;
         }
 
@@ -36,16 +43,16 @@
 
         .info {
             width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             direction: rtl;
             unicode-bidi: embed;
             border-collapse: separate;
-            border-spacing: 8px;
+            border-spacing: 6px;
         }
 
         .info-item {
             width: 25%;
-            padding: 8px;
+            padding: 7px;
             border: 1px solid #ddd;
             text-align: center;
             vertical-align: middle;
@@ -53,7 +60,7 @@
 
         .info-item .label {
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             text-align: center;
         }
 
@@ -68,7 +75,7 @@
             border-collapse: collapse;
             direction: rtl;
             unicode-bidi: embed;
-            table-layout: auto;
+            table-layout: fixed;
         }
 
         table.report thead {
@@ -81,35 +88,50 @@
 
         table.report tr {
             direction: rtl;
+            page-break-inside: avoid;
         }
 
         table.report th,
         table.report td {
             border: 1px solid #999;
-            padding: 5px;
+            padding: 4px 3px;
             vertical-align: middle;
             direction: rtl;
             unicode-bidi: embed;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         table.report th {
+            font-size: 8px;
             font-weight: bold;
             text-align: center;
+            background-color: #f2f2f2;
         }
 
         table.report td {
+            font-size: 8px;
             text-align: right;
         }
 
         .empty {
             text-align: center !important;
-            padding: 20px !important;
+            padding: 18px !important;
         }
 
         .footer {
-            margin-top: 15px;
+            margin-top: 12px;
             text-align: center;
             font-size: 9px;
+        }
+
+        .page-number {
+            position: fixed;
+            bottom: -15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
         }
     </style>
 </head>
@@ -236,6 +258,33 @@
     {{ count($rows) }}
 
 </div>
+
+<script type="text/php">
+    if (isset($pdf)) {
+        $font = $fontMetrics->getFont("DejaVu Sans", "normal");
+        $size = 8;
+
+        $text = "صفحة {PAGE_NUM} من {PAGE_COUNT}";
+
+        $width = $fontMetrics->getTextWidth(
+            $text,
+            $font,
+            $size
+        );
+
+        $x = ($pdf->get_width() - $width) / 2;
+        $y = $pdf->get_height() - 20;
+
+        $pdf->page_text(
+            $x,
+            $y,
+            $text,
+            $font,
+            $size,
+            array(0, 0, 0)
+        );
+    }
+</script>
 
 </body>
 

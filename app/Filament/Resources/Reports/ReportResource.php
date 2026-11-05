@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Reports;
 
 use App\Filament\Resources\Reports\Pages\CreateReport;
-use App\Filament\Resources\Reports\Pages\EditReport;
 use App\Filament\Resources\Reports\Pages\ListReports;
 use App\Filament\Resources\Reports\Pages\ViewReport;
 use App\Filament\Resources\Reports\Schemas\ReportForm;
@@ -52,11 +51,6 @@ class ReportResource extends Resource
     public static function canView(Model $record): bool
     {
         return auth()->user()?->can('reports.view') ?? false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return auth()->user()?->can('reports.update') ?? false;
     }
 
     public static function canDelete(Model $record): bool
@@ -115,7 +109,6 @@ class ReportResource extends Resource
             'index' => ListReports::route('/'),
             'create' => CreateReport::route('/create'),
             'view' => ViewReport::route('/{record}'),
-            'edit' => EditReport::route('/{record}/edit'),
         ];
     }
 }

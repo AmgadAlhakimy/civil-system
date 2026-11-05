@@ -7,217 +7,360 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 30px 25px;
+            margin: 8mm;
         }
 
         * {
             box-sizing: border-box;
         }
 
+        html,
         body {
-            font-family: DejaVu Sans, sans-serif;
+            width: 194mm;
+            height: 281mm;
+            margin: 0;
+            padding: 0;
             direction: rtl;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            color: #222;
             text-align: right;
-            font-size: 11px;
-            color: #222222;
-            margin: 0;
-            padding: 0;
         }
 
-        .document-wrapper {
+        .page-layout {
             width: 100%;
-            border: 1.5px solid #2c3e50;
-            padding: 18px;
-            background-color: #ffffff;
-        }
-
-        .header {
-            text-align: center;
-            border-bottom: 1.5px solid #e0e0e0;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-        }
-
-        .header h1 {
-            font-size: 20px;
-            margin: 0 0 5px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .header h2 {
-            font-size: 13px;
-            margin: 0;
-            text-align: center;
-        }
-
-        .layout-table {
-            width: 100%;
+            height: 281mm;
             border-collapse: collapse;
+            table-layout: fixed;
             direction: rtl;
-            margin-bottom: 15px;
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
 
-        .data-column {
-            width: 76%;
-            vertical-align: top;
-            padding: 0 0 0 12px;
-        }
-
-        .photo-column {
-            width: 24%;
-            vertical-align: top;
-            text-align: center;
-            padding: 0;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            direction: rtl;
-        }
-
-        .info-table th,
-        .info-table td {
-            border: 1px solid #d1d5db;
-            padding: 7px 8px;
+        .page-half {
+            height: 140.5mm;
             vertical-align: middle;
-        }
-
-        .info-table th {
-            width: 34%;
-            background-color: #f3f4f6;
-            color: #374151;
-            font-size: 10px;
-            font-weight: bold;
-            text-align: right;
-        }
-
-        .info-table td {
-            width: 66%;
-            font-size: 11px;
-            font-weight: bold;
-            color: #111827;
-            text-align: right;
-            direction: rtl;
-        }
-
-        .arabic-text {
-            direction: rtl;
-            text-align: right;
-        }
-
-        .ltr-text {
-            direction: ltr;
-            text-align: left;
-            display: inline-block;
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-        }
-
-        .english-text {
-            direction: ltr;
-            text-align: left;
-            display: inline-block;
-            font-family: DejaVu Sans, sans-serif;
-        }
-
-        .label-en {
-            direction: ltr;
-            display: inline-block;
-            font-size: 8px;
-            font-weight: normal;
-        }
-
-        .photo-container {
             text-align: center;
             direction: rtl;
+            page-break-inside: avoid;
+        }
+
+        .card {
+            width: 135mm;
+            height: 85mm;
+            margin: 0 auto;
+            overflow: hidden;
+            border: 1px solid #b0b0b0;
+            border-radius: 3mm;
+            background: #f4f6f8;
+            position: relative;
+            direction: rtl;
+            page-break-inside: avoid;
+        }
+
+        /* ==================== الوجه الأمامي ==================== */
+        .front {
+            padding: 3mm 4mm 2mm;
+        }
+
+        .front-header {
+            width: 100%;
+            height: 24mm;
+            border-collapse: collapse;
+            direction: rtl;
+        }
+
+        .front-heading-cell {
+            width: 45%;
+            text-align: right;
+            vertical-align: top;
+        }
+
+        .front-logo-cell {
+            width: 25%;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .front-photo-cell {
+            width: 30%;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .government-name {
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 1.6;
+            color: #222;
+        }
+
+        .card-title {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #20406e;
+            margin-top: 2mm;
+            margin-right: 15mm;
+        }
+
+        .front-logo {
+            width: 18mm;
+            height: 18mm;
+            object-fit: contain;
         }
 
         .photo-box {
-            width: 105px;
-            height: 135px;
-            border: 1.5px solid #9ca3af;
-            border-radius: 5px;
+            width: 18mm;
+            height: 22mm;
+            object-fit: cover;
+            border: 1px solid #999;
+            border-radius: 1mm;
         }
 
         .photo-placeholder {
-            width: 105px;
-            height: 135px;
-            border: 1.5px dashed #9ca3af;
-            border-radius: 5px;
-            display: inline-block;
-            line-height: 135px;
+            width: 18mm;
+            height: 22mm;
+            border: 1px dashed #999;
             text-align: center;
-            color: #6b7280;
-            font-size: 9px;
-            background-color: #f9fafb;
+            line-height: 22mm;
+            color: #777;
+            font-size: 6px;
+            background: #eaeaea;
         }
 
-        .photo-label {
-            margin-top: 7px;
+        .front-info {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2mm;
+        }
+
+        .front-info td {
+            padding: 1mm 0;
+            vertical-align: middle;
+        }
+
+        .national-id-row {
+            text-align: center;
+            margin-bottom: 2mm;
+        }
+
+        .national-label {
             font-size: 9px;
-            color: #4b5563;
             font-weight: bold;
-            text-align: center;
+            color: #333;
+            margin-left: 5px;
         }
 
-        .print-count {
-            margin-top: 12px;
-            font-size: 8px;
-            color: #555555;
-            text-align: center;
-        }
-
-        .badge {
-            display: inline-block;
-            background-color: #dcfce7;
-            color: #166534;
-            padding: 3px 8px;
-            border: 1px solid #bbf7d0;
-            border-radius: 3px;
-            font-size: 9px;
-            direction: rtl;
-        }
-
-        .footer-section {
-            text-align: center;
-            border-top: 1.5px solid #e0e0e0;
-            padding-top: 12px;
-            margin-top: 8px;
-            direction: rtl;
-        }
-
-        .qr-title {
-            margin-bottom: 6px;
-            font-size: 10px;
+        .national-number {
+            font-size: 16px;
             font-weight: bold;
-            text-align: center;
+            letter-spacing: 1px;
+            color: #20406e;
+            direction: ltr;
+            display: inline-block;
         }
 
-        .qr-box {
+        .full-name {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        /* تنسيق سطر الميلاد */
+        .birth-row {
+            text-align: center;
+            font-size: 9px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .date-ltr {
+            direction: ltr;
+            unicode-bidi: embed;
             display: inline-block;
-            background-color: #ffffff;
-            border: 1px solid #d1d5db;
-            padding: 7px 14px;
-            border-radius: 4px;
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 10px;
+        }
+
+        .front-footer {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2mm;
+            position: absolute;
+            bottom: 2mm;
+            left: 0;
+            padding: 0 4mm;
+        }
+
+        .front-footer td {
+            vertical-align: bottom;
+        }
+
+        .blood-type-cell {
+            width: 25%;
+            text-align: right;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .blood-value {
+            color: #b23b3b;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .front-barcode-cell {
+            width: 50%;
+            text-align: center;
             direction: ltr;
         }
 
-        .footer-text {
-            margin-top: 9px;
-            font-size: 8px;
-            color: #6b7280;
-            line-height: 1.7;
-            text-align: center;
+        .front-barcode-cell img {
+            width: 60mm;
+            height: 8mm;
+        }
+
+        .serial-cell {
+            width: 25%;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            direction: ltr;
+        }
+
+        /* ==================== الوجه الخلفي ==================== */
+        .back {
+            padding: 4mm 4mm 2mm;
+        }
+
+        .back-top {
+            width: 100%;
+            height: 25mm;
+            border-collapse: collapse;
             direction: rtl;
         }
 
-        .national-id {
+        .back-info-cell {
+            width: 65%;
+            vertical-align: top;
+        }
+
+        .back-logo-cell {
+            width: 35%;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .back-logo {
+            width: 25mm;
+            height: 22mm;
+            object-fit: contain;
+            opacity: 0.7;
+            filter: sepia(1) hue-rotate(340deg) saturate(0.5) brightness(0.6);
+        }
+
+        .dates-table {
+            width: 100%;
+            border-collapse: collapse;
+            direction: rtl;
+        }
+
+        .dates-table td {
+            padding: 1mm 0;
+            vertical-align: middle;
+        }
+
+        .back-label {
+            width: 35%;
+            text-align: right;
+            font-size: 10px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        /* تنسيق قيم التواريخ في الوجه الخلفي */
+        .back-value {
+            width: 65%;
+            text-align: left; /* محاذاة لليسار لتكون بجانب اللابل */
+            font-size: 11px;
+            font-weight: bold;
+            color: #222;
+            direction: ltr; /* إجبار الاتجاه من اليسار لليمين */
+            unicode-bidi: embed;
+            padding-left: 5mm; /* مسافة بسيطة لليسار */
+        }
+
+        .instructions {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2mm;
+            text-align: center;
+        }
+
+        .instructions td {
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 1.8;
+            color: #222;
+            text-align: center;
+        }
+
+        .barcode-area {
+            width: 100%;
+            height: 35mm;
+            text-align: center;
+            vertical-align: middle;
+            margin-top: 1mm;
+        }
+
+        .pdf417-image {
+            width: 115mm;
+            height: 28mm;
+            object-fit: fill;
+        }
+
+        .barcode-placeholder {
+            width: 115mm;
+            height: 25mm;
+            margin: auto;
+            border: 1px dashed #aaa;
+            text-align: center;
+            line-height: 25mm;
+            color: #777;
+            font-size: 8px;
+            direction: rtl;
+        }
+
+        .back-footer {
+            width: 100%;
+            border-collapse: collapse;
+            position: absolute;
+            bottom: 3mm;
+            left: 0;
+            padding: 0 4mm;
+        }
+
+        .back-footer td {
+            width: 50%;
+            vertical-align: bottom;
+        }
+
+        .control-number {
+            text-align: left;
+            font-size: 14px;
+            font-weight: bold;
             direction: ltr;
-            display: inline-block;
+            color: #333;
+        }
+
+        .reference-number {
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            direction: ltr;
+            color: #333;
         }
     </style>
 </head>
@@ -236,11 +379,26 @@
 
         $text = (string) $text;
 
+        // التأكد من وجود حروف عربية قبل معالجتها
         if (! preg_match('/[\x{0600}-\x{06FF}]/u', $text)) {
             return $text;
         }
 
         return $arabic->utf8Glyphs($text);
+    };
+
+    $toDataUri = function (?string $path): ?string {
+        if (! $path || ! is_file($path)) {
+            return null;
+        }
+
+        $mime = mime_content_type($path);
+
+        if (! in_array($mime, ['image/jpeg', 'image/png', 'image/gif'], true)) {
+            return null;
+        }
+
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
     };
 
     $citizen = $identityCard->citizen;
@@ -251,209 +409,219 @@
         $citizen?->middle_name,
         $citizen?->last_name,
     ])
-        ->filter()
+        ->filter(fn ($value) => filled($value))
         ->join(' ');
 
     $fullName = $shapeArabic($fullName);
 
-    $status = match ($identityCard->status) {
-        'pending' => $shapeArabic('قيد الانتظار'),
-        'approved' => $shapeArabic('معتمد'),
-        'rejected' => $shapeArabic('مرفوض'),
-        'active' => $shapeArabic('سارية'),
-        'expired' => $shapeArabic('منتهية'),
-        'cancelled' => $shapeArabic('ملغاة'),
-        'lost' => $shapeArabic('مفقودة'),
-        'damaged' => $shapeArabic('تالفة'),
-        default => $shapeArabic('غير محدد'),
-    };
+    $nationalId = $identityCard->national_id;
 
-    $authority = $shapeArabic('مصلحة الأحوال المدنية والسجل المدني - اليمن');
+    // --- معالجة تاريخ ومكان الميلاد ---
+    $birthPlace = $shapeArabic($citizen?->place_of_birth);
+    $birthDate = $citizen?->date_of_birth?->format('Y/m/d');
+    // -----------------------------------
 
-    $photoPlaceholder = $shapeArabic('صورة غير متوفرة');
-    $photoLabel = $shapeArabic('صورة صاحب البطاقة');
-    $qrTitle = $shapeArabic('رمز التحقق الإلكتروني');
+    $bloodType = $citizen?->blood_type;
 
-    $footerText1 = $shapeArabic(
-        'هذه الوثيقة مستخرجة إلكترونياً من نظام السجل المدني بالجمهورية اليمنية.'
-    );
+    $photoPath = $citizen?->photo
+        ? storage_path('app/private/' . $citizen->photo)
+        : null;
 
-    $footerText2 = $shapeArabic(
-        'أي كشط أو تعديل في هذه الوثيقة يلغي صحتها.'
-    );
+    $photoData = $toDataUri($photoPath);
 
+    $serialNumber = $identityCard->serial_number;
+
+    $issuePlace = $shapeArabic($identityCard->issue_place);
+    $issueDate = $identityCard->issue_date?->format('Y/m/d');
+    $expiryDate = $identityCard->expiry_date?->format('Y/m/d');
+
+    $barcodeReference = $identityCard->barcode_reference;
+
+    $controlNumber = $identityCard->control_number;
+
+    $logoPath = public_path('images/eagle-logo.png');
+
+    $logoData = $toDataUri($logoPath);
+
+    $frontBarcodeData = filled($frontBarcode ?? null)
+        ? 'data:image/png;base64,' . $frontBarcode
+        : null;
+
+    $pdf417Data = filled($pdf417Barcode ?? null)
+        ? 'data:image/png;base64,' . $pdf417Barcode
+        : null;
+
+    $repText = $shapeArabic('الجمهورية اليمنية');
+    $minText = $shapeArabic('وزارة الداخلية');
+    $authText = $shapeArabic('مصلحة الأحوال المدنية والسجل المدني');
+    $cardTitle = $shapeArabic('بطاقة شخصية');
     $nationalIdLabel = $shapeArabic('الرقم الوطني');
-    $fullNameLabel = $shapeArabic('الاسم الكامل');
-    $statusLabel = $shapeArabic('حالة البطاقة');
+    $birthLabel = $shapeArabic('مكان وتاريخ الميلاد');
+    $bloodLabel = $shapeArabic('فصيلة الدم');
+    $photoPlaceholder = $shapeArabic('صورة');
+
+    $issuePlaceLabel = $shapeArabic('جهة الإصدار');
     $issueDateLabel = $shapeArabic('تاريخ الإصدار');
     $expiryDateLabel = $shapeArabic('تاريخ الانتهاء');
-    $authorityLabel = $shapeArabic('جهة الإصدار');
 
-    $documentTitle = $shapeArabic('الجمهورية اليمنية');
-    $documentSubtitle = $shapeArabic('مستخرج بيانات بطاقة شخصية');
+    $instruction1 = $shapeArabic('البطاقة وثيقة هامة يجب الحفاظ عليها');
+    $instruction2 = $shapeArabic('في حالة فقدان البطاقة او تلفها يجب إبلاغ أقرب مركز شرطة');
 
-    $photo = $citizen?->photo;
+    $barcodePlaceholder = $shapeArabic('لا يتوفر رمز الباركود');
 @endphp
 
-<div class="document-wrapper">
+<table class="page-layout">
 
-    <div class="header">
-        <h1>
-            {{ $documentTitle }}
-        </h1>
+    <!-- ==================== البطاقة (الوجه الأمامي) ==================== -->
+    <tr>
+        <td class="page-half">
+            <div class="card front">
 
-        <h2>
-            {{ $documentSubtitle }}
-        </h2>
-    </div>
-
-    <table class="layout-table">
-        <tr>
-            <td class="data-column">
-
-                <table class="info-table">
-
+                <table class="front-header">
                     <tr>
-                        <th>
-                            {{ $nationalIdLabel }}
-                            <br>
-                            <span class="label-en">National ID</span>
-                        </th>
+                        <td class="front-heading-cell">
+                            <div class="government-name">
+                                {{ $repText }}<br>
+                                {{ $minText }}<br>
+                                {{ $authText }}
+                            </div>
+                        </td>
 
-                        <td>
-                            <span class="national-id">
-                                {{ $identityCard->national_id ?? '---' }}
-                            </span>
+                        <td class="front-logo-cell">
+                            @if ($logoData)
+                                <img src="{{ $logoData }}" class="front-logo" alt="Logo">
+                            @endif
+                        </td>
+
+                        <td class="front-photo-cell">
+                            @if ($photoData)
+                                <img src="{{ $photoData }}" class="photo-box" alt="Photo">
+                            @else
+                                <div class="photo-placeholder">
+                                    {{ $photoPlaceholder }}
+                                </div>
+                            @endif
                         </td>
                     </tr>
-
-                    <tr>
-                        <th>
-                            {{ $fullNameLabel }}
-                            <br>
-                            <span class="label-en">Full Name</span>
-                        </th>
-
-                        <td>
-                            <span class="arabic-text">
-                                {{ $fullName ?: '---' }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>
-                            {{ $statusLabel }}
-                            <br>
-                            <span class="label-en">Status</span>
-                        </th>
-
-                        <td>
-                            <span class="badge">
-                                {{ $status }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>
-                            {{ $issueDateLabel }}
-                            <br>
-                            <span class="label-en">Date of Issue</span>
-                        </th>
-
-                        <td>
-                            <span class="ltr-text">
-                                {{ $identityCard->issue_date?->format('Y-m-d') ?? '---' }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>
-                            {{ $expiryDateLabel }}
-                            <br>
-                            <span class="label-en">Date of Expiry</span>
-                        </th>
-
-                        <td>
-                            <span class="ltr-text">
-                                {{ $identityCard->expiry_date?->format('Y-m-d') ?? '---' }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>
-                            {{ $authorityLabel }}
-                            <br>
-                            <span class="label-en">Authority</span>
-                        </th>
-
-                        <td>
-                            <span class="arabic-text">
-                                {{ $authority }}
-                            </span>
-                        </td>
-                    </tr>
-
                 </table>
 
-            </td>
-
-            <td class="photo-column">
-
-                <div class="photo-container">
-
-                    @if ($photo && file_exists(storage_path('app/private/' . $photo)))
-
-                        <img
-                            src="{{ storage_path('app/private/' . $photo) }}"
-                            class="photo-box"
-                        >
-
-                    @else
-
-                        <div class="photo-placeholder">
-                            {{ $photoPlaceholder }}
-                        </div>
-
-                    @endif
-
-                    <div class="photo-label">
-                        {{ $photoLabel }}
-                    </div>
-
+                <div class="card-title">
+                    {{ $cardTitle }}
                 </div>
 
-            </td>
-        </tr>
-    </table>
+                <table class="front-info">
+                    <tr>
+                        <td class="national-id-row">
+                            <span class="national-number">{{ $nationalId ?: '-' }}</span>
+                            <span class="national-label">{{ $nationalIdLabel }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="full-name">
+                            {{ $fullName }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="birth-row">
+                            <!-- عرض مكان الميلاد (عربي) ثم التاريخ (انجليزي) -->
+                            {{ $birthPlace }}
+                            @if($birthPlace && $birthDate) - @endif
+                            <span class="date-ltr" dir="ltr">{{ $birthDate }}</span>
+                        </td>
+                    </tr>
+                </table>
 
-    <div class="footer-section">
+                <table class="front-footer">
+                    <tr>
+                        <td class="blood-type-cell">
+                            {{ $bloodLabel }} <span class="blood-value">{{ $bloodType ?: '-' }}</span>
+                        </td>
 
-        <div class="qr-title">
-            {{ $qrTitle }}
-            <span class="english-text">(QR / Code)</span>
-        </div>
+                        <td class="front-barcode-cell">
+                            @if ($frontBarcodeData)
+                                <img src="{{ $frontBarcodeData }}" alt="Barcode">
+                            @else
+                                {{ $nationalId ?: '-' }}
+                            @endif
+                        </td>
 
-        <div class="qr-box">
-            {{ $identityCard->qr_code ?: $identityCard->national_id }}
-        </div>
+                        <td class="serial-cell">
+                            {{ $serialNumber ?: '-' }}
+                        </td>
+                    </tr>
+                </table>
 
-        <div class="footer-text">
+            </div>
+        </td>
+    </tr>
 
-            {{ $footerText1 }}
+    <!-- ==================== البطاقة (الوجه الخلفي) ==================== -->
+    <tr>
+        <td class="page-half">
+            <div class="card back">
 
-            <br>
+                <table class="back-top">
+                    <tr>
+                        <td class="back-info-cell">
+                            <table class="dates-table">
+                                <tr>
+                                    <td class="back-label">{{ $issuePlaceLabel }}</td>
+                                    <td class="back-value">{{ $issuePlace }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="back-label">{{ $issueDateLabel }}</td>
+                                    <!-- إضافة dir="ltr" للتاريخ -->
+                                    <td class="back-value" dir="ltr">{{ $issueDate ?: '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="back-label">{{ $expiryDateLabel }}</td>
+                                    <!-- إضافة dir="ltr" للتاريخ -->
+                                    <td class="back-value" dir="ltr">{{ $expiryDate ?: '-' }}</td>
+                                </tr>
+                            </table>
+                        </td>
 
-            {{ $footerText2 }}
+                        <td class="back-logo-cell">
+                            @if ($logoData)
+                                <img src="{{ $logoData }}" class="back-logo" alt="Logo">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
 
-        </div>
+                <table class="instructions">
+                    <tr>
+                        <td>- {{ $instruction1 }}</td>
+                    </tr>
+                    <tr>
+                        <td>- {{ $instruction2 }}</td>
+                    </tr>
+                </table>
 
-    </div>
+                <div class="barcode-area">
+                    @if ($pdf417Data)
+                        <img src="{{ $pdf417Data }}" class="pdf417-image" alt="PDF417 Barcode">
+                    @else
+                        <div class="barcode-placeholder">{{ $barcodePlaceholder }}</div>
+                    @endif
+                </div>
 
-</div>
+                <table class="back-footer">
+                    <tr>
+                        <td class="reference-number">
+                            {{ $barcodeReference ?: '-' }}
+                        </td>
+                        <td class="control-number">
+                            {{ $controlNumber ?: '-' }}
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+        </td>
+    </tr>
+
+</table>
 
 </body>
 </html>

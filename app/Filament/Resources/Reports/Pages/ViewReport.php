@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Reports\Pages;
 
 use App\Filament\Resources\Reports\ReportResource;
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,12 +52,6 @@ class ViewReport extends ViewRecord
                         basename($this->record->path)
                     );
                 }),
-
-            EditAction::make()
-                ->visible(
-                    fn (): bool =>
-                        auth()->user()?->can('reports.update') ?? false
-                ),
         ];
     }
 }

@@ -36,7 +36,6 @@ class GovernoratesTable
                     ->label('اسم المحافظة بالإنجليزية')
                     ->searchable()
                     ->sortable()
-                    ->copyable()
                     ->copyMessage('تم نسخ اسم المحافظة بالإنجليزية'),
 
                 TextColumn::make('code')

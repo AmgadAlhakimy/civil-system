@@ -14,6 +14,12 @@ class ViewGovernorate extends ViewRecord
 {
     protected static string $resource = GovernorateResource::class;
 
+
+    public function getTitle(): string
+    {
+        return 'عرض المحافظة: ' . $this->record->name_ar;
+    }
+
     public function mount(int|string $record): void
     {
         abort_unless(

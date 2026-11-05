@@ -14,6 +14,11 @@ class ViewDistrict extends ViewRecord
 {
     protected static string $resource = DistrictResource::class;
 
+    public function getTitle(): string
+    {
+        return 'عرض المديرية: ' . $this->record->name_ar;
+    }
+
     public function mount(int|string $record): void
     {
         abort_unless(

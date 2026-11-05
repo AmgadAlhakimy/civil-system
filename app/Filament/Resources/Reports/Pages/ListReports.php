@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Reports\Pages;
 use App\Filament\Resources\Reports\ReportResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 
 class ListReports extends ListRecords
 {
@@ -24,6 +25,7 @@ class ListReports extends ListRecords
     {
         return [
             CreateAction::make()
+                ->icon(Heroicon::OutlinedPlusCircle)
                 ->visible(
                     fn (): bool =>
                         auth()->user()?->can('reports.create') ?? false

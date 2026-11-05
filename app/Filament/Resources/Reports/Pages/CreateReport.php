@@ -27,6 +27,11 @@ class CreateReport extends CreateRecord
         return null;
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return ReportResource::getUrl('index');
+    }
+
     protected function handleRecordCreation(array $data): Model
     {
         abort_unless(
@@ -57,6 +62,7 @@ class CreateReport extends CreateRecord
                 reportType: $data['report_type'],
                 format: $format,
                 filters: $filters,
+                name: $data['name'] ?? null,
             );
 
             Notification::make()
@@ -68,7 +74,7 @@ class CreateReport extends CreateRecord
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('فشل إنشاء التقرير')
-                ->body($e->getMessage())
+                ->body('حدث خطأ أثناء إنشاء التقرير. يرجى المحاولة مرة أخرى أو التواصل مع مسؤول النظام.')
                 ->danger()
                 ->persistent()
                 ->send();

@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Reports\Tables;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -22,8 +21,7 @@ class ReportsTable
                     ->label('اسم التقرير')
                     ->searchable()
                     ->sortable()
-                    ->limit(50)
-                    ->tooltip(fn ($state): ?string => $state),
+                    ->limit(50),
 
                 TextColumn::make('report_type')
                     ->label('نوع التقرير')
@@ -31,6 +29,7 @@ class ReportsTable
                         fn (?string $state): string => match ($state) {
                             'citizens' => 'تقرير المواطنين',
                             'birth_certificates' => 'تقرير شهادات الميلاد',
+                            'death_certificates' => 'تقرير شهادات الوفاة',
                             'identity_cards' => 'تقرير البطاقات الشخصية',
                             'family_cards' => 'تقرير البطاقات العائلية',
                             'passports' => 'تقرير الجوازات',
@@ -142,6 +141,7 @@ class ReportsTable
                     ->options([
                         'citizens' => 'تقرير المواطنين',
                         'birth_certificates' => 'تقرير شهادات الميلاد',
+                        'death_certificates' => 'تقرير شهادات الوفاة',
                         'identity_cards' => 'تقرير البطاقات الشخصية',
                         'family_cards' => 'تقرير البطاقات العائلية',
                         'passports' => 'تقرير الجوازات',
@@ -174,14 +174,6 @@ class ReportsTable
                     ->visible(
                         fn (): bool =>
                             auth()->user()?->can('reports.view') ?? false
-                    ),
-
-                EditAction::make()
-                    ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square')
-                    ->visible(
-                        fn (): bool =>
-                            auth()->user()?->can('reports.update') ?? false
                     ),
 
                 Action::make('download')
