@@ -1,7 +1,7 @@
 <?php
 use App\Http\Controllers\Api\OtpController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\FaceRecognitionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppointmentApiController;
 use App\Http\Controllers\Api\IdentityCardApiController;
@@ -56,6 +56,13 @@ Route::get('/districts/{id}', [DistrictApiController::class, 'show']);
 // Protected Routes
 // ═══════════════════════════════════════════════════════════
 Route::middleware('auth:sanctum')->group(function () {
+
+
+// ─── Face Recognition ───
+Route::middleware('can:use-face-recognition')->group(function () {
+    Route::post('/face/identify', [FaceRecognitionController::class, 'identify'])
+        ->middleware('throttle:20,1');
+});
 
     // ─── Auth ───
     Route::get('/user', [AuthController::class, 'user']);

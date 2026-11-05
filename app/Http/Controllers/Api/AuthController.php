@@ -268,14 +268,21 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // ✅ منع الموظفين/الأدمن من الدخول للتطبيق
-        if ($user->account_type === 'employee') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'هذا الحساب مخصص للنظام الإداري. '
-                           . 'يرجى استخدام بوابة النظام.',
-            ], 403);
-        }
+
+
+// ✅ الجديد — يسمح لـ query_officer بالدخول
+$isQueryOfficer = $user->hasRole('query_officer');
+
+if ($user->account_type === 'employee' && ! $isQueryOfficer) {
+    return response()->json([
+        'status' => 'error',
+        'message' => 'هذا الحساب مخصص للنظام الإداري. '
+                   . 'يرجى استخدام بوابة النظام.',
+    ], 403);
+}
+
+
+
 
         if (!$user->is_verified) {
             $otpCode = str_pad(
@@ -324,14 +331,26 @@ class AuthController extends Controller
 
         $token = $user->createToken('mobile-app')->plainTextToken;
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'تم تسجيل الدخول بنجاح.',
-            'data' => [
-                'user' => $user,
-                'token' => $token,
-            ],
-        ]);
+
+// ✅ الجديد — يُرجع role + redirect
+return response()->json([
+    'status' => 'success',
+    'message' => 'تم تسجيل الدخول بنجاح.',
+    'data' => [
+        'user' => $user,
+        'token' => $token,
+        'role' => $isQueryOfficer ? 'query_officer' : 'citizen',
+        'redirect' => $isQueryOfficer ? 'query_only' : 'main_app',
+        'permissions' => [
+            'use_face_recognition' => $user->can('use-face-recognition'),
+        ],
+    ],
+]);
+
+
+
+
+
     }
 
     // ═══════════════════════════════════════════════════════════

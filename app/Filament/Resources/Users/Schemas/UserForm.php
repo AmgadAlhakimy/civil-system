@@ -158,6 +158,7 @@ class UserForm
                                     ->preload()
                                     ->searchable()
                                     ->required()
+                                    ->helperText('اختر query_officer لمنح المستخدم صلاحية صفحة الاستعلامات')
                                     ->native(false)
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار دور المستخدم',
