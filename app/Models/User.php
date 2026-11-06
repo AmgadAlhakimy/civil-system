@@ -93,6 +93,8 @@ class User extends Authenticatable implements FilamentUser
                 'otp_code',
                 'otp_expires_at',
                 'device_token',
+                'last_login_at',
+                'last_login_ip',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

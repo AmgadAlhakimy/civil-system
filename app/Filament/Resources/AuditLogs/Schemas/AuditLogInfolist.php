@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\AuditLogs\Schemas;
 
+use App\Models\Activity;
+use Illuminate\Support\Collection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Schemas\Components\Grid;
@@ -26,9 +28,19 @@ class AuditLogInfolist
                         ])
                             ->schema([
 
-                                TextEntry::make('causer.name')
+                                TextEntry::make('causer_name')
                                     ->label('المستخدم')
-                                    ->placeholder('النظام')
+                                    ->state(function (Activity $record): string {
+                                        if ($record->causer_name) {
+                                            return $record->causer_id && ! $record->causer
+                                                ? $record->causer_name . ' (محذوف)'
+                                                : $record->causer_name;
+                                        }
+
+                                        return $record->causer_id
+                                            ? ($record->causer?->name ?? 'غير معروف')
+                                            : 'النظام';
+                                    })
                                     ->weight('bold')
                                     ->icon('heroicon-o-user'),
 
@@ -41,10 +53,10 @@ class AuditLogInfolist
                                     ->label('العملية')
                                     ->color(
                                         fn (?string $state): string => match ($state) {
-                                            'created' => 'success',
-                                            'updated' => 'warning',
-                                            'deleted' => 'danger',
-                                            'restored' => 'info',
+                                            'created', 'login' => 'success',
+                                            'updated', 'password_changed' => 'warning',
+                                            'deleted', 'failed_login' => 'danger',
+                                            'restored', 'logout' => 'info',
                                             default => 'gray',
                                         }
                                     )
@@ -54,16 +66,20 @@ class AuditLogInfolist
                                             'updated' => 'تعديل',
                                             'deleted' => 'حذف',
                                             'restored' => 'استعادة',
+                                            'login' => 'تسجيل الدخول',
+                                            'logout' => 'تسجيل الخروج',
+                                            'password_changed' => 'تغيير كلمة المرور',
+                                            'failed_login' => 'محاولة تسجيل دخول فاشلة',
                                             default => $state ?? 'غير محدد',
                                         }
                                     )
                                     ->icon('heroicon-o-bolt')
                                     ->iconColor(
                                         fn (?string $state): string => match ($state) {
-                                            'created' => 'success',
-                                            'updated' => 'warning',
-                                            'deleted' => 'danger',
-                                            'restored' => 'info',
+                                            'created', 'login' => 'success',
+                                            'updated', 'password_changed' => 'warning',
+                                            'deleted', 'failed_login' => 'danger',
+                                            'restored', 'logout' => 'info',
                                             default => 'gray',
                                         }
                                     ),
@@ -81,6 +97,10 @@ class AuditLogInfolist
                 Section::make('السجل المتأثر')
                     ->description('السجل الذي تمت عليه العملية')
                     ->icon('heroicon-o-document-text')
+                    ->visible(
+                        fn (Activity $record): bool =>
+                            filled($record->subject_type) || filled($record->subject_id)
+                    )
                     ->schema([
                         Grid::make(2)
                             ->schema([
@@ -103,6 +123,7 @@ class AuditLogInfolist
                                             'App\\Models\\IdentityCard' => 'بطاقة شخصية',
                                             'App\\Models\\BirthCertificate' => 'شهادة ميلاد',
                                             'App\\Models\\DeathCertificate' => 'شهادة وفاة',
+                                            'App\\Models\\User' => 'مستخدم',
                                             default => $state
                                                 ? class_basename($state)
                                                 : 'غير محدد',
@@ -124,6 +145,7 @@ class AuditLogInfolist
                 Section::make('تفاصيل التغييرات')
                     ->description('مقارنة البيانات قبل وبعد تنفيذ العملية')
                     ->icon('heroicon-o-arrows-right-left')
+                    ->visible(fn (Activity $record): bool => self::hasChanges($record))
                     ->schema([
                         Grid::make([
                             'default' => 1,
@@ -154,7 +176,7 @@ class AuditLogInfolist
                             ->state(function ($record): array {
                                 $properties = $record->properties;
 
-                                if ($properties instanceof \Illuminate\Support\Collection) {
+                                if ($properties instanceof Collection) {
                                     $properties = $properties->toArray();
                                 }
 
@@ -206,6 +228,24 @@ class AuditLogInfolist
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
+
+                Section::make('معلومات محاولة الدخول')
+                    ->description('بيانات الحساب المستخدم في محاولة تسجيل الدخول الفاشلة')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->visible(
+                        fn (Activity $record): bool =>
+                            $record->event === 'failed_login'
+                    )
+                    ->schema([
+                        TextEntry::make('properties.email')
+                            ->label('البريد الإلكتروني المُدخل')
+                            ->placeholder('غير متوفر')
+                            ->copyable()
+                            ->copyMessage('تم نسخ البريد الإلكتروني')
+                            ->icon('heroicon-o-envelope'),
+                    ])
+                    ->columnSpanFull(),
+
                 Section::make('معلومات جلسة المستخدم')
                     ->description('بيانات الاتصال والبيئة التي تم من خلالها تنفيذ العملية')
                     ->icon('heroicon-o-computer-desktop')
@@ -264,6 +304,10 @@ class AuditLogInfolist
                                     'updated' => 'تم تعديل بيانات السجل.',
                                     'deleted' => 'تم حذف السجل من النظام.',
                                     'restored' => 'تمت استعادة السجل.',
+                                    'login' => 'تم تسجيل الدخول إلى النظام بنجاح.',
+                                    'logout' => 'تم تسجيل الخروج من النظام.',
+                                    'password_changed' => 'تم تغيير كلمة مرور المستخدم.',
+                                    'failed_login' => 'فشلت محاولة تسجيل الدخول باستخدام بيانات الاعتماد المُدخلة.',
                                     default => $record->description ?: 'تم تنفيذ العملية على السجل.',
                                 }
                             ),
@@ -282,6 +326,11 @@ class AuditLogInfolist
                                     ->label('معرف سجل التدقيق')
                                     ->copyable()
                                     ->copyMessage('تم نسخ معرف سجل التدقيق'),
+
+                                TextEntry::make('causer_name')
+                                    ->label('اسم منفذ العملية')
+                                    ->placeholder('غير متوفر')
+                                    ->copyable(),
 
                                 TextEntry::make('causer_id')
                                     ->label('معرف المستخدم')
@@ -314,6 +363,20 @@ class AuditLogInfolist
             ]);
     }
 
+    private static function hasChanges(Activity $record): bool
+    {
+        $properties = $record->properties;
+
+        if ($properties instanceof Collection) {
+            $properties = $properties->toArray();
+        }
+
+        $old = $properties['old'] ?? [];
+        $new = $properties['attributes'] ?? [];
+
+        return ! empty($old) || ! empty($new);
+    }
+
     private static function getSubjectName($record): string
     {
         $subject = $record->subject;
@@ -336,20 +399,24 @@ class AuditLogInfolist
                     ?? $subject->identity_number
                     ?? 'بطاقة شخصية',
 
+                'App\\Models\\User' => $subject->full_name
+                    ?? $subject->name
+                    ?? 'مستخدم',
+
                 default => class_basename($record->subject_type),
             };
         }
 
         $properties = $record->properties;
 
-        if ($properties instanceof \Illuminate\Support\Collection) {
+        if ($properties instanceof Collection) {
             $properties = $properties->toArray();
         }
 
         $attributes = $properties['attributes'] ?? [];
         $old = $properties['old'] ?? [];
 
-        $data = !empty($attributes) ? $attributes : $old;
+        $data = ! empty($attributes) ? $attributes : $old;
 
         return match ($record->subject_type) {
             'App\\Models\\Citizen' => trim(
@@ -377,6 +444,10 @@ class AuditLogInfolist
 
             'App\\Models\\FamilyMember' => 'فرد أسرة',
 
+            'App\\Models\\User' => $data['full_name']
+                ?? $data['name']
+                ?? 'مستخدم',
+
             default => $record->subject_type
                 ? class_basename($record->subject_type)
                 : 'السجل المتأثر',
@@ -387,7 +458,7 @@ class AuditLogInfolist
     {
         $properties = $record->properties;
 
-        if ($properties instanceof \Illuminate\Support\Collection) {
+        if ($properties instanceof Collection) {
             $properties = $properties->toArray();
         }
 
@@ -409,7 +480,7 @@ class AuditLogInfolist
     {
         $properties = $record->properties;
 
-        if ($properties instanceof \Illuminate\Support\Collection) {
+        if ($properties instanceof Collection) {
             $properties = $properties->toArray();
         }
 

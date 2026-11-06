@@ -169,7 +169,11 @@ class ChangePassword extends Page
         $user->password = Hash::make($password);
         $user->must_change_password = false;
         $user->save();
-
+        activity()
+            ->causedBy($user)
+            ->performedOn($user)
+            ->event('password_changed')
+            ->log('تم تغيير المستخدم كلمة المرور الخاصة به.');
         request()->session()->regenerate();
 
         Notification::make()

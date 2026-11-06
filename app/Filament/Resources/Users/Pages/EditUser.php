@@ -12,6 +12,8 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    protected bool $passwordWasChanged = false;
+
     public static function canAccess(array $parameters = []): bool
     {
         return auth()->user()?->can('users.update') ?? false;
@@ -59,11 +61,26 @@ class EditUser extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $this->passwordWasChanged = filled($data['password'] ?? null);
+
         if (($data['account_type'] ?? null) === 'external') {
             $data['branch_id'] = null;
         }
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        if (! $this->passwordWasChanged) {
+            return;
+        }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($this->record)
+            ->event('password_changed')
+            ->log('تم تغيير كلمة مرور المستخدم.');
     }
 
     public function mount(int|string $record): void

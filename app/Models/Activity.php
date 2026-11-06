@@ -19,20 +19,24 @@ class Activity extends SpatieActivity
     {
         static::creating(function (Activity $activity) {
             $user = Auth::user();
+            $userAgent = Request::userAgent();
+
+            $activity->causer_name = $user?->full_name
+                ?? $activity->causer?->full_name
+                ?? $user?->name
+                ?? $activity->causer?->name;
 
             $activity->ip_address = Request::ip();
 
-            $activity->user_agent = Request::userAgent();
+            $activity->user_agent = $userAgent;
 
-            $activity->device_type = self::detectDevice(
-                Request::userAgent()
-            );
+            $activity->device_type = self::detectDevice($userAgent);
 
-            $activity->browser = self::detectBrowser(
-                Request::userAgent()
-            );
+            $activity->browser = self::detectBrowser($userAgent);
 
-            $activity->user_role = $user?->roles?->first()?->name;
+            $activity->user_role = $user?->roles
+                ?->pluck('name')
+                ->implode(', ');
         });
     }
 
@@ -40,14 +44,18 @@ class Activity extends SpatieActivity
     {
         $userAgent = strtolower($userAgent ?? '');
 
-        if (str_contains($userAgent, 'tablet')) {
+        if (
+            str_contains($userAgent, 'ipad') ||
+            str_contains($userAgent, 'tablet')
+        ) {
             return 'tablet';
         }
 
         if (
             str_contains($userAgent, 'mobile') ||
             str_contains($userAgent, 'android') ||
-            str_contains($userAgent, 'iphone')
+            str_contains($userAgent, 'iphone') ||
+            str_contains($userAgent, 'ipod')
         ) {
             return 'mobile';
         }
@@ -60,11 +68,12 @@ class Activity extends SpatieActivity
         $userAgent = $userAgent ?? '';
 
         return match (true) {
-            str_contains($userAgent, 'Edg') => 'Edge',
-            str_contains($userAgent, 'OPR') => 'Opera',
-            str_contains($userAgent, 'Chrome') => 'Chrome',
-            str_contains($userAgent, 'Firefox') => 'Firefox',
-            str_contains($userAgent, 'Safari') => 'Safari',
+            str_contains($userAgent, 'Edg/') => 'Edge',
+            str_contains($userAgent, 'OPR/') => 'Opera',
+            str_contains($userAgent, 'SamsungBrowser/') => 'Samsung Internet',
+            str_contains($userAgent, 'Firefox/') => 'Firefox',
+            str_contains($userAgent, 'Chrome/') => 'Chrome',
+            str_contains($userAgent, 'Safari/') => 'Safari',
             default => 'غير معروف',
         };
     }

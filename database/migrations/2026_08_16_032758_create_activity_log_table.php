@@ -27,6 +27,7 @@ return new class extends Migration
 
                 $table->string('causer_type')->nullable();
                 $table->uuid('causer_id')->nullable();
+                $table->string('causer_name')->nullable();
 
                 $table->index([
                     'causer_type',

@@ -13,9 +13,19 @@ class AuditLogsTable
     {
         return $table
             ->columns([
-                TextColumn::make('causer.name')
+                TextColumn::make('causer_name')
                     ->label('المستخدم')
-                    ->default('النظام')
+                    ->formatStateUsing(function (?string $state, Activity $record): string {
+                        if ($state) {
+                            return $record->causer_id && ! $record->causer
+                                ? $state . ' (محذوف)'
+                                : $state;
+                        }
+
+                        return $record->causer_id
+                            ? ($record->causer?->name ?? 'غير معروف')
+                            : 'النظام';
+                    })
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
@@ -34,15 +44,19 @@ class AuditLogsTable
                             'updated' => 'تعديل',
                             'deleted' => 'حذف',
                             'restored' => 'استعادة',
+                            'login' => 'تسجيل الدخول',
+                            'logout' => 'تسجيل الخروج',
+                            'password_changed' => 'تغيير كلمة المرور',
+                            'failed_login' => 'محاولة تسجيل دخول فاشلة',
                             default => $state ?? 'غير محدد',
                         }
                     )
                     ->color(
                         fn (?string $state): string => match ($state) {
-                            'created' => 'success',
-                            'updated' => 'warning',
-                            'deleted' => 'danger',
-                            'restored' => 'info',
+                            'created', 'login' => 'success',
+                            'updated', 'password_changed' => 'warning',
+                            'deleted', 'failed_login' => 'danger',
+                            'restored', 'logout' => 'info',
                             default => 'gray',
                         }
                     )
@@ -59,6 +73,13 @@ class AuditLogsTable
                             'App\\Models\\IdentityCard' => 'بطاقة شخصية',
                             'App\\Models\\BirthCertificate' => 'شهادة ميلاد',
                             'App\\Models\\DeathCertificate' => 'شهادة وفاة',
+                            'App\\Models\\Appointment' => 'موعد',
+                            'App\\Models\\Branch' => 'فرع',
+                            'App\\Models\\District' => 'مديرية',
+                            'App\\Models\\Governorate' => 'محافظة',
+                            'App\\Models\\User' => 'مستخدم',
+                            'App\\Models\\Report' => 'تقرير',
+                            'App\\Models\\ServiceFee' => 'رسوم خدمة',
                             default => $state
                                 ? class_basename($state)
                                 : 'غير محدد',
@@ -71,33 +92,75 @@ class AuditLogsTable
                     ->label('السجل المتأثر')
                     ->formatStateUsing(
                         function ($state, Activity $record): string {
-                            if (!$state) {
-                                return 'السجل غير موجود';
+                            $properties = $record->properties ?? collect();
+
+                            if ($state) {
+                                return match ($record->subject_type) {
+                                    'App\\Models\\Citizen' => trim(
+                                        ($state->first_name ?? '') . ' ' .
+                                        ($state->middle_name ?? '') . ' ' .
+                                        ($state->last_name ?? '')
+                                    ),
+
+                                    'App\\Models\\Passport' => $state->passport_number
+                                        ?? $state->number
+                                        ?? 'جواز سفر',
+
+                                    'App\\Models\\FamilyCard' => $state->card_number
+                                        ?? 'بطاقة عائلية',
+
+                                    'App\\Models\\IdentityCard' => $state->id_number
+                                        ?? $state->card_number
+                                        ?? $state->identity_number
+                                        ?? 'بطاقة شخصية',
+
+                                    'App\\Models\\User' => $state->full_name
+                                        ?? $state->name
+                                        ?? 'مستخدم',
+
+                                    default => class_basename(
+                                        $record->subject_type ?? ''
+                                    ) ?: 'غير محدد',
+                                };
                             }
 
-                            return match ($record->subject_type) {
-                                'App\\Models\\Citizen' => trim(
-                                    ($state->first_name ?? '') . ' ' .
-                                    ($state->middle_name ?? '') . ' ' .
-                                    ($state->last_name ?? '')
-                                ),
+                            $attributes = $properties->get('attributes', []);
 
-                                'App\\Models\\Passport' => $state->passport_number
-                                    ?? $state->number
-                                    ?? 'جواز سفر',
+                            if ($attributes instanceof \Illuminate\Support\Collection) {
+                                $attributes = $attributes->all();
+                            }
 
-                                'App\\Models\\FamilyCard' => $state->card_number
-                                    ?? 'بطاقة عائلية',
+                            if (! is_array($attributes)) {
+                                $attributes = [];
+                            }
 
-                                'App\\Models\\IdentityCard' => $state->id_number
-                                    ?? $state->card_number
-                                    ?? $state->identity_number
-                                    ?? 'بطاقة شخصية',
+                            $name = trim(implode(' ', array_filter([
+                                $attributes['first_name'] ?? null,
+                                $attributes['middle_name'] ?? null,
+                                $attributes['last_name'] ?? null,
+                            ])));
 
-                                default => class_basename(
-                                    $record->subject_type ?? ''
-                                ) ?: 'غير محدد',
-                            };
+                            if ($name !== '') {
+                                return $name;
+                            }
+
+                            foreach ([
+                                         'passport_number',
+                                         'card_number',
+                                         'id_number',
+                                         'identity_number',
+                                         'number',
+                                         'full_name',
+                                         'name',
+                                     ] as $key) {
+                                if (! empty($attributes[$key])) {
+                                    return (string) $attributes[$key];
+                                }
+                            }
+
+                            return $record->subject_type
+                                ? class_basename($record->subject_type)
+                                : 'غير محدد';
                         }
                     )
                     ->searchable(),
@@ -105,19 +168,28 @@ class AuditLogsTable
                 TextColumn::make('description')
                     ->label('الوصف')
                     ->formatStateUsing(
-                        fn (
-                            ?string $state,
-                            Activity $record
-                        ): string => match ($record->event) {
-                            'created' => 'تمت إضافة السجل',
-                            'updated' => 'تم تعديل السجل',
-                            'deleted' => 'تم حذف السجل',
-                            'restored' => 'تمت استعادة السجل',
-                            default => $state ?? 'غير محدد',
-                        }
+                        fn (?string $state): string => $state ?? 'غير محدد'
                     )
                     ->searchable()
-                    ->limit(50),
+                    ->limit(50)
+                    ->tooltip(fn (?string $state): ?string => $state),
+
+                TextColumn::make('device_type')
+                    ->label('نوع الجهاز')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'desktop' => 'حاسوب',
+                            'mobile' => 'هاتف',
+                            'tablet' => 'جهاز لوحي',
+                            default => 'غير معروف',
+                        }
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('browser')
+                    ->label('المتصفح')
+                    ->default('غير معروف')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('ip_address')
                     ->label('عنوان IP')
@@ -139,6 +211,7 @@ class AuditLogsTable
                             auth()->user()?->can('audit_logs.view') ?? false
                     ),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([])
             ->defaultSort('created_at', 'desc');
     }
