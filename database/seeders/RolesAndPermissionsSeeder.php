@@ -236,10 +236,11 @@ class RolesAndPermissionsSeeder extends Seeder
             */
 
             ['name' => 'backups.view', 'name_ar' => 'عرض النسخ الاحتياطية', 'module' => 'backups', 'action' => 'view', 'description' => 'عرض قائمة النسخ الاحتياطية وتفاصيلها'],
-            ['name' => 'backups.create', 'name_ar' => 'إنشاء نسخة احتياطية', 'module' => 'backups', 'action' => 'create', 'description' => 'إنشاء نسخة احتياطية يدوية لقاعدة البيانات وملفات النظام'],
+            ['name' => 'backups.create_database', 'name_ar' => 'إنشاء نسخة لقاعدة البيانات', 'module' => 'backups', 'action' => 'create_database', 'description' => 'إنشاء نسخة احتياطية لقاعدة البيانات فقط'],
+            ['name' => 'backups.create_full', 'name_ar' => 'إنشاء نسخة كاملة للنظام', 'module' => 'backups', 'action' => 'create_full', 'description' => 'إنشاء نسخة احتياطية تشمل قاعدة البيانات وملفات النظام المهمة'],
             ['name' => 'backups.delete', 'name_ar' => 'حذف النسخ الاحتياطية', 'module' => 'backups', 'action' => 'delete', 'description' => 'حذف النسخ الاحتياطية وملفاتها وسجلاتها'],
             ['name' => 'backups.download', 'name_ar' => 'تنزيل النسخ الاحتياطية', 'module' => 'backups', 'action' => 'download', 'description' => 'تنزيل ملفات النسخ الاحتياطية المكتملة'],
-
+            ['name' => 'backups.restore', 'name_ar' => 'استعادة النسخ الاحتياطية', 'module' => 'backups', 'action' => 'restore', 'description' => 'استعادة النظام من نسخة احتياطية'],
             /*
             |--------------------------------------------------------------------------
             | Audit Logs
@@ -258,7 +259,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'users.create', 'name_ar' => 'إضافة المستخدمين', 'module' => 'users', 'action' => 'create', 'description' => 'إضافة مستخدم جديد'],
             ['name' => 'users.update', 'name_ar' => 'تعديل المستخدمين', 'module' => 'users', 'action' => 'update', 'description' => 'تعديل بيانات المستخدمين'],
             ['name' => 'users.delete', 'name_ar' => 'حذف المستخدمين', 'module' => 'users', 'action' => 'delete', 'description' => 'حذف المستخدمين'],
-
+            ['name' => 'users.restore', 'name_ar' => 'استعادة المستخدمين', 'module' => 'users', 'action' => 'restore', 'description' => 'استعادة حسابات المستخدمين المحذوفة'],
+            ['name' => 'users.force_delete', 'name_ar' => 'الحذف النهائي للمستخدمين', 'module' => 'users', 'action' => 'force_delete', 'description' => 'حذف حسابات المستخدمين نهائيًا من النظام'],
             /*
             |--------------------------------------------------------------------------
             | Roles
@@ -292,7 +294,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'guard_name' => 'web',
                 ],
                 [
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'name_ar' => $permissionData['name_ar'],
                     'module' => $permissionData['module'],
                     'action' => $permissionData['action'],
@@ -312,6 +314,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'موظف التسجيل'],
             ['name' => 'موظف الجوازات'],
             ['name' => 'المعتمد'],
+            ['name' => 'جهة خاصة'],
         ];
 
         /*
@@ -327,7 +330,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'guard_name' => 'web',
                 ],
                 [
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                 ]
             );
         }
@@ -351,6 +354,10 @@ class RolesAndPermissionsSeeder extends Seeder
             ->firstOrFail();
 
         $approver = Role::where('name', 'المعتمد')
+            ->where('guard_name', 'web')
+            ->firstOrFail();
+
+        $privateEntity = Role::where('name', 'جهة خاصة')
             ->where('guard_name', 'web')
             ->firstOrFail();
 
@@ -406,6 +413,17 @@ class RolesAndPermissionsSeeder extends Seeder
             'passports.view',
             'passports.approve',
             'passports.reject',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Private Entity
+        |--------------------------------------------------------------------------
+        */
+
+        $privateEntity->syncPermissions([
+            'citizens.view',
         ]);
 
         /*

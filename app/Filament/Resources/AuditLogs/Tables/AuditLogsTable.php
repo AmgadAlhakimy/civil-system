@@ -32,7 +32,11 @@ class AuditLogsTable
 
                 TextColumn::make('user_role')
                     ->label('دور المستخدم')
-                    ->default('غير محدد')
+                    ->formatStateUsing(
+                        fn (?string $state): string => filled($state)
+                            ? $state
+                            : 'غير محدد'
+                    )
                     ->searchable()
                     ->sortable(),
 
@@ -44,142 +48,31 @@ class AuditLogsTable
                             'updated' => 'تعديل',
                             'deleted' => 'حذف',
                             'restored' => 'استعادة',
+                            'force_deleted' => 'حذف نهائي',
                             'login' => 'تسجيل الدخول',
                             'logout' => 'تسجيل الخروج',
                             'password_changed' => 'تغيير كلمة المرور',
-                            'failed_login' => 'محاولة تسجيل دخول فاشلة',
-                            default => $state ?? 'غير محدد',
+                            'failed_login' => 'محاولة دخول فاشلة',
+                            default => 'عملية أخرى',
                         }
                     )
                     ->color(
                         fn (?string $state): string => match ($state) {
                             'created', 'login' => 'success',
                             'updated', 'password_changed' => 'warning',
-                            'deleted', 'failed_login' => 'danger',
+                            'deleted', 'force_deleted', 'failed_login' => 'danger',
                             'restored', 'logout' => 'info',
                             default => 'gray',
                         }
                     )
                     ->sortable(),
 
-                TextColumn::make('subject_type')
-                    ->label('نوع السجل')
-                    ->formatStateUsing(
-                        fn (?string $state): string => match ($state) {
-                            'App\\Models\\Citizen' => 'مواطن',
-                            'App\\Models\\Passport' => 'جواز سفر',
-                            'App\\Models\\FamilyCard' => 'بطاقة عائلية',
-                            'App\\Models\\FamilyMember' => 'فرد أسرة',
-                            'App\\Models\\IdentityCard' => 'بطاقة شخصية',
-                            'App\\Models\\BirthCertificate' => 'شهادة ميلاد',
-                            'App\\Models\\DeathCertificate' => 'شهادة وفاة',
-                            'App\\Models\\Appointment' => 'موعد',
-                            'App\\Models\\Branch' => 'فرع',
-                            'App\\Models\\District' => 'مديرية',
-                            'App\\Models\\Governorate' => 'محافظة',
-                            'App\\Models\\User' => 'مستخدم',
-                            'App\\Models\\Report' => 'تقرير',
-                            'App\\Models\\ServiceFee' => 'رسوم خدمة',
-                            default => $state
-                                ? class_basename($state)
-                                : 'غير محدد',
-                        }
-                    )
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('subject')
-                    ->label('السجل المتأثر')
-                    ->formatStateUsing(
-                        function ($state, Activity $record): string {
-                            $properties = $record->properties ?? collect();
-
-                            if ($state) {
-                                return match ($record->subject_type) {
-                                    'App\\Models\\Citizen' => trim(
-                                        ($state->first_name ?? '') . ' ' .
-                                        ($state->middle_name ?? '') . ' ' .
-                                        ($state->last_name ?? '')
-                                    ),
-
-                                    'App\\Models\\Passport' => $state->passport_number
-                                        ?? $state->number
-                                        ?? 'جواز سفر',
-
-                                    'App\\Models\\FamilyCard' => $state->card_number
-                                        ?? 'بطاقة عائلية',
-
-                                    'App\\Models\\IdentityCard' => $state->id_number
-                                        ?? $state->card_number
-                                        ?? $state->identity_number
-                                        ?? 'بطاقة شخصية',
-
-                                    'App\\Models\\User' => $state->full_name
-                                        ?? $state->name
-                                        ?? 'مستخدم',
-
-                                    default => class_basename(
-                                        $record->subject_type ?? ''
-                                    ) ?: 'غير محدد',
-                                };
-                            }
-
-                            $attributes = $properties->get('attributes', []);
-
-                            if ($attributes instanceof \Illuminate\Support\Collection) {
-                                $attributes = $attributes->all();
-                            }
-
-                            if (! is_array($attributes)) {
-                                $attributes = [];
-                            }
-
-                            $name = trim(implode(' ', array_filter([
-                                $attributes['first_name'] ?? null,
-                                $attributes['middle_name'] ?? null,
-                                $attributes['last_name'] ?? null,
-                            ])));
-
-                            if ($name !== '') {
-                                return $name;
-                            }
-
-                            foreach ([
-                                         'passport_number',
-                                         'card_number',
-                                         'id_number',
-                                         'identity_number',
-                                         'number',
-                                         'full_name',
-                                         'name',
-                                     ] as $key) {
-                                if (! empty($attributes[$key])) {
-                                    return (string) $attributes[$key];
-                                }
-                            }
-
-                            return $record->subject_type
-                                ? class_basename($record->subject_type)
-                                : 'غير محدد';
-                        }
-                    )
-                    ->searchable(),
-
-                TextColumn::make('description')
-                    ->label('الوصف')
-                    ->formatStateUsing(
-                        fn (?string $state): string => $state ?? 'غير محدد'
-                    )
-                    ->searchable()
-                    ->limit(50)
-                    ->tooltip(fn (?string $state): ?string => $state),
-
                 TextColumn::make('device_type')
                     ->label('نوع الجهاز')
                     ->formatStateUsing(
                         fn (?string $state): string => match ($state) {
-                            'desktop' => 'حاسوب',
-                            'mobile' => 'هاتف',
+                            'desktop' => 'كمبيوتر مكتبي',
+                            'mobile' => 'هاتف محمول',
                             'tablet' => 'جهاز لوحي',
                             default => 'غير معروف',
                         }
@@ -188,7 +81,17 @@ class AuditLogsTable
 
                 TextColumn::make('browser')
                     ->label('المتصفح')
-                    ->default('غير معروف')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'Chrome' => 'جوجل كروم',
+                            'Firefox' => 'موزيلا فايرفوكس',
+                            'Edge' => 'مايكروسوفت إيدج',
+                            'Opera' => 'أوبرا',
+                            'Samsung Internet' => 'سامسونج إنترنت',
+                            'Safari' => 'سفاري',
+                            default => 'غير معروف',
+                        }
+                    )
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('ip_address')

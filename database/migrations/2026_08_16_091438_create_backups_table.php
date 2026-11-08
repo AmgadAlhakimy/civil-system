@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('file_path', 255)->nullable();
             $table->unsignedBigInteger('file_size')->nullable();
             $table->enum('type', ['manual', 'automatic'])->default('manual');
+            $table->enum('backup_scope', ['database', 'full'])->default('database');
             $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
             $table->text('notes')->nullable();
             $table->uuid('created_by')->nullable();
@@ -26,6 +27,7 @@ return new class extends Migration
                 ->onDelete('set null');
 
             $table->index('type');
+            $table->index('backup_scope');
             $table->index('status');
             $table->index('created_at');
         });

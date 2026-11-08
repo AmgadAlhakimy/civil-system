@@ -3,14 +3,18 @@
 namespace App\Filament\Resources\Backups\Tables;
 
 use App\Models\Backup;
+use App\Services\BackupRestoreService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class BackupsTable
 {
@@ -29,6 +33,17 @@ class BackupsTable
                         fn (?string $state): string => match ($state) {
                             'manual' => 'يدوية',
                             'automatic' => 'تلقائية',
+                            default => $state ?? 'غير محدد',
+                        }
+                    )
+                    ->sortable(),
+
+                TextColumn::make('backup_scope')
+                    ->label('نطاق النسخة')
+                    ->formatStateUsing(
+                        fn (?string $state): string => match ($state) {
+                            'database' => 'قاعدة البيانات فقط',
+                            'full' => 'قاعدة البيانات وملفات النظام',
                             default => $state ?? 'غير محدد',
                         }
                     )
@@ -66,7 +81,7 @@ class BackupsTable
                     })
                     ->sortable(),
 
-                TextColumn::make('createdBy.name')
+                TextColumn::make('createdBy.full_name')
                     ->label('أنشأها')
                     ->searchable()
                     ->sortable()
@@ -89,6 +104,13 @@ class BackupsTable
                     ->options([
                         'manual' => 'يدوية',
                         'automatic' => 'تلقائية',
+                    ]),
+
+                SelectFilter::make('backup_scope')
+                    ->label('نطاق النسخة')
+                    ->options([
+                        'database' => 'قاعدة البيانات فقط',
+                        'full' => 'قاعدة البيانات وملفات النظام',
                     ]),
 
                 SelectFilter::make('status')
@@ -147,6 +169,85 @@ class BackupsTable
                         );
                     }),
 
+                Action::make('restore')
+                    ->label('استعادة')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->visible(
+                        fn (Backup $record): bool =>
+                            (auth()->user()?->can('backups.restore') ?? false)
+                            && $record->status === 'completed'
+                            && filled($record->file_path)
+                            && Storage::disk(
+                                config('backup.backup.destination.disks.0', 'local')
+                            )->exists($record->file_path)
+                    )
+                    ->schema(fn (Backup $record): array => [
+                        Select::make('scope')
+                            ->label('نطاق الاستعادة')
+                            ->options(fn (): array => self::getRestoreScopes($record))
+                            ->required()
+                            ->native(false)
+                            ->helperText('يتم تحديد الخيارات وفق محتويات النسخة الاحتياطية.'),
+                    ])
+                    ->modalHeading('استعادة نسخة احتياطية')
+                    ->modalDescription(
+                        'سيتم إنشاء نسخة احتياطية وقائية قبل الاستعادة. قد تؤدي الاستعادة إلى استبدال البيانات والملفات الحالية وفق النطاق المحدد.'
+                    )
+                    ->modalSubmitActionLabel('بدء الاستعادة')
+                    ->modalCancelActionLabel('إلغاء')
+                    ->action(function (Backup $record, array $data): void {
+                        abort_unless(
+                            auth()->user()?->can('backups.restore'),
+                            403
+                        );
+
+                        $disk = Storage::disk(
+                            config('backup.backup.destination.disks.0', 'local')
+                        );
+
+                        abort_unless(
+                            $record->status === 'completed'
+                            && filled($record->file_path)
+                            && $disk->exists($record->file_path),
+                            404
+                        );
+
+                        try {
+                            $inspection = app(BackupRestoreService::class)
+                                ->inspectArchive($disk->path($record->file_path));
+
+                            $availableScopes = array_keys(
+                                $inspection['scopes'] ?? []
+                            );
+
+                            if (! in_array($data['scope'] ?? null, $availableScopes, true)) {
+                                throw new \RuntimeException(
+                                    'نطاق الاستعادة المحدد غير متاح لهذه النسخة.'
+                                );
+                            }
+
+                            app(BackupRestoreService::class)->restore(
+                                $record,
+                                $data['scope']
+                            );
+
+                            Notification::make()
+                                ->title('تمت استعادة النسخة الاحتياطية بنجاح')
+                                ->success()
+                                ->send();
+                        } catch (Throwable $exception) {
+                            report($exception);
+
+                            Notification::make()
+                                ->title('تعذرت استعادة النسخة الاحتياطية')
+                                ->body($exception->getMessage())
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        }
+                    }),
+
                 Action::make('delete')
                     ->label('حذف')
                     ->icon('heroicon-o-trash')
@@ -182,6 +283,7 @@ class BackupsTable
                         $record->delete();
                     }),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('delete')
@@ -224,5 +326,30 @@ class BackupsTable
                     ->label('إجراءات جماعية'),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    private static function getRestoreScopes(Backup $record): array
+    {
+        try {
+            $disk = Storage::disk(
+                config('backup.backup.destination.disks.0', 'local')
+            );
+
+            if (
+                ! filled($record->file_path)
+                || ! $disk->exists($record->file_path)
+            ) {
+                return [];
+            }
+
+            $inspection = app(BackupRestoreService::class)
+                ->inspectArchive($disk->path($record->file_path));
+
+            return $inspection['scopes'] ?? [];
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return [];
+        }
     }
 }

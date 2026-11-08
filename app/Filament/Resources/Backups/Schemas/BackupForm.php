@@ -15,7 +15,7 @@ class BackupForm
             ->components([
                 Section::make('إنشاء نسخة احتياطية')
                     ->description(
-                        'سيتم إنشاء نسخة احتياطية يدوية لقاعدة البيانات.'
+                        'سيتم تحديد نطاق النسخة الاحتياطية تلقائيًا حسب زر الإنشاء الذي اخترته.'
                     )
                     ->icon('heroicon-o-archive-box')
                     ->schema([

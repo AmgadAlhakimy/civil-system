@@ -21,6 +21,8 @@ class Activity extends SpatieActivity
             $user = Auth::user();
             $userAgent = Request::userAgent();
 
+            $roleUser = $user ?? $activity->causer;
+
             $activity->causer_name = $user?->full_name
                 ?? $activity->causer?->full_name
                 ?? $user?->name
@@ -34,9 +36,10 @@ class Activity extends SpatieActivity
 
             $activity->browser = self::detectBrowser($userAgent);
 
-            $activity->user_role = $user?->roles
-                ?->pluck('name')
-                ->implode(', ');
+            $activity->user_role = $roleUser?->roles
+                ?->map(fn ($role) => $role->name_ar ?: $role->name)
+                ->filter()
+                ->implode('، ');
         });
     }
 

@@ -26,7 +26,6 @@ class UserForm
                                 'employee' => 'موظف',
                                 'external' => 'جهة خاصة',
                             ])
-                            ->default('employee')
                             ->required()
                             ->live()
                             ->native(false)
@@ -38,6 +37,7 @@ class UserForm
                             ->schema([
                                 TextInput::make('name')
                                     ->label('اسم المستخدم')
+                                    ->placeholder('مثال: Amjad')
                                     ->required()
                                     ->minLength(3)
                                     ->maxLength(50)
@@ -54,6 +54,7 @@ class UserForm
 
                                 TextInput::make('full_name')
                                     ->label('الاسم الكامل')
+                                    ->placeholder('اسمك باللغة العربية')
                                     ->required()
                                     ->minLength(10)
                                     ->maxLength(255)
@@ -70,7 +71,7 @@ class UserForm
 
                                 TextInput::make('email')
                                     ->label('البريد الإلكتروني')
-                                    ->placeholder('ahmed@example.com')
+                                    ->placeholder('مثال: ahmed@example.com')
                                     ->email()
                                     ->required()
                                     ->default(null)
@@ -86,6 +87,7 @@ class UserForm
 
                                 TextInput::make('phone')
                                     ->label('رقم الهاتف')
+                                    ->placeholder('مثال: 771234567')
                                     ->required()
                                     ->minLength(9)
                                     ->maxLength(9)
@@ -113,7 +115,7 @@ class UserForm
                     ->schema([
                         Grid::make()
                             ->columns(
-                                fn ($get): int => $get('account_type') === 'external' ? 2 : 3
+                                fn ($get): int => $get('account_type') === 'employee' ? 3 : 2
                             )
                             ->schema([
                                 Select::make('branch_id')
@@ -153,12 +155,22 @@ class UserForm
                                 Select::make('roles')
                                     ->label('الدور')
                                     ->placeholder('اختر صلاحية المستخدم')
-                                    ->relationship('roles', 'name')
+                                    ->relationship(
+                                        'roles',
+                                        'name',
+                                        modifyQueryUsing: function ($query, $get) {
+                                            if ($get('account_type') === 'external') {
+                                                return $query->where('name', 'جهة خاصة')
+                                                    ->where('guard_name', 'web');
+                                            }
+
+                                            return $query->where('name', '!=', 'جهة خاصة');
+                                        }
+                                    )
                                     ->multiple()
                                     ->preload()
                                     ->searchable()
                                     ->required()
-                                    ->helperText('اختر query_officer لمنح المستخدم صلاحية صفحة الاستعلامات')
                                     ->native(false)
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار دور المستخدم',

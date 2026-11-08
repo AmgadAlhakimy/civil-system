@@ -33,6 +33,16 @@ class BackupInfolist
                                         }
                                     ),
 
+                                TextEntry::make('backup_scope')
+                                    ->label('نطاق النسخة')
+                                    ->formatStateUsing(
+                                        fn (?string $state): string => match ($state) {
+                                            'database' => 'قاعدة البيانات فقط',
+                                            'full' => 'قاعدة البيانات وملفات النظام',
+                                            default => 'غير محدد',
+                                        }
+                                    ),
+
                                 TextEntry::make('status')
                                     ->label('الحالة')
                                     ->formatStateUsing(
@@ -84,7 +94,7 @@ class BackupInfolist
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                TextEntry::make('createdBy.name')
+                                TextEntry::make('createdBy.full_name')
                                     ->label('أنشأ النسخة')
                                     ->placeholder('غير محدد'),
 

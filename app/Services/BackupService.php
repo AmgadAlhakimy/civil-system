@@ -5,14 +5,20 @@ namespace App\Services;
 use App\Models\Backup;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class BackupService
 {
     public function create(
         string $type = 'automatic',
         ?string $notes = null,
-        ?string $userId = null
+        ?string $userId = null,
+        string $scope = 'database'
     ): Backup {
+        if (! in_array($scope, ['database', 'full'], true)) {
+            throw new RuntimeException('نطاق النسخة الاحتياطية غير صالح.');
+        }
+
         $diskName = config(
             'backup.backup.destination.disks.0',
             'local'
@@ -25,7 +31,14 @@ class BackupService
                 fn (string $file): bool =>
                 str_ends_with(strtolower($file), '.zip')
             )
-            ->values()
+            ->mapWithKeys(
+                fn (string $file): array => [
+                    $file => [
+                        'last_modified' => $disk->lastModified($file),
+                        'size' => $disk->size($file),
+                    ],
+                ]
+            )
             ->all();
 
         $path = getenv('PATH') ?: '';
@@ -50,14 +63,16 @@ class BackupService
         $_SERVER['SystemRoot'] = $systemRoot;
         $_SERVER['WINDIR'] = $windir;
 
-        $exitCode = Artisan::call('backup:run', [
-            '--only-db' => true,
-        ]);
+        $commandOptions = $scope === 'database'
+            ? ['--only-db' => true]
+            : [];
+
+        $exitCode = Artisan::call('backup:run', $commandOptions);
 
         if ($exitCode !== 0) {
             $output = Artisan::output();
 
-            throw new \Exception(
+            throw new RuntimeException(
                 "فشل إنشاء النسخة الاحتياطية.\n\n" .
                 "تفاصيل الأمر:\n" .
                 $output
@@ -72,17 +87,21 @@ class BackupService
             ->values()
             ->all();
 
-        $newFiles = array_values(
-            array_diff($filesAfter, $filesBefore)
-        );
+        $newFiles = collect($filesAfter)
+            ->filter(function (string $file) use ($disk, $filesBefore): bool {
+                if (! array_key_exists($file, $filesBefore)) {
+                    return true;
+                }
+
+                return $disk->lastModified($file) !== $filesBefore[$file]['last_modified']
+                    || $disk->size($file) !== $filesBefore[$file]['size'];
+            })
+            ->values()
+            ->all();
 
         if (empty($newFiles)) {
-            $newFiles = $filesAfter;
-        }
-
-        if (empty($newFiles)) {
-            throw new \Exception(
-                'تم تنفيذ النسخ الاحتياطي بنجاح، ولكن لم يتم العثور على ملف ZIP.'
+            throw new RuntimeException(
+                'تم تنفيذ أمر النسخ الاحتياطي، ولكن لم يتم العثور على ملف ZIP جديد.'
             );
         }
 
@@ -96,7 +115,7 @@ class BackupService
         $filePath = $newFiles[0];
 
         if (! $disk->exists($filePath)) {
-            throw new \Exception(
+            throw new RuntimeException(
                 'تم إنشاء النسخة الاحتياطية ولكن الملف غير موجود.'
             );
         }
@@ -104,7 +123,7 @@ class BackupService
         $fileSize = $disk->size($filePath);
 
         if ($fileSize <= 0) {
-            throw new \Exception(
+            throw new RuntimeException(
                 'تم إنشاء ملف النسخة الاحتياطية ولكنه فارغ.'
             );
         }
@@ -114,6 +133,7 @@ class BackupService
             'file_path' => $filePath,
             'file_size' => $fileSize,
             'type' => $type,
+            'backup_scope' => $scope,
             'status' => 'completed',
             'notes' => $notes,
             'created_by' => $userId,

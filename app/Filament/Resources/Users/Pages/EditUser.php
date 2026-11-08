@@ -63,6 +63,10 @@ class EditUser extends EditRecord
     {
         $this->passwordWasChanged = filled($data['password'] ?? null);
 
+        if ($this->passwordWasChanged) {
+            $data['must_change_password'] = true;
+        }
+
         if (($data['account_type'] ?? null) === 'external') {
             $data['branch_id'] = null;
         }

@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages\Auth;
 
+use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
@@ -91,6 +93,19 @@ class ChangePassword extends Page
                                 'same' => 'تأكيد كلمة المرور غير مطابق لكلمة المرور الجديدة.',
                             ])
                             ->autocomplete('new-password'),
+
+                        Actions::make([
+                            Action::make('save')
+                                ->label('حفظ كلمة المرور الجديدة')
+                                ->icon('heroicon-o-check-circle')
+                                ->color('primary')
+                                ->button()
+                                ->extraAttributes([
+                                    'class' => 'w-full',
+                                ])
+                                ->action(fn () => $this->save()),
+                        ])
+                            ->fullWidth(),
                     ]),
             ]);
     }
@@ -169,11 +184,13 @@ class ChangePassword extends Page
         $user->password = Hash::make($password);
         $user->must_change_password = false;
         $user->save();
+
         activity()
             ->causedBy($user)
             ->performedOn($user)
             ->event('password_changed')
             ->log('تم تغيير المستخدم كلمة المرور الخاصة به.');
+
         request()->session()->regenerate();
 
         Notification::make()

@@ -95,6 +95,8 @@ class User extends Authenticatable implements FilamentUser
                 'device_token',
                 'last_login_at',
                 'last_login_ip',
+                'must_change_password',
+                'updated_at',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

@@ -22,6 +22,7 @@ class Backup extends Model
         'file_path',
         'file_size',
         'type',
+        'backup_scope',
         'status',
         'notes',
         'created_by',
