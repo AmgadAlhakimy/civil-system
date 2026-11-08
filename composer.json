@@ -19,7 +19,8 @@
         "phpoffice/phpspreadsheet": "5.9.0",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-backup": "^9.3",
-        "spatie/laravel-permission": "^6.25"
+        "spatie/laravel-permission": "^6.25",
+      "ext-zip": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

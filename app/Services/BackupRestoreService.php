@@ -382,7 +382,7 @@ class BackupRestoreService
                 );
             }
 
-            File::makeDirectory($destination, 0755, true);
+            File::ensureDirectoryExists($destination);
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $entry = $zip->getNameIndex($i);
@@ -433,11 +433,11 @@ class BackupRestoreService
                     str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
 
                 if (str_ends_with($relativePath, '/')) {
-                    File::makeDirectory($targetPath, 0755, true);
+                    File::ensureDirectoryExists($targetPath);
                     continue;
                 }
 
-                File::makeDirectory(dirname($targetPath), 0755, true);
+                File::ensureDirectoryExists(dirname($targetPath));
 
                 $input = $zip->getStream($entry);
 

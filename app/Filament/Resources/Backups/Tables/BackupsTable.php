@@ -51,14 +51,26 @@ class BackupsTable
 
                 TextColumn::make('status')
                     ->label('الحالة')
-                    ->formatStateUsing(
-                        fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(function (?string $state, Backup $record): string {
+                        if (
+                            $state === 'completed'
+                            && (
+                                ! filled($record->file_path)
+                                || ! Storage::disk(
+                                    config('backup.backup.destination.disks.0', 'local')
+                                )->exists($record->file_path)
+                            )
+                        ) {
+                            return 'ملف النسخة غير موجود';
+                        }
+
+                        return match ($state) {
                             'pending' => 'قيد التنفيذ',
                             'completed' => 'مكتملة',
                             'failed' => 'فشلت',
                             default => $state ?? 'غير محدد',
-                        }
-                    )
+                        };
+                    })
                     ->sortable(),
 
                 TextColumn::make('file_size')
