@@ -95,9 +95,11 @@ class BackupsTable
 
                 TextColumn::make('createdBy.full_name')
                     ->label('أنشأها')
+                    ->state(fn (Backup $record): string => $record->type === 'automatic'
+                        ? 'النظام'
+                        : ($record->createdBy?->full_name ?? 'غير محدد'))
                     ->searchable()
-                    ->sortable()
-                    ->placeholder('غير محدد'),
+                    ->sortable(),
 
                 TextColumn::make('completed_at')
                     ->label('تاريخ الإكمال')
@@ -259,41 +261,6 @@ class BackupsTable
                                 ->send();
                         }
                     }),
-
-                Action::make('delete')
-                    ->label('حذف')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->visible(
-                        fn (): bool =>
-                            auth()->user()?->can('backups.delete') ?? false
-                    )
-                    ->requiresConfirmation()
-                    ->modalHeading('حذف النسخة الاحتياطية')
-                    ->modalDescription(
-                        'هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ سيتم حذف ملف النسخة وسجلها من النظام.'
-                    )
-                    ->modalSubmitActionLabel('نعم، حذف')
-                    ->modalCancelActionLabel('إلغاء')
-                    ->action(function (Backup $record): void {
-                        abort_unless(
-                            auth()->user()?->can('backups.delete'),
-                            403
-                        );
-
-                        $disk = Storage::disk(
-                            config('backup.backup.destination.disks.0', 'local')
-                        );
-
-                        if (
-                            filled($record->file_path)
-                            && $disk->exists($record->file_path)
-                        ) {
-                            $disk->delete($record->file_path);
-                        }
-
-                        $record->delete();
-                    }),
             ])
             ->recordActionsColumnLabel('العمليات')
             ->toolbarActions([
@@ -333,6 +300,11 @@ class BackupsTable
 
                                 $record->delete();
                             }
+
+                            Notification::make()
+                                ->title('تم حذف النسخ الاحتياطية المحددة بنجاح')
+                                ->success()
+                                ->send();
                         }),
                 ])
                     ->label('إجراءات جماعية'),

@@ -110,7 +110,9 @@ class BackupInfolist
                             ->schema([
                                 TextEntry::make('createdBy.full_name')
                                     ->label('أنشأ النسخة')
-                                    ->placeholder('غير محدد'),
+                                    ->state(fn (Backup $record): string => $record->type === 'automatic'
+                                        ? 'النظام'
+                                        : ($record->createdBy?->full_name ?? 'غير محدد')),
 
                                 TextEntry::make('created_at')
                                     ->label('تاريخ الإنشاء')
