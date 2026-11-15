@@ -234,7 +234,7 @@ class UserForm
                             ->label('الصورة الشخصية')
                             ->placeholder('اختر صورة شخصية')
                             ->image()
-                            ->disk('local')
+                            ->disk('public')
                             ->directory('users/profile-photos')
                             ->imageEditor()
                             ->imageEditorAspectRatios([

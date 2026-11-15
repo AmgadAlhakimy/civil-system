@@ -41,6 +41,10 @@ class DeathCertificateSeeder extends Seeder
                 ][$index % 5],
 
                 'place_of_death' => 'صنعاء',
+                'witness_1_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_1_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_2_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_2_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
                 'issue_date' => null,
                 'status' => 'pending',
                 'approved_by' => null,

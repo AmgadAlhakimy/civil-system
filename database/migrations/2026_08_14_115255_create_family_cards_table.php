@@ -14,6 +14,11 @@ return new class extends Migration
             $table->uuid('head_id');
             $table->uuid('branch_id');
 
+            $table->string('witness_1_front')->nullable();
+            $table->string('witness_1_back')->nullable();
+            $table->string('witness_2_front')->nullable();
+            $table->string('witness_2_back')->nullable();
+
             $table->string('card_number', 11)->unique();
 
             $table->enum('status', [

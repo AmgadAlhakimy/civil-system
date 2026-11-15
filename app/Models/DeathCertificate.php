@@ -19,6 +19,10 @@ class DeathCertificate extends Model
 
     protected $fillable = [
         'deceased_id',
+        'witness_1_front',
+        'witness_1_back',
+        'witness_2_front',
+        'witness_2_back',
         'death_date',
         'cause_of_death',
         'place_of_death',

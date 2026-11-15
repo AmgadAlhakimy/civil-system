@@ -216,8 +216,9 @@ class AppointmentsTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->visible(
-                            fn (): bool =>
-                                auth()->user()?->can('appointments.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->requiresConfirmation()
                         ->modalHeading('حذف المواعيد المحددة')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeathCertificates\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -143,7 +144,8 @@ class DeathCertificatesTable
                         'cancelled' => 'ملغاة',
                     ]),
 
-                TrashedFilter::make()
+
+                TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
 
             ])
@@ -175,8 +177,9 @@ class DeathCertificatesTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->visible(
-                            fn (): bool =>
-                                auth()->user()?->can('death_certificates.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->requiresConfirmation()
                         ->modalHeading('حذف شهادات الوفاة المحددة')

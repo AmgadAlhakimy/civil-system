@@ -71,6 +71,38 @@ Route::middleware(['auth'])->group(function () {
     })
         ->where('path', '.*')
         ->name('citizens.face');
+
+    Route::get('/identity-cards/witnesses/{filename}', function (string $filename) {
+        abort_unless(
+            auth()->user()->can('identity_cards.view'),
+            403
+        );
+
+        abort_unless(
+            $filename === basename($filename)
+            && preg_match('/\A[a-zA-Z0-9._-]+\.(jpg|jpeg|png)\z/i', $filename),
+            404
+        );
+
+        $path = 'identity-cards/witnesses/' . $filename;
+
+        abort_unless(
+            Storage::disk('private')->exists($path),
+            404
+        );
+
+        return response()->file(
+            Storage::disk('private')->path($path)
+        );
+    })->name('identity-cards.witness-image');
+
+    Route::get('/test-auth', function () {
+        return response()->json([
+            'authenticated' => auth()->check(),
+            'guard' => auth()->getDefaultDriver(),
+            'user_id' => auth()->id(),
+        ]);
+    });
 });
 
 Route::get(
@@ -78,4 +110,4 @@ Route::get(
     [PassportVerificationController::class, 'show']
 )->name('passports.verify');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

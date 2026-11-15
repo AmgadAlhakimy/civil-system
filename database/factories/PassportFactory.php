@@ -17,6 +17,10 @@ class PassportFactory extends Factory
             'passport_number' => fake()->unique()->numerify('########'),
             'issuing_authority_ar' => 'مصلحة الهجرة والجوازات',
             'issuing_authority_en' => 'Immigration and Passport Authority',
+            'witness_1_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+            'witness_1_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+            'witness_2_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+            'witness_2_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
             'issue_date' => null,
             'expiry_date' => null,
             'type' => fake()->randomElement([

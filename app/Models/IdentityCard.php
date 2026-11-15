@@ -22,6 +22,10 @@ class IdentityCard extends Model
     protected $fillable = [
         'citizen_id',
         'national_id',
+        'witness_1_front',
+        'witness_1_back',
+        'witness_2_front',
+        'witness_2_back',
         'branch_id',
         'issue_date',
         'expiry_date',

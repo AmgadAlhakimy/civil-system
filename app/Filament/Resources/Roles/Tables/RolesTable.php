@@ -57,8 +57,9 @@ class RolesTable
                         ->label('حذف المحدد')
                         ->requiresConfirmation()
                         ->visible(
-                            fn (): bool =>
-                                auth()->user()?->can('roles.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->before(function (): void {
                             abort_unless(

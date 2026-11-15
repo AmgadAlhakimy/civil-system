@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FamilyCards\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -165,7 +166,9 @@ class FamilyCardsTable
                         'damaged' => 'تالفة',
                     ]),
 
-                TrashedFilter::make(),
+
+                TwoOptionTrashedFilter::make()
+                    ->label('سلة المحذوفات'),
             ])
             ->recordActions([
                 ViewAction::make()
@@ -191,7 +194,9 @@ class FamilyCardsTable
                         ->modalDescription('هل أنت متأكد من حذف البطاقات العائلية المحددة؟')
                         ->modalSubmitActionLabel('نعم، احذف')
                         ->visible(
-                            fn (): bool => auth()->user()?->can('family_cards.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         ),
 
                     RestoreBulkAction::make()

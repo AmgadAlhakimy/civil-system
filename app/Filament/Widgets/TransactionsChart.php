@@ -6,6 +6,7 @@ use App\Models\BirthCertificate;
 use App\Models\Citizen;
 use App\Models\DeathCertificate;
 use App\Models\FamilyCard;
+use App\Models\IdentityCard;
 use App\Models\Passport;
 use Filament\Widgets\ChartWidget;
 
@@ -22,6 +23,7 @@ class TransactionsChart extends ChartWidget
         $labels = [];
         $citizens = [];
         $passports = [];
+        $identityCards = [];
         $familyCards = [];
         $birthCertificates = [];
         $deathCertificates = [];
@@ -34,6 +36,8 @@ class TransactionsChart extends ChartWidget
             $citizens[] = Citizen::whereDate('created_at', $date)->count();
 
             $passports[] = Passport::whereDate('created_at', $date)->count();
+
+            $identityCards[] = IdentityCard::whereDate('created_at', $date)->count();
 
             $familyCards[] = FamilyCard::whereDate('created_at', $date)->count();
 
@@ -64,6 +68,19 @@ class TransactionsChart extends ChartWidget
                     'borderColor' => '#D97706',
                     'backgroundColor' => '#D97706',
                     'pointBackgroundColor' => '#D97706',
+                    'pointBorderColor' => '#FFFFFF',
+                    'pointBorderWidth' => 2,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'borderWidth' => 3,
+                ],
+                [
+                    'label' => 'البطاقات الشخصية',
+                    'data' => $identityCards,
+                    'tension' => 0.4,
+                    'borderColor' => '#0891B2',
+                    'backgroundColor' => '#0891B2',
+                    'pointBackgroundColor' => '#0891B2',
                     'pointBorderColor' => '#FFFFFF',
                     'pointBorderWidth' => 2,
                     'pointRadius' => 4,

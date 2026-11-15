@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ServiceFees\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -116,7 +117,7 @@ class ServiceFeesTable
                     ->falseLabel('الخدمات المعطّلة')
                     ->native(false),
 
-                TrashedFilter::make()
+                TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
             ])
             ->recordActions([
@@ -145,9 +146,9 @@ class ServiceFeesTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->visible(
-                            fn (): bool => auth()->user()?->can(
-                                'service_fees.delete'
-                            ) ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->before(function (): void {
                             abort_unless(

@@ -13,6 +13,11 @@ return new class extends Migration
 
             $table->uuid('deceased_id');
 
+            $table->string('witness_1_front')->nullable();
+            $table->string('witness_1_back')->nullable();
+            $table->string('witness_2_front')->nullable();
+            $table->string('witness_2_back')->nullable();
+
             $table->date('death_date');
             $table->string('cause_of_death', 200);
             $table->string('place_of_death', 100);

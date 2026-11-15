@@ -15,6 +15,11 @@ return new class extends Migration
 
             $table->string('national_id', 11)->unique();
 
+            $table->string('witness_1_front')->nullable();
+            $table->string('witness_1_back')->nullable();
+            $table->string('witness_2_front')->nullable();
+            $table->string('witness_2_back')->nullable();
+
             $table->enum('status', [
                 'pending',
                 'rejected',

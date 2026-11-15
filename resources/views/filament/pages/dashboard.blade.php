@@ -4,28 +4,35 @@
 
 
         <section class="civil-dashboard-stats">
-
-            <div class="civil-stat-card">
-                <div class="civil-stat-info">
-                    <span>إجمالي المواطنين</span>
-                    <strong>{{ number_format(\App\Models\Citizen::count()) }}</strong>
-                    <small>إجمالي السجلات المسجلة</small>
+            <div class="civil-bottom-card">
+                <div class="civil-bottom-info">
+                    <span>المعاملات قيد الانتظار</span>
+                    <strong>
+                        {{ number_format(
+                            \App\Models\Citizen::where('verification_status', 'pending')->count()
+                            + \App\Models\Passport::where('status', 'pending')->count()
+                            + \App\Models\IdentityCard::where('status', 'pending')->count()
+                            + \App\Models\FamilyCard::where('status', 'pending')->count()
+                            + \App\Models\BirthCertificate::where('status', 'pending')->count()
+                            + \App\Models\DeathCertificate::where('status', 'pending')->count()
+                        ) }}
+                    </strong>
+                    <small>معاملة قيد الانتظار</small>
                 </div>
 
-                <div class="civil-stat-icon blue">
-                    <x-heroicon-o-users />
+                <div class="civil-stat-icon orange">
+                    <x-heroicon-o-clock />
                 </div>
             </div>
-
             <div class="civil-stat-card">
                 <div class="civil-stat-info">
-                    <span>المواطنون النشطون</span>
-                    <strong>{{ number_format(\App\Models\Citizen::where('is_active', true)->count()) }}</strong>
-                    <small>سجلات نشطة</small>
+                    <span>الجوازات</span>
+                    <strong>{{ number_format(\App\Models\Passport::count()) }}</strong>
+                    <small>جوازات مسجلة</small>
                 </div>
 
-                <div class="civil-stat-icon green">
-                    <x-heroicon-o-user-group />
+                <div class="civil-stat-icon purple">
+                    <x-heroicon-o-document-text />
                 </div>
             </div>
 
@@ -43,13 +50,13 @@
 
             <div class="civil-stat-card">
                 <div class="civil-stat-info">
-                    <span>الجوازات</span>
-                    <strong>{{ number_format(\App\Models\Passport::count()) }}</strong>
-                    <small>جوازات مسجلة</small>
+                    <span>البطاقات العائلية</span>
+                    <strong>{{ number_format(\App\Models\FamilyCard::count()) }}</strong>
+                    <small>شهادات مسجلة</small>
                 </div>
 
-                <div class="civil-stat-icon purple">
-                    <x-heroicon-o-document-text />
+                <div class="civil-stat-icon green">
+                    <x-heroicon-o-user-group />
                 </div>
             </div>
 
@@ -271,6 +278,17 @@
         </section>
 
         <section class="civil-dashboard-bottom">
+            <div class="civil-stat-card">
+                <div class="civil-stat-info">
+                    <span>إجمالي المواطنين</span>
+                    <strong>{{ number_format(\App\Models\Citizen::count()) }}</strong>
+                    <small>إجمالي السجلات المسجلة</small>
+                </div>
+
+                <div class="civil-stat-icon blue">
+                    <x-heroicon-o-users />
+                </div>
+            </div>
 
             <div class="civil-bottom-card">
                 <div class="civil-bottom-info">
@@ -282,21 +300,11 @@
                     <x-heroicon-o-building-office-2 />
                 </div>
             </div>
-            <div class="civil-bottom-card">
-                <div class="civil-bottom-info">
-                    <span>الفروع النشطة</span>
-                    <strong>{{ number_format(\App\Models\Branch::where('is_active', true)->count()) }}</strong>
-                </div>
-
-                <div class="civil-stat-icon green">
-                    <x-heroicon-o-building-office-2 />
-                </div>
-            </div>
 
             <div class="civil-bottom-card">
                 <div class="civil-bottom-info">
                     <span>الموظفون</span>
-                    <strong>{{ number_format(\App\Models\User::count()) }}</strong>
+                    <strong>{{ number_format(\App\Models\User::where('account_type', 'employee')->count()) }}</strong>
                 </div>
 
                 <div class="civil-stat-icon purple">
@@ -306,16 +314,14 @@
 
             <div class="civil-bottom-card">
                 <div class="civil-bottom-info">
-                    <span>التاريخ</span>
-                    <strong>{{ now()->translatedFormat('d F Y') }}</strong>
-                    <small>{{ now()->format('H:i') }}</small>
+                    <span>مستخدمو الجهات الخاصة</span>
+                    <strong>{{ number_format(\App\Models\User::where('account_type', 'external')->count()) }}</strong>
                 </div>
 
                 <div class="civil-stat-icon orange">
-                    <x-heroicon-o-clock />
+                    <x-heroicon-o-building-office />
                 </div>
             </div>
-
         </section>
 
     </div>

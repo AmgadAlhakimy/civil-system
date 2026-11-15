@@ -6,10 +6,8 @@ use App\Filament\Resources\Backups\BackupResource;
 use App\Services\BackupRestoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -72,45 +70,12 @@ class ListBackups extends ListRecords
                             'application/zip',
                             'application/x-zip-compressed',
                         ])
-                        ->maxSize(512000)
                         ->required()
                         ->live(),
-
-                    Select::make('scope')
-                        ->label('نطاق الاستعادة')
-                        ->options(function (Get $get): array {
-                            $archivePath = $get('archive');
-
-                            if (! is_string($archivePath) || $archivePath === '') {
-                                return [];
-                            }
-
-                            $disk = Storage::disk('local');
-
-                            if (! $disk->exists($archivePath)) {
-                                return [];
-                            }
-
-                            try {
-                                $inspection = app(BackupRestoreService::class)
-                                    ->inspectArchive($disk->path($archivePath));
-
-                                return $inspection['scopes'] ?? [];
-                            } catch (Throwable) {
-                                return [];
-                            }
-                        })
-                        ->required()
-                        ->disabled(
-                            fn (Get $get): bool => blank($get('archive'))
-                        )
-                        ->helperText(
-                            'يحدد النظام خيارات الاستعادة تلقائيًا حسب محتويات النسخة الاحتياطية.'
-                        ),
                 ])
                 ->modalHeading('استعادة نسخة احتياطية خارجية')
                 ->modalDescription(
-                    'ارفع ملف النسخة الاحتياطية. سيفحص النظام محتوياته ويعرض نطاقات الاستعادة المتاحة. ستُنشأ نسخة وقائية قبل تنفيذ الاستعادة.'
+                    'ارفع ملف النسخة الاحتياطية. سيحدد النظام نطاق الاستعادة تلقائيًا حسب محتويات الملف، وستُنشأ نسخة وقائية قبل تنفيذ الاستعادة.'
                 )
                 ->modalSubmitActionLabel('بدء الاستعادة')
                 ->modalCancelActionLabel('إلغاء')
@@ -149,15 +114,19 @@ class ListBackups extends ListRecords
                             $inspection['scopes'] ?? []
                         );
 
-                        if (! in_array($data['scope'] ?? null, $availableScopes, true)) {
+                        if (in_array('full', $availableScopes, true)) {
+                            $scope = 'full';
+                        } elseif (in_array('database', $availableScopes, true)) {
+                            $scope = 'database';
+                        } else {
                             throw new \RuntimeException(
-                                'نطاق الاستعادة المختار غير متاح في محتويات النسخة الاحتياطية.'
+                                'لم يتم العثور على نطاق استعادة صالح في النسخة الاحتياطية.'
                             );
                         }
 
                         $service->restoreExternal(
                             $absolutePath,
-                            $data['scope']
+                            $scope
                         );
 
                         Notification::make()

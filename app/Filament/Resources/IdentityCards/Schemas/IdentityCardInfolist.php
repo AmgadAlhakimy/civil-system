@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\IdentityCards\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -90,6 +91,59 @@ class IdentityCardInfolist
                                 TextEntry::make('print_count')
                                     ->label('عدد مرات الطباعة')
                                     ->numeric(),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('صور بطاقات الشاهدين')
+                    ->description('صور الوجه الأمامي والخلفي لبطاقتي الشاهدين')
+                    ->icon('heroicon-o-camera')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                ImageEntry::make('witness_1_front')
+                                    ->label('الشاهد الأول - الوجه الأمامي')
+                                    ->getStateUsing(
+                                        fn ($record) => filled($record->witness_1_front)
+                                            ? route('identity-cards.witness-image', [
+                                                'filename' => basename($record->witness_1_front),
+                                            ])
+                                            : null
+                                    )
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_1_back')
+                                    ->label('الشاهد الأول - الوجه الخلفي')
+                                    ->getStateUsing(
+                                        fn ($record) => filled($record->witness_1_back)
+                                            ? route('identity-cards.witness-image', [
+                                                'filename' => basename($record->witness_1_back),
+                                            ])
+                                            : null
+                                    )
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_front')
+                                    ->label('الشاهد الثاني - الوجه الأمامي')
+                                    ->getStateUsing(
+                                        fn ($record) => filled($record->witness_2_front)
+                                            ? route('identity-cards.witness-image', [
+                                                'filename' => basename($record->witness_2_front),
+                                            ])
+                                            : null
+                                    )
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_back')
+                                    ->label('الشاهد الثاني - الوجه الخلفي')
+                                    ->getStateUsing(
+                                        fn ($record) => filled($record->witness_2_back)
+                                            ? route('identity-cards.witness-image', [
+                                                'filename' => basename($record->witness_2_back),
+                                            ])
+                                            : null
+                                    )
+                                    ->imageHeight(180),
                             ]),
                     ])
                     ->columnSpanFull(),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BirthCertificates\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -199,7 +200,8 @@ class BirthCertificatesTable
                         'cancelled' => 'ملغاة',
                     ]),
 
-                TrashedFilter::make()
+
+                TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
 
             ])
@@ -229,7 +231,9 @@ class BirthCertificatesTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->visible(
-                            fn (): bool => auth()->user()?->can('birth_certificates.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->requiresConfirmation()
                         ->modalHeading('حذف شهادات الميلاد المحددة')

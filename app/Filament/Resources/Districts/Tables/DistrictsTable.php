@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Districts\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use App\Models\District;
 use App\Models\Governorate;
 use Filament\Actions\BulkAction;
@@ -104,8 +105,8 @@ class DistrictsTable
                     ->falseLabel('المعطّلة فقط')
                     ->native(false),
 
-                TrashedFilter::make()
-                    ->label('حالة الحذف'),
+                TwoOptionTrashedFilter::make()
+                    ->label('سلة المحذوفات'),
             ])
             ->recordActions([
                 ViewAction::make()

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
@@ -156,7 +157,8 @@ class UsersTable
                     ->searchable()
                     ->preload(),
 
-                TrashedFilter::make()
+
+                TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
             ])
             ->recordActions([

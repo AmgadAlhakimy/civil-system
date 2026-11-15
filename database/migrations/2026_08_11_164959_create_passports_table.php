@@ -13,6 +13,11 @@ return new class extends Migration
 
             $table->uuid('citizen_id');
 
+            $table->string('witness_1_front')->nullable();
+            $table->string('witness_1_back')->nullable();
+            $table->string('witness_2_front')->nullable();
+            $table->string('witness_2_back')->nullable();
+
             $table->string('passport_number', 8)->unique();
             $table->string('issuing_authority_ar', 100);
             $table->string('issuing_authority_en', 100);

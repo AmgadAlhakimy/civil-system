@@ -17,6 +17,10 @@ class Passport extends Model
     protected $fillable = [
         'citizen_id',
         'passport_number',
+        'witness_1_front',
+        'witness_1_back',
+        'witness_2_front',
+        'witness_2_back',
         'issuing_authority_ar',
         'issuing_authority_en',
         'issue_date',

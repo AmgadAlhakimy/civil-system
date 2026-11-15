@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use App\Models\Governorate;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -123,8 +124,9 @@ class BranchesTable
                     ])
                     ->native(false),
 
-                TrashedFilter::make()
-                    ->label('حالة الحذف'),
+
+                TwoOptionTrashedFilter::make()
+                    ->label('سلة المحذوفات'),
             ])
             ->recordActions([
                 ViewAction::make()

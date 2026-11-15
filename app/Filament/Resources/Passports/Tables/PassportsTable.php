@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Passports\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -10,7 +11,6 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class PassportsTable
@@ -163,7 +163,8 @@ class PassportsTable
                         'damaged' => 'تالف',
                     ]),
 
-                TrashedFilter::make()
+
+                TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
             ])
             ->recordActions([
@@ -188,7 +189,9 @@ class PassportsTable
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
                         ->visible(
-                            fn (): bool => auth()->user()?->can('passports.delete') ?? false
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->requiresConfirmation()
                         ->modalHeading('حذف الجوازات المحددة')

@@ -43,6 +43,10 @@ class IdentityCardSeeder extends Seeder
                 'citizen_id' => $citizen->id,
                 'branch_id' => $branch->id,
                 'national_id' => $nationalId,
+                'witness_1_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_1_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_2_front' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
+                'witness_2_back' => 'citizens/photos/01M6FZTNPPZ4754M6GSDJHD2RB.png',
                 'issue_date' => $issueDate,
                 'expiry_date' => $issueDate->copy()->addYears(10),
                 'status' => fake()->randomElement([

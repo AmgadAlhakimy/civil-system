@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ServiceRequests\Tables;
 
+use App\Filament\Filters\TwoOptionTrashedFilter;
 use App\Models\ServiceRequest;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -163,7 +164,8 @@ class ServiceRequestsTable
                     ])
                     ->native(false),
 
-                TrashedFilter::make()->label('المحذوفة'),
+                TwoOptionTrashedFilter::make()
+                    ->label('سلة المحذوفات'),
             ])
             ->recordActions([
                 ViewAction::make()
@@ -265,8 +267,10 @@ class ServiceRequestsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف')
-                        ->visible(fn (): bool =>
-                            auth()->user()?->can('service_requests.delete') ?? false
+                        ->visible(
+                            fn ($livewire): bool =>
+                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         )
                         ->before(function (): void {
                             abort_unless(
