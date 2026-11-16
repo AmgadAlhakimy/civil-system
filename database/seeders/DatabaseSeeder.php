@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,7 +23,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'admin',
                 'full_name' => 'أمجد عبد الرقيب الحكيمي',
                 'phone' => '777100001',
-                'password' => 'password@123',
+                'password' => Hash::make('password@123'),
                 'must_change_password' => true,
                 'account_type' => 'employee',
                 'branch_id' => Branch::where('code', 'SNA-01')->value('id'),

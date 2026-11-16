@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -19,7 +20,7 @@ class UserSeeder extends Seeder
                 'name' => 'employee01',
                 'full_name' => 'موظف فرع عدن',
                 'phone' => '777100002',
-                'password' => 'password@123',
+                'password' => Hash::make('password@123'),
                 'must_change_password' => true,
                 'account_type' => 'employee',
                 'branch_id' => $aden?->id,
@@ -38,7 +39,7 @@ class UserSeeder extends Seeder
                 'name' => 'employee02',
                 'full_name' => 'موظف فرع تعز',
                 'phone' => '777100003',
-                'password' => 'password@123',
+                'password' => Hash::make('password@123'),
                 'must_change_password' => true,
                 'account_type' => 'employee',
                 'branch_id' => $taiz?->id,

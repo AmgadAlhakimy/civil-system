@@ -6,11 +6,11 @@ use Filament\Pages\Page;
 
 class Dashboard extends Page
 {
-    protected static ?string $title = 'لوحة التحكم';
+    protected static ?string $title = 'لوحة المعلومات';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home';
 
-    protected static ?string $navigationLabel = 'لوحة التحكم';
+    protected static ?string $navigationLabel = 'لوحة المعلومات';
 
     protected static ?string $slug = 'dashboard';
 

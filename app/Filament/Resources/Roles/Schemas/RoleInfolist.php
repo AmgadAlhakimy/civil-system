@@ -13,6 +13,7 @@ class RoleInfolist
     {
         $moduleLabels = [
             'users' => 'المستخدمون',
+            'dashboard' => 'لوحة المعلومات',
             'roles' => 'الأدوار والصلاحيات',
             'branches' => 'الفروع',
             'citizens' => 'المواطنون',
