@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ServiceRequests\Tables;
 
 use App\Filament\Filters\TwoOptionTrashedFilter;
+use App\Models\RequestStatusHistory;
 use App\Models\ServiceRequest;
+use App\Services\Requests\ApproveRequestService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -12,8 +14,8 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -94,11 +96,16 @@ class ServiceRequestsTable
 
                 TextColumn::make('status')
                     ->label('حالة الطلب')
+                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
                         'processing' => 'info',
                         'approved' => 'success',
                         'rejected' => 'danger',
+                        'printing' => 'warning',
+                        'ready' => 'success',
+                        'delivered' => 'gray',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -106,9 +113,26 @@ class ServiceRequestsTable
                         'processing' => 'قيد المراجعة',
                         'approved' => 'مقبول',
                         'rejected' => 'مرفوض',
+                        'printing' => 'قيد الطباعة',
+                        'ready' => 'جاهز للاستلام',
+                        'delivered' => 'تم التسليم',
+                        'cancelled' => 'ملغي',
                         default => $state,
                     })
                     ->sortable(),
+
+                // ✅ عمود جديد — عدد مرات إعادة الإرسال
+                TextColumn::make('resubmission_count')
+                    ->label('إعادة الإرسال')
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state === 0 => 'gray',
+                        $state === 1 => 'info',
+                        $state === 2 => 'warning',
+                        default => 'danger',
+                    })
+                    ->formatStateUsing(fn ($state): string => $state . ' / 3')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('branch.name')
                     ->label('الفرع')
@@ -136,10 +160,14 @@ class ServiceRequestsTable
                 SelectFilter::make('status')
                     ->label('حالة الطلب')
                     ->options([
-                        'pending' => 'قيد الانتظار',
+                        'pending'    => 'قيد الانتظار',
                         'processing' => 'قيد المراجعة',
-                        'approved' => 'مقبول',
-                        'rejected' => 'مرفوض',
+                        'approved'   => 'مقبول',
+                        'rejected'   => 'مرفوض',
+                        'printing'   => 'قيد الطباعة',
+                        'ready'      => 'جاهز للاستلام',
+                        'delivered'  => 'تم التسليم',
+                        'cancelled'  => 'ملغي',
                     ])
                     ->multiple()
                     ->native(false),
@@ -180,59 +208,105 @@ class ServiceRequestsTable
                         auth()->user()?->can('service_requests.update') ?? false
                     ),
 
+                // ─── بدء المراجعة (pending → processing) ───
+                Action::make('startProcessing')
+                    ->label('بدء المراجعة')
+                    ->icon('heroicon-o-play')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('بدء مراجعة الطلب')
+                    ->modalDescription('سيتم نقل الطلب إلى حالة "قيد المراجعة".')
+                    ->visible(fn (ServiceRequest $record): bool =>
+                        $record->status === 'pending'
+                        && (auth()->user()?->can('service_requests.approve') ?? false)
+                    )
+                    ->action(function (ServiceRequest $record): void {
+                        $result = app(ApproveRequestService::class)->updateStatus(
+                            $record,
+                            auth()->user(),
+                            'processing',
+                            'بدء المراجعة',
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->success()
+                                ->title('تم نقل الطلب إلى: قيد المراجعة')
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->danger()
+                                ->title('فشل')
+                                ->body($result['error'] ?? 'خطأ')
+                                ->send();
+                        }
+                    }),
+
+                // ─── اعتماد (pending/processing → approved) ───
                 Action::make('approve')
                     ->label('موافقة')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('الموافقة على الطلب')
-                    ->modalDescription('سيتم اعتماد الطلب وستُنشأ البطاقة/الوثيقة تلقائياً.')
-                    ->modalSubmitActionLabel('نعم، موافقة')
+                    ->modalHeading('اعتماد الطلب')
+                    ->modalDescription('سيتم تخزين البيانات في جدول المواطن وجدول الخدمة.')
+                    ->modalSubmitActionLabel('نعم، اعتماد')
+                    ->form([
+                        Textarea::make('notes')
+                            ->label('ملاحظات (اختياري)')
+                            ->rows(2),
+                    ])
                     ->visible(fn (ServiceRequest $record): bool =>
                         (auth()->user()?->can('service_requests.approve') ?? false)
                         && in_array($record->status, ['pending', 'processing'], true)
                     )
-                    ->action(function (ServiceRequest $record): void {
+                    ->action(function (ServiceRequest $record, array $data): void {
                         abort_unless(
                             auth()->user()?->can('service_requests.approve'),
                             403
                         );
 
-                        abort_unless(
-                            in_array($record->status, ['pending', 'processing'], true),
-                            403
+                        $result = app(ApproveRequestService::class)->approve(
+                            $record,
+                            auth()->user(),
+                            $data['notes'] ?? null,
                         );
 
-                        $record->update([
-                            'status' => 'approved',
-                            'reviewed_by' => auth()->id(),
-                            'reviewed_at' => now(),
-                        ]);
-
-                        if ($record->category === 'id_card') {
-                            $record->createIdentityCard();
+                        if ($result['success']) {
+                            Notification::make()
+                                ->success()
+                                ->title('تم اعتماد الطلب')
+                                ->body('تم تخزين البيانات بنجاح للطلب رقم ' . $record->request_number)
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->danger()
+                                ->title('فشل الاعتماد')
+                                ->body($result['error'] ?? 'خطأ غير معروف')
+                                ->send();
                         }
-
-                        Notification::make()
-                            ->title('تم اعتماد الطلب')
-                            ->body('تم اعتماد الطلب رقم ' . $record->request_number)
-                            ->success()
-                            ->send();
                     }),
 
+                // ─── ✅ رفض (pending/processing → rejected) — مع Toggle ───
                 Action::make('reject')
                     ->label('رفض')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
+                    ->modalHeading('رفض الطلب')
+                    ->modalDescription('أدخل سبب الرفض. إذا كان الرفض بسبب وثائق/بيانات، فعّل خيار السماح بالتعديل.')
+                    ->modalSubmitActionLabel('نعم، رفض')
                     ->form([
                         Textarea::make('rejection_reason')
                             ->label('سبب الرفض')
                             ->required()
+                            ->maxLength(1000)
                             ->rows(3),
+                        Toggle::make('is_resubmittable')
+                            ->label('السماح للمواطن بالتعديل وإعادة الإرسال')
+                            ->helperText('فعّل إذا كان الرفض بسبب وثائق ناقصة أو بيانات خاطئة')
+                            ->default(true),
                     ])
-                    ->modalHeading('رفض الطلب')
-                    ->modalSubmitActionLabel('نعم، رفض')
                     ->visible(fn (ServiceRequest $record): bool =>
                         (auth()->user()?->can('service_requests.reject') ?? false)
                         && in_array($record->status, ['pending', 'processing'], true)
@@ -243,23 +317,143 @@ class ServiceRequestsTable
                             403
                         );
 
-                        abort_unless(
-                            in_array($record->status, ['pending', 'processing'], true),
-                            403
-                        );
+                        $oldStatus = $record->status;
 
+                        // ✅ حفظ الحالة في history
+                        RequestStatusHistory::create([
+                            'service_request_id' => $record->id,
+                            'from_status' => $oldStatus,
+                            'to_status' => 'rejected',
+                            'notes' => $data['rejection_reason'],
+                            'changed_by' => auth()->id(),
+                        ]);
+
+                        // ✅ تحديث الطلب مع is_resubmittable
                         $record->update([
                             'status' => 'rejected',
                             'rejection_reason' => $data['rejection_reason'],
+                            'is_resubmittable' => (bool) ($data['is_resubmittable'] ?? false),
                             'reviewed_by' => auth()->id(),
                             'reviewed_at' => now(),
                         ]);
 
                         Notification::make()
+                            ->success()
                             ->title('تم رفض الطلب')
-                            ->body('الطلب رقم ' . $record->request_number)
-                            ->warning()
+                            ->body(
+                                'الطلب رقم ' . $record->request_number
+                                . (($data['is_resubmittable'] ?? false)
+                                    ? ' — يمكن للمواطن التعديل وإعادة الإرسال'
+                                    : ' — الرفض نهائي')
+                            )
                             ->send();
+                    }),
+
+                // ─── إرسال للطباعة (approved → printing) ───
+                Action::make('sendToPrint')
+                    ->label('إرسال للطباعة')
+                    ->icon('heroicon-o-printer')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('إرسال الطلب للطباعة')
+                    ->modalDescription('سيتم نقل الطلب إلى حالة "قيد الطباعة".')
+                    ->visible(fn (ServiceRequest $record): bool =>
+                        $record->status === 'approved'
+                        && (auth()->user()?->can('service_requests.approve') ?? false)
+                    )
+                    ->action(function (ServiceRequest $record): void {
+                        $result = app(ApproveRequestService::class)->updateStatus(
+                            $record,
+                            auth()->user(),
+                            'printing',
+                            'تم إرسال الطلب للطباعة',
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->success()
+                                ->title('تم نقل الطلب إلى: قيد الطباعة')
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->danger()
+                                ->title('فشل')
+                                ->body($result['error'] ?? 'خطأ')
+                                ->send();
+                        }
+                    }),
+
+                // ─── جاهز للاستلام (printing → ready) ───
+                Action::make('markReady')
+                    ->label('جاهز للاستلام')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('تأكيد جاهزية الطلب')
+                    ->modalDescription('سيتم نقل الطلب إلى حالة "جاهز للاستلام".')
+                    ->visible(fn (ServiceRequest $record): bool =>
+                        $record->status === 'printing'
+                        && (auth()->user()?->can('service_requests.approve') ?? false)
+                    )
+                    ->action(function (ServiceRequest $record): void {
+                        $result = app(ApproveRequestService::class)->updateStatus(
+                            $record,
+                            auth()->user(),
+                            'ready',
+                            'الطلب جاهز للاستلام',
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->success()
+                                ->title('تم نقل الطلب إلى: جاهز للاستلام')
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->danger()
+                                ->title('فشل')
+                                ->body($result['error'] ?? 'خطأ')
+                                ->send();
+                        }
+                    }),
+
+                // ─── تم التسليم (ready → delivered) ───
+                Action::make('markDelivered')
+                    ->label('تم التسليم')
+                    ->icon('heroicon-o-hand-thumb-up')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('تأكيد تسليم الطلب')
+                    ->modalDescription('سيتم نقل الطلب إلى حالة "تم التسليم".')
+                    ->form([
+                        Textarea::make('notes')
+                            ->label('ملاحظات (اختياري)')
+                            ->rows(2),
+                    ])
+                    ->visible(fn (ServiceRequest $record): bool =>
+                        $record->status === 'ready'
+                        && (auth()->user()?->can('service_requests.approve') ?? false)
+                    )
+                    ->action(function (ServiceRequest $record, array $data): void {
+                        $result = app(ApproveRequestService::class)->updateStatus(
+                            $record,
+                            auth()->user(),
+                            'delivered',
+                            $data['notes'] ?? 'تم تسليم الطلب للمواطن',
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->success()
+                                ->title('تم تسليم الطلب بنجاح')
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->danger()
+                                ->title('فشل')
+                                ->body($result['error'] ?? 'خطأ')
+                                ->send();
+                        }
                     }),
             ])
             ->recordActionsColumnLabel('العمليات')

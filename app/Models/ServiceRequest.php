@@ -33,6 +33,9 @@ class ServiceRequest extends Model
         'payment_status',
         'status',
         'rejection_reason',
+        'is_resubmittable',
+        'resubmission_count',
+        'last_resubmitted_at',
         'reviewed_at',
         'data',
         'documents',
@@ -43,6 +46,9 @@ class ServiceRequest extends Model
         'documents' => 'array',
         'amount' => 'decimal:2',
         'reviewed_at' => 'datetime',
+        'is_resubmittable' => 'boolean',
+        'resubmission_count' => 'integer',
+        'last_resubmitted_at' => 'datetime',
     ];
 
     public function getActivitylogOptions(): LogOptions

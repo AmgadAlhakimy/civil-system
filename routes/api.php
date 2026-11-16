@@ -1,6 +1,7 @@
 <?php
-use App\Http\Controllers\Api\OtpController;
+
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\FaceRecognitionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppointmentApiController;
@@ -14,13 +15,12 @@ use App\Http\Controllers\Api\ServiceFeeApiController;
 use App\Http\Controllers\Api\GovernorateApiController;
 use App\Http\Controllers\Api\DistrictApiController;
 use App\Http\Controllers\Api\ServiceRequestApiController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
-
-
 
 Route::prefix('otp')->group(function () {
     Route::post('/send', [OtpController::class, 'send'])
@@ -38,11 +38,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+    ->middleware('throttle:5,1');
+Route::post('/verify-reset-otp', [AuthController::class, 'verifyResetOtp'])
+    ->middleware('throttle:10,1');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->middleware('throttle:5,1');
+
 // ─── Service Fees (Public) ───
 Route::get('/service-fees', [ServiceFeeApiController::class, 'index']);
 Route::get('/service-fees/category/{category}', [ServiceFeeApiController::class, 'byCategory']);
 Route::get('/service-fees/{serviceKey}', [ServiceFeeApiController::class, 'show']);
-
 
 // ─── Locations (Public) ───
 Route::get('/governorates', [GovernorateApiController::class, 'index']);
@@ -57,12 +63,11 @@ Route::get('/districts/{id}', [DistrictApiController::class, 'show']);
 // ═══════════════════════════════════════════════════════════
 Route::middleware('auth:sanctum')->group(function () {
 
-
-// ─── Face Recognition ───
-Route::middleware('can:use-face-recognition')->group(function () {
-    Route::post('/face/identify', [FaceRecognitionController::class, 'identify'])
-        ->middleware('throttle:20,1');
-});
+    // ─── Face Recognition ───
+    Route::middleware('can:use-face-recognition')->group(function () {
+        Route::post('/face/identify', [FaceRecognitionController::class, 'identify'])
+            ->middleware('throttle:20,1');
+    });
 
     // ─── Auth ───
     Route::get('/user', [AuthController::class, 'user']);
@@ -71,11 +76,13 @@ Route::middleware('can:use-face-recognition')->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/upload', [AuthController::class, 'uploadDocument']);
 
-Route::get('/service-requests/by-category/{category}', [ServiceRequestApiController::class, 'byCategory']);
-        // ─── Service Requests ───
+    // ─── Service Requests ───
+    Route::get('/service-requests/by-category/{category}', [ServiceRequestApiController::class, 'byCategory']);
     Route::get('/service-requests', [ServiceRequestApiController::class, 'index']);
     Route::post('/service-requests', [ServiceRequestApiController::class, 'store']);
     Route::get('/service-requests/{id}', [ServiceRequestApiController::class, 'show']);
+    Route::get('/service-requests/{id}/history', [ServiceRequestApiController::class, 'history']);
+    Route::post('/service-requests/{id}/resubmit', [ServiceRequestApiController::class, 'resubmit']);
     Route::post('/service-requests/{id}/cancel', [ServiceRequestApiController::class, 'cancel']);
 
     // ─── Appointments ───
@@ -109,6 +116,7 @@ Route::get('/service-requests/by-category/{category}', [ServiceRequestApiControl
     Route::get('/family-cards', [FamilyCardApiController::class, 'index']);
     Route::post('/family-cards', [FamilyCardApiController::class, 'store']);
     Route::get('/family-cards/{id}', [FamilyCardApiController::class, 'show']);
+
     // ─── Notifications ───
     Route::get('/notifications', [NotificationApiController::class, 'index']);
     Route::get('/notifications/unread-count', [NotificationApiController::class, 'unreadCount']);

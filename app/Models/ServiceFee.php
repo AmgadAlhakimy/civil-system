@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class ServiceFee extends Model
 {
@@ -22,9 +23,11 @@ class ServiceFee extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'service_key',   // ✅ أُضيف
         'service_name',
         'category',
         'amount',
+        'currency',      // ✅ أُضيف (لأنه NOT NULL مع default YER — لكن يُفضّل تمريره)
         'is_active',
         'notes',
         'updated_by',
@@ -39,6 +42,57 @@ class ServiceFee extends Model
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ✅ توليد service_key تلقائياً إذا لم يُمرَّر
+    // ═══════════════════════════════════════════════════════════
+    protected static function booted(): void
+    {
+        static::creating(function (self $fee): void {
+            if (empty($fee->service_key)) {
+                $fee->service_key = static::generateUniqueKey(
+                    $fee->service_name ?? 'service'
+                );
+            }
+        });
+
+        static::updating(function (self $fee): void {
+            // إذا غيّر المستخدم الاسم ولم يكن هناك service_key صريح، لا نغيّره
+            // (نحافظ على الاستقرار عبر التحديثات)
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ✅ توليد مفتاح فريد من اسم الخدمة
+    // ═══════════════════════════════════════════════════════════
+    public static function generateUniqueKey(string $serviceName): string
+    {
+        // slug من الاسم؛ إن كان عربياً بالكامل → fallback
+        $base = Str::slug($serviceName);
+        if (empty($base)) {
+            $base = 'service';
+        }
+
+        // اقتطاع + ضمان الطول
+        $base = Str::limit($base, 200, '');
+
+        $key = $base;
+        $counter = 1;
+
+        // ضمان الفرادة (UNIQUE)
+        while (static::withTrashed()->where('service_key', $key)->exists()) {
+            $key = $base . '_' . $counter;
+            $counter++;
+
+            // حماية من الحلقة اللانهائية
+            if ($counter > 1000) {
+                $key = $base . '_' . Str::random(6);
+                break;
+            }
+        }
+
+        return $key;
     }
 
     public function updatedBy(): BelongsTo

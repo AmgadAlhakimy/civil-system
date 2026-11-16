@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
+use App\Models\RequestStatusHistory;
 use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+
 class ServiceRequestApiController extends Controller
 {
     // ═══════════════════════════════════════════════════════════
@@ -16,12 +16,10 @@ class ServiceRequestApiController extends Controller
         $query = ServiceRequest::where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc');
 
-        // فلترة اختيارية حسب الحالة
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // فلترة اختيارية حسب الفئة
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
@@ -68,10 +66,8 @@ class ServiceRequestApiController extends Controller
         }
 
         try {
-            // ✅ 1. توليد رقم طلب فريد
             $requestNumber = ServiceRequest::generateRequestNumber('REQ');
 
-            // ✅ 2. إنشاء الطلب
             $serviceRequest = ServiceRequest::create([
                 'user_id' => $request->user()->id,
                 'branch_id' => $request->branch_id,
@@ -121,6 +117,159 @@ class ServiceRequestApiController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $this->formatRequest($serviceRequest),
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // تاريخ حالات الطلب (Timeline)
+    // ═══════════════════════════════════════════════════════════
+    public function history(Request $request, $id)
+    {
+        $serviceRequest = ServiceRequest::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$serviceRequest) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'الطلب غير موجود',
+            ], 404);
+        }
+
+        $history = RequestStatusHistory::where('service_request_id', $id)
+            ->with('changedBy')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn ($h) => [
+                'from_status' => $h->from_status,
+                'from_label'  => $h->from_status ? $this->statusLabel($h->from_status) : null,
+                'to_status'   => $h->to_status,
+                'to_label'    => $this->statusLabel($h->to_status),
+                'notes'       => $h->notes,
+                'changed_by'  => $h->changedBy?->full_name ?? $h->changedBy?->name,
+                'created_at'  => $h->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'request' => [
+                    'request_number'       => $serviceRequest->request_number,
+                    'service_name'         => $serviceRequest->service_name,
+                    'current_status'       => $serviceRequest->status,
+                    'current_status_label' => $this->statusLabel($serviceRequest->status),
+                ],
+                'timeline' => $history,
+            ],
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // إعادة إرسال طلب مرفوض بعد التعديل
+    // ═══════════════════════════════════════════════════════════
+    public function resubmit(Request $request, $id)
+    {
+        $serviceRequest = ServiceRequest::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$serviceRequest) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'الطلب غير موجود',
+            ], 404);
+        }
+
+        if ($serviceRequest->status !== 'rejected') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'لا يمكن تعديل طلب غير مرفوض',
+            ], 400);
+        }
+
+        if (!$serviceRequest->is_resubmittable) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'هذا الرفض نهائي ولا يمكن التعديل عليه',
+            ], 400);
+        }
+
+        if ($serviceRequest->resubmission_count >= 3) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'تجاوزت الحد الأقصى لإعادة الإرسال (3 مرات)',
+            ], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'data' => 'nullable|array',
+            'documents' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        RequestStatusHistory::create([
+            'service_request_id' => $serviceRequest->id,
+            'from_status' => 'rejected',
+            'to_status' => 'pending',
+            'notes' => 'أُعيد الإرسال بعد تعديل البيانات/الوثائق',
+            'changed_by' => $request->user()->id,
+        ]);
+
+        $serviceRequest->update([
+            'status' => 'pending',
+            'rejection_reason' => null,
+            'is_resubmittable' => false,
+            'data' => $request->data ?? $serviceRequest->data,
+            'documents' => $request->documents ?? $serviceRequest->documents,
+            'resubmission_count' => $serviceRequest->resubmission_count + 1,
+            'last_resubmitted_at' => now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم إعادة إرسال الطلب — سيراجعه الموظف قريباً',
+            'data' => $this->formatRequest($serviceRequest->fresh()),
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // رفض الطلب (من قبل الموظف — API)
+    // ═══════════════════════════════════════════════════════════
+    public function rejectByEmployee(Request $request, $id)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+            'is_resubmittable' => 'required|boolean',
+        ]);
+
+        $serviceRequest = ServiceRequest::findOrFail($id);
+        $oldStatus = $serviceRequest->status;
+
+        RequestStatusHistory::create([
+            'service_request_id' => $serviceRequest->id,
+            'from_status' => $oldStatus,
+            'to_status' => 'rejected',
+            'notes' => $request->rejection_reason,
+            'changed_by' => $request->user()->id,
+        ]);
+
+        $serviceRequest->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+            'is_resubmittable' => $request->is_resubmittable,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم رفض الطلب',
+            'data' => $this->formatRequest($serviceRequest->fresh()),
         ]);
     }
 
@@ -181,6 +330,12 @@ class ServiceRequestApiController extends Controller
             'status' => $req->status,
             'status_label' => $req->status_label,
             'rejection_reason' => $req->rejection_reason,
+            'is_resubmittable' => (bool) $req->is_resubmittable,
+            'resubmission_count' => (int) $req->resubmission_count,
+            'last_resubmitted_at' => $req->last_resubmitted_at?->toIso8601String(),
+            'can_resubmit' => $req->status === 'rejected'
+                && $req->is_resubmittable
+                && $req->resubmission_count < 3,
             'branch_id' => $req->branch_id,
             'branch_name' => $req->branch?->name,
             'data' => $req->data,
@@ -191,22 +346,42 @@ class ServiceRequestApiController extends Controller
         ];
     }
 
-
-    public function byCategory(Request $request, string $category)
-{
-    $allowed = ['id_card', 'certificate', 'passport', 'family_card', 'appointment'];
-
-    if (!in_array($category, $allowed)) {
-        return response()->json(['message' => 'فئة غير معروفة'], 404);
+    // ═══════════════════════════════════════════════════════════
+    // التسمية العربية للحالة
+    // ═══════════════════════════════════════════════════════════
+    private function statusLabel(?string $status): string
+    {
+        return match ($status) {
+            'pending'      => 'قيد الانتظار',
+            'processing'   => 'قيد المعالجة',
+            'approved'     => 'موافق عليه',
+            'rejected'     => 'مرفوض',
+            'completed'    => 'مكتمل',
+            'cancelled'    => 'ملغي',
+            'on_hold'      => 'معلّق',
+            'under_review' => 'قيد المراجعة',
+            default        => $status ?? 'غير محدد',
+        };
     }
 
-    $requests = \App\Models\ServiceRequest::where('user_id', $request->user()->id)
-        ->where('category', $category)
-        ->latest()
-        ->get();
+    // ═══════════════════════════════════════════════════════════
+    // جلب طلبات حسب الفئة
+    // ═══════════════════════════════════════════════════════════
+    public function byCategory(Request $request, string $category)
+    {
+        $allowed = ['id_card', 'certificate', 'passport', 'family_card', 'appointment'];
 
-    return response()->json([
-        'data' => $requests,
-    ]);
-}
+        if (!in_array($category, $allowed)) {
+            return response()->json(['message' => 'فئة غير معروفة'], 404);
+        }
+
+        $requests = ServiceRequest::where('user_id', $request->user()->id)
+            ->where('category', $category)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'data' => $requests,
+        ]);
+    }
 }

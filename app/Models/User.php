@@ -45,6 +45,8 @@ class User extends Authenticatable implements FilamentUser
         'last_login_at',
         'last_login_ip',
         'profile_photo',
+        'password_reset_token',
+        'password_reset_expires_at',
     ];
 
     protected $hidden = [
@@ -73,7 +75,7 @@ class User extends Authenticatable implements FilamentUser
             'is_verified' => 'boolean',
             'biometric_enabled' => 'boolean',
             'notifications_enabled' => 'boolean',
-            'password' => 'hashed',
+           // 'password' => 'hashed',
         ];
     }
 

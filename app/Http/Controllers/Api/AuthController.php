@@ -268,21 +268,16 @@ class AuthController extends Controller
             ], 401);
         }
 
+        // ✅ يسمح لـ query_officer بالدخول
+        $isQueryOfficer = $user->hasRole('query_officer');
 
-
-// ✅ الجديد — يسمح لـ query_officer بالدخول
-$isQueryOfficer = $user->hasRole('query_officer');
-
-if ($user->account_type === 'employee' && ! $isQueryOfficer) {
-    return response()->json([
-        'status' => 'error',
-        'message' => 'هذا الحساب مخصص للنظام الإداري. '
-                   . 'يرجى استخدام بوابة النظام.',
-    ], 403);
-}
-
-
-
+        if ($user->account_type === 'employee' && ! $isQueryOfficer) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'هذا الحساب مخصص للنظام الإداري. '
+                           . 'يرجى استخدام بوابة النظام.',
+            ], 403);
+        }
 
         if (!$user->is_verified) {
             $otpCode = str_pad(
@@ -331,26 +326,19 @@ if ($user->account_type === 'employee' && ! $isQueryOfficer) {
 
         $token = $user->createToken('mobile-app')->plainTextToken;
 
-
-// ✅ الجديد — يُرجع role + redirect
-return response()->json([
-    'status' => 'success',
-    'message' => 'تم تسجيل الدخول بنجاح.',
-    'data' => [
-        'user' => $user,
-        'token' => $token,
-        'role' => $isQueryOfficer ? 'query_officer' : 'citizen',
-        'redirect' => $isQueryOfficer ? 'query_only' : 'main_app',
-        'permissions' => [
-            'use_face_recognition' => $user->can('use-face-recognition'),
-        ],
-    ],
-]);
-
-
-
-
-
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم تسجيل الدخول بنجاح.',
+            'data' => [
+                'user' => $user,
+                'token' => $token,
+                'role' => $isQueryOfficer ? 'query_officer' : 'citizen',
+                'redirect' => $isQueryOfficer ? 'query_only' : 'main_app',
+                'permissions' => [
+                    'use_face_recognition' => $user->can('use-face-recognition'),
+                ],
+            ],
+        ]);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -451,6 +439,177 @@ return response()->json([
         return response()->json([
             'status' => 'success',
             'message' => 'تم تغيير كلمة المرور بنجاح. يرجى إعادة تسجيل الدخول.',
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // نسيت كلمة المرور — الخطوة 1: طلب OTP
+    // ═══════════════════════════════════════════════════════════
+    public function forgotPassword(Request $request, SmsGatewayService $sms)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^7[0-9]{8}$/',
+                'exists:users,phone',
+            ],
+        ], [
+            'phone.required' => 'رقم الهاتف مطلوب.',
+            'phone.regex' => 'أدخل رقم هاتف صحيحًا مكونًا من 9 أرقام ويبدأ بـ 7.',
+            'phone.exists' => 'رقم الهاتف غير مسجل في النظام.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if ($user->status !== 'active') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'حسابك غير نشط. تواصل مع الإدارة.',
+            ], 403);
+        }
+
+        $otpCode = str_pad(
+            (string) random_int(0, 999999),
+            6,
+            '0',
+            STR_PAD_LEFT
+        );
+
+        $user->update([
+            'otp_code' => $otpCode,
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        try {
+            $sms->send(
+                '+967' . $user->phone,
+                "رمز استعادة كلمة المرور: {$otpCode}. صالح لمدة 10 دقائق."
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'تعذر إرسال رمز التحقق. حاول لاحقًا.',
+            ], 502);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم إرسال رمز التحقق إلى هاتفك.',
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // نسيت كلمة المرور — الخطوة 2: التحقق من OTP
+    // ═══════════════════════════════════════════════════════════
+    public function verifyResetOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string',
+            'otp_code' => 'required|string|size:6',
+        ], [
+            'phone.required' => 'رقم الهاتف مطلوب.',
+            'otp_code.required' => 'رمز التحقق مطلوب.',
+            'otp_code.size' => 'رمز التحقق يجب أن يكون 6 أرقام.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = User::where('phone', $request->phone)
+            ->where('otp_code', $request->otp_code)
+            ->where('otp_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'رمز التحقق غير صحيح أو منتهي الصلاحية.',
+            ], 401);
+        }
+
+        // ✅ توليد reset_token جديد وتخزين hash فقط
+        $resetToken = bin2hex(random_bytes(32));
+
+        $user->update([
+            'password_reset_token' => hash('sha256', $resetToken),
+            'password_reset_expires_at' => now()->addMinutes(10),
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم التحقق. يمكنك تعيين كلمة المرور الجديدة.',
+            'data' => [
+                'reset_token' => $resetToken,
+            ],
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // نسيت كلمة المرور — الخطوة 3: تعيين كلمة المرور
+    // ═══════════════════════════════════════════════════════════
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|regex:/^7[0-9]{8}$/',
+            'reset_token' => 'required|string',
+            'password' => 'required|string|min:8',
+        ], [
+            'phone.required' => 'رقم الهاتف مطلوب.',
+            'phone.regex' => 'رقم الهاتف غير صالح.',
+            'reset_token.required' => 'رمز إعادة التعيين مفقود.',
+            'password.required' => 'كلمة المرور الجديدة مطلوبة.',
+            'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = User::where('phone', $request->phone)
+            ->where('password_reset_token', hash('sha256', $request->reset_token))
+            ->where('password_reset_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'رمز إعادة التعيين غير صالح أو منتهي الصلاحية.',
+            ], 401);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password),
+            'password_reset_token' => null,
+            'password_reset_expires_at' => null,
+        ]);
+
+        // ✅ إبطال كل التوكنات النشطة
+        $user->tokens()->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم تغيير كلمة المرور بنجاح. سجّل الدخول من جديد.',
         ]);
     }
 

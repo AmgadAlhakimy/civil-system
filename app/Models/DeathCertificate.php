@@ -26,6 +26,7 @@ class DeathCertificate extends Model
         'death_date',
         'cause_of_death',
         'place_of_death',
+        'certificate_number',
         'issue_date',
         'status',
         'notes',

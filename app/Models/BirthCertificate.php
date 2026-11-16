@@ -22,6 +22,7 @@ class BirthCertificate extends Model
         'child_id',
         'father_id',
         'mother_id',
+        'certificate_number', 
         'branch_id',
         'witness_1_front',
         'witness_1_back',

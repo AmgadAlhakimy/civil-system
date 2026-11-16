@@ -22,6 +22,18 @@ class ServiceFeeForm
                     ->schema([
                         Grid::make(3)
                             ->schema([
+                                // ✅ حقل جديد — المفتاح الفريد (اختياري، يُولَّد تلقائياً)
+                                TextInput::make('service_key')
+                                    ->label('مفتاح الخدمة (اختياري)')
+                                    ->placeholder('يُولَّد تلقائياً من الاسم إن تُرك فارغاً')
+                                    ->maxLength(255)
+                                    ->unique(ignoreRecord: true)
+                                    ->helperText('معرّف فريد بالإنجليزية للاستخدام البرمجي. اتركه فارغاً للتوليد التلقائي.')
+                                    ->validationMessages([
+                                        'unique' => 'هذا المفتاح مستخدم بالفعل، اختر مفتاحاً آخر.',
+                                        'max' => 'يجب ألا يتجاوز المفتاح 255 حرفاً.',
+                                    ]),
+
                                 TextInput::make('service_name')
                                     ->label('اسم الخدمة')
                                     ->placeholder('مثال: إصدار بطاقة شخصية جديدة')
