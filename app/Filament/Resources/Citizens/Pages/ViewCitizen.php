@@ -34,7 +34,6 @@ class ViewCitizen extends ViewRecord
                 ->title('المواطن محذوف')
                 ->body('هذا المواطن موجود في سلة المحذوفات. يجب استعادة المواطن أولًا.')
                 ->danger()
-                ->persistent()
                 ->send();
 
             $this->redirect(
@@ -198,6 +197,17 @@ class ViewCitizen extends ViewRecord
                 ->modalDescription('هل أنت متأكد من حذف هذا المواطن؟ سيتم نقله إلى سلة المحذوفات.')
                 ->modalSubmitActionLabel('تأكيد الحذف')
                 ->successNotificationTitle('تم حذف المواطن بنجاح')
+                ->before(function (DeleteAction $action): void {
+                    if ($this->getRecord()->hasRelatedDocuments()) {
+                        Notification::make()
+                            ->title('تعذر حذف المواطن')
+                            ->body('لا يمكن حذف هذا المواطن لوجود بطاقات أو مستندات مرتبطة به. يرجى حذف المستندات المرتبطة أولاً.')
+                            ->danger()
+                            ->send();
+
+                        $action->halt();
+                    }
+                })
                 ->visible(
                     fn (): bool =>
                         Auth::user()?->can('citizens.delete') ?? false

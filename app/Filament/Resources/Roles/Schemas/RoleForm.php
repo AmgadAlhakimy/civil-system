@@ -22,6 +22,7 @@ class RoleForm
 
         $moduleLabels = [
             'users' => 'المستخدمون',
+            'dashboard' => 'لوحة التحكم',
             'roles' => 'الأدوار والصلاحيات',
             'branches' => 'الفروع',
             'governorates' => 'المحافظات',

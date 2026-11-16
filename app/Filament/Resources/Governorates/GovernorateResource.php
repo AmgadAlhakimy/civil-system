@@ -25,7 +25,7 @@ class GovernorateResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedBuildingLibrary;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $recordTitleAttribute = 'name_ar';
 
     protected static ?int $navigationSort = 1;
 

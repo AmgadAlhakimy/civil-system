@@ -9,12 +9,14 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class CitizensTable
 {
@@ -229,7 +231,6 @@ class CitizensTable
                         0 => 'غير نشط',
                     ]),
 
-
                 TwoOptionTrashedFilter::make()
                     ->label('سلة المحذوفات'),
             ])
@@ -254,9 +255,24 @@ class CitizensTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->label('حذف المحدد')
+                        ->before(function (Collection $records, DeleteBulkAction $action): void {
+                            $hasRelatedDocuments = $records->contains(
+                                fn ($record): bool => $record->hasRelatedDocuments()
+                            );
+
+                            if ($hasRelatedDocuments) {
+                                Notification::make()
+                                    ->title('تعذر حذف المواطنين')
+                                    ->body('لا يمكن حذف المحددين لوجود بطاقات أو مستندات مرتبطة بأحدهم أو بعضهم. يرجى حذف المستندات المرتبطة أولاً.')
+                                    ->danger()
+                                    ->send();
+
+                                $action->halt();
+                            }
+                        })
                         ->visible(
                             fn ($livewire): bool =>
-                                (auth()->user()?->can('identity_cards.delete') ?? false)
+                                (auth()->user()?->can('citizens.delete') ?? false)
                                 && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
                         ),
 

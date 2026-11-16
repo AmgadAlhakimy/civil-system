@@ -38,6 +38,17 @@ class EditCitizen extends EditRecord
                 ->label('حذف المواطن')
                 ->icon('heroicon-o-trash')
                 ->size('lg')
+                ->before(function (DeleteAction $action): void {
+                    if ($this->getRecord()->hasRelatedDocuments()) {
+                        Notification::make()
+                            ->title('تعذر حذف المواطن')
+                            ->body('لا يمكن حذف هذا المواطن لوجود بطاقات أو مستندات مرتبطة به. يرجى حذف المستندات المرتبطة أولاً.')
+                            ->danger()
+                            ->send();
+
+                        $action->halt();
+                    }
+                })
                 ->visible(
                     fn (): bool => Auth::user()?->can('citizens.delete') ?? false
                 ),
@@ -60,7 +71,6 @@ class EditCitizen extends EditRecord
                 ->title('المواطن محذوف')
                 ->body('هذا المواطن موجود في سلة المحذوفات. يجب استعادة المواطن أولًا قبل تعديله.')
                 ->danger()
-                ->persistent()
                 ->send();
 
             $this->redirect(

@@ -1,9 +1,6 @@
 <?php
 
 namespace App\Filament\Resources\Roles\Tables;
-
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -35,6 +32,7 @@ class RolesTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable(),
             ])
+            ->recordActionsColumnLabel('العمليات')
             ->recordActions([
                 ViewAction::make()
                     ->label('عرض')
@@ -49,25 +47,6 @@ class RolesTable
                         fn (): bool =>
                             auth()->user()?->can('roles.update') ?? false
                     ),
-            ])
-            ->recordActionsColumnLabel('العمليات')
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label('حذف المحدد')
-                        ->requiresConfirmation()
-                        ->visible(
-                            fn ($livewire): bool =>
-                                (auth()->user()?->can('identity_cards.delete') ?? false)
-                                && ! (bool) data_get($livewire->tableFilters, 'trashed.value', 0)
-                        )
-                        ->before(function (): void {
-                            abort_unless(
-                                auth()->user()?->can('roles.delete'),
-                                403
-                            );
-                        }),
-                ]),
             ]);
     }
 }

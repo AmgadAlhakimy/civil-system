@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
 use App\Models\Permission;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -38,22 +38,38 @@ class EditRole extends EditRecord
                 ),
 
             DeleteAction::make()
-                ->label('حذف الدور')
+                ->label('حذف الدور نهائياً')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
                 ->requiresConfirmation()
                 ->modalHeading('حذف الدور')
-                ->modalDescription('هل أنت متأكد من حذف هذا الدور؟')
+                ->modalDescription('هل أنت متأكد من حذف هذا الدور نهائياً؟')
                 ->modalSubmitActionLabel('نعم، حذف')
                 ->visible(
                     fn (): bool =>
                         auth()->user()?->can('roles.delete') ?? false
                 )
-                ->before(function (): void {
+                ->before(function (DeleteAction $action): void {
                     abort_unless(
                         auth()->user()?->can('roles.delete'),
                         403
                     );
+
+                    $role = $this->getRecord();
+
+                    $usersCount = $role->users()->count();
+
+                    if ($usersCount > 0) {
+                        Notification::make()
+                            ->title('تعذر حذف الدور')
+                            ->body(
+                                "لا يمكن حذف الدور ({$role->name}) لأنه مرتبط بـ {$usersCount} مستخدم."
+                            )
+                            ->warning()
+                            ->send();
+
+                        $action->halt();
+                    }
                 }),
         ];
     }
