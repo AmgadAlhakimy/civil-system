@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AuditLogs\Tables;
 
 use App\Models\Activity;
+use App\Models\Backup;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -42,8 +43,15 @@ class AuditLogsTable
 
                 TextColumn::make('event')
                     ->label('العملية')
-                    ->formatStateUsing(
-                        fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(function (?string $state, Activity $record): string {
+                        if (
+                            $state === 'created' &&
+                            $record->subject_type === Backup::class
+                        ) {
+                            return 'إنشاء نسخة احتياطية';
+                        }
+
+                        return match ($state) {
                             'created' => 'إضافة',
                             'updated' => 'تعديل',
                             'deleted' => 'حذف',
@@ -54,8 +62,8 @@ class AuditLogsTable
                             'password_changed' => 'تغيير كلمة المرور',
                             'failed_login' => 'محاولة دخول فاشلة',
                             default => 'عملية أخرى',
-                        }
-                    )
+                        };
+                    })
                     ->color(
                         fn (?string $state): string => match ($state) {
                             'created', 'login' => 'success',

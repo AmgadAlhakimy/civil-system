@@ -25,10 +25,10 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'name' => 'access_dashboard',
-                'name_ar' => 'دخول لوحة التحكم',
+                'name_ar' => 'دخول لوحة المعلومات',
                 'module' => 'dashboard',
                 'action' => 'access',
-                'description' => 'السماح بدخول لوحة التحكم',
+                'description' => 'السماح بدخول لوحة المعلومات',
             ],
 
 

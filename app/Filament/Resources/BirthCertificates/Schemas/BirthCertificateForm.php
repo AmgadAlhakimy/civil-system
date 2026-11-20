@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\BirthCertificates\Schemas;
 
+use App\Models\Citizen;
+use Closure;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class BirthCertificateForm
@@ -57,6 +61,9 @@ class BirthCertificateForm
                                     ->required()
                                     ->native(false)
                                     ->live()
+                                    ->afterStateUpdated(
+                                        fn (Set $set) => $set('father_id', null)
+                                    )
                                     ->disabled(
                                         fn (string $operation): bool => $operation === 'edit'
                                     )
@@ -104,11 +111,30 @@ class BirthCertificateForm
                                                 ->where('verification_status', 'approved')
                                                 ->where('gender', 'male');
 
-                                            if ($childId) {
-                                                $query->where('id', '!=', $childId);
+                                            if (! $childId) {
+                                                return $query->whereRaw('1 = 0');
+                                            }
+
+                                            $child = Citizen::query()
+                                                ->select([
+                                                    'id',
+                                                    'father_name',
+                                                    'middle_name',
+                                                ])
+                                                ->find($childId);
+
+                                            if (
+                                                ! $child ||
+                                                blank($child->father_name) ||
+                                                blank($child->middle_name)
+                                            ) {
+                                                return $query->whereRaw('1 = 0');
                                             }
 
                                             return $query
+                                                ->where('id', '!=', $child->id)
+                                                ->where('first_name', $child->father_name)
+                                                ->where('father_name', $child->middle_name)
                                                 ->orderBy('first_name')
                                                 ->orderBy('father_name')
                                                 ->orderBy('middle_name')
@@ -137,6 +163,39 @@ class BirthCertificateForm
                                     ->required()
                                     ->native(false)
                                     ->live()
+                                    ->rules(
+                                        fn (Get $get): array => [
+                                            function (
+                                                string $attribute,
+                                                       $value,
+                                                Closure $fail
+                                            ) use ($get): void {
+
+                                                $child = Citizen::query()
+                                                    ->find($get('child_id'));
+
+                                                $father = Citizen::query()
+                                                    ->find($value);
+
+                                                if (! $child || ! $father) {
+                                                    $fail('تعذر التحقق من بيانات الطفل أو الأب.');
+                                                    return;
+                                                }
+
+                                                if (
+                                                    $father->verification_status !== 'approved' ||
+                                                    $father->gender !== 'male' ||
+                                                    $father->id == $child->id ||
+                                                    $father->first_name !== $child->father_name ||
+                                                    $father->father_name !== $child->middle_name
+                                                ) {
+                                                    $fail(
+                                                        'اسم الأب غير مطابق لبيانات الطفل. يجب أن يتطابق الاسم الأول والثاني للأب مع اسم الأب واسم الجد المسجلين في بيانات الطفل.'
+                                                    );
+                                                }
+                                            },
+                                        ]
+                                    )
                                     ->validationMessages([
                                         'required' => 'يرجى اختيار الأب',
                                         'exists' => 'الأب المحدد غير صالح',

@@ -273,26 +273,28 @@ class Settings extends Page
             true
         );
 
-        $settings->set(
-            'automatic_backup_enabled',
-            (bool)$data['automatic_backup_enabled'],
-            'backup',
-            'تفعيل النسخ الاحتياطي التلقائي'
-        );
+        if (auth()->user()?->can('settings.backup')) {
+            $settings->set(
+                'automatic_backup_enabled',
+                (bool) $data['automatic_backup_enabled'],
+                'backup',
+                'تفعيل النسخ الاحتياطي التلقائي'
+            );
 
-        $settings->set(
-            'automatic_backup_frequency',
-            $data['automatic_backup_frequency'],
-            'backup',
-            'تكرار النسخ الاحتياطي التلقائي'
-        );
+            $settings->set(
+                'automatic_backup_frequency',
+                $data['automatic_backup_frequency'],
+                'backup',
+                'تكرار النسخ الاحتياطي التلقائي'
+            );
 
-        $settings->set(
-            'automatic_backup_time',
-            $data['automatic_backup_time'],
-            'backup',
-            'وقت تنفيذ النسخ الاحتياطي التلقائي'
-        );
+            $settings->set(
+                'automatic_backup_time',
+                $data['automatic_backup_time'],
+                'backup',
+                'وقت تنفيذ النسخ الاحتياطي التلقائي'
+            );
+        }
 
         $this->js(
             'window.applyCivilTheme(' .

@@ -44,7 +44,10 @@ class BackupResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->can('backups.create') ?? false;
+        return auth()->user()?->canAny([
+            'backups.create_database',
+            'backups.create_full',
+        ]) ?? false;
     }
 
     public static function canView(Model $record): bool

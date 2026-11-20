@@ -40,8 +40,7 @@ class BirthCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                             });
                         }
                     )
@@ -80,7 +79,7 @@ class BirthCertificatesTable
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
                                     ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                ;
                             });
                         }
                     )
@@ -112,8 +111,7 @@ class BirthCertificatesTable
                                     ->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('father_name', 'like', "%{$search}%")
                                     ->orWhere('middle_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('national_id', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                             });
                         }
                     )

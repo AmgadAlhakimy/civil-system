@@ -41,7 +41,16 @@ class CreateIdentityCard extends CreateRecord
                     ->danger()
                     ->title('لا يمكن إصدار البطاقة')
                     ->body('لا يمكن إصدار بطاقة شخصية إلا لمواطن تم اعتماد بياناته.')
-                    ->persistent()
+                    ->send();
+
+                $this->halt();
+            }
+
+            if (! $citizen->birth_date || $citizen->birth_date->age < 18) {
+                Notification::make()
+                    ->danger()
+                    ->title('لا يمكن إصدار البطاقة')
+                    ->body('يشترط ألا يقل عمر المواطن عن 18 سنة لإصدار البطاقة الشخصية.')
                     ->send();
 
                 $this->halt();

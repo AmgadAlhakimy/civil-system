@@ -75,7 +75,7 @@ class User extends Authenticatable implements FilamentUser
             'is_verified' => 'boolean',
             'biometric_enabled' => 'boolean',
             'notifications_enabled' => 'boolean',
-           // 'password' => 'hashed',
+            'password' => 'hashed',
         ];
     }
 

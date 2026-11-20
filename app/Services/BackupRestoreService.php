@@ -278,6 +278,7 @@ class BackupRestoreService
 
             activity('backups')
                 ->causedBy(auth()->user())
+                ->event('restored')
                 ->withProperties([
                     'backup_id' => $backup?->id,
                     'backup_name' => $backupName,
