@@ -18,7 +18,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class ServiceRequestsTable
@@ -42,6 +41,16 @@ class ServiceRequestsTable
                     ->searchable()
                     ->sortable()
                     ->wrap(),
+
+                TextColumn::make('documents_count')
+                    ->label('المرفقات')
+                    ->state(fn (ServiceRequest $record): int => is_array($record->documents)
+                        ? count(array_filter($record->documents, fn ($document) => !empty($document)))
+                        : 0)
+                    ->badge()
+                    ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
+                    ->icon('heroicon-o-paper-clip')
+                    ->sortable(false),
 
                 TextColumn::make('category')
                     ->label('الفئة')
@@ -121,7 +130,7 @@ class ServiceRequestsTable
                     })
                     ->sortable(),
 
-                // ✅ عمود جديد — عدد مرات إعادة الإرسال
+                // عدد مرات إعادة الإرسال
                 TextColumn::make('resubmission_count')
                     ->label('إعادة الإرسال')
                     ->badge()
@@ -145,7 +154,8 @@ class ServiceRequestsTable
                     ->sortable()
                     ->since(),
 
-                TextColumn::make('reviewedBy.name')
+                // استخدام العلاقة الصحيحة reviewer()
+                TextColumn::make('reviewer.name')
                     ->label('المراجع')
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -160,14 +170,14 @@ class ServiceRequestsTable
                 SelectFilter::make('status')
                     ->label('حالة الطلب')
                     ->options([
-                        'pending'    => 'قيد الانتظار',
+                        'pending' => 'قيد الانتظار',
                         'processing' => 'قيد المراجعة',
-                        'approved'   => 'مقبول',
-                        'rejected'   => 'مرفوض',
-                        'printing'   => 'قيد الطباعة',
-                        'ready'      => 'جاهز للاستلام',
-                        'delivered'  => 'تم التسليم',
-                        'cancelled'  => 'ملغي',
+                        'approved' => 'مقبول',
+                        'rejected' => 'مرفوض',
+                        'printing' => 'قيد الطباعة',
+                        'ready' => 'جاهز للاستلام',
+                        'delivered' => 'تم التسليم',
+                        'cancelled' => 'ملغي',
                     ])
                     ->multiple()
                     ->native(false),
@@ -197,7 +207,8 @@ class ServiceRequestsTable
             ])
             ->recordActions([
                 ViewAction::make()
-                    ->label('عرض')
+                    ->label('فتح ومراجعة')
+                    ->icon('heroicon-o-document-magnifying-glass')
                     ->visible(fn (): bool =>
                         auth()->user()?->can('service_requests.view') ?? false
                     ),
@@ -208,7 +219,7 @@ class ServiceRequestsTable
                         auth()->user()?->can('service_requests.update') ?? false
                     ),
 
-                // ─── بدء المراجعة (pending → processing) ───
+                // بدء المراجعة
                 Action::make('startProcessing')
                     ->label('بدء المراجعة')
                     ->icon('heroicon-o-play')
@@ -242,7 +253,7 @@ class ServiceRequestsTable
                         }
                     }),
 
-                // ─── اعتماد (pending/processing → approved) ───
+                // اعتماد الطلب
                 Action::make('approve')
                     ->label('موافقة')
                     ->icon('heroicon-o-check-circle')
@@ -287,14 +298,14 @@ class ServiceRequestsTable
                         }
                     }),
 
-                // ─── ✅ رفض (pending/processing → rejected) — مع Toggle ───
+                // رفض الطلب
                 Action::make('reject')
                     ->label('رفض')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading('رفض الطلب')
-                    ->modalDescription('أدخل سبب الرفض. إذا كان الرفض بسبب وثائق/بيانات، فعّل خيار السماح بالتعديل.')
+                    ->modalDescription('أدخل سبب الرفض. إذا كان الرفض بسبب وثائق أو بيانات، فعّل خيار السماح بالتعديل.')
                     ->modalSubmitActionLabel('نعم، رفض')
                     ->form([
                         Textarea::make('rejection_reason')
@@ -302,6 +313,7 @@ class ServiceRequestsTable
                             ->required()
                             ->maxLength(1000)
                             ->rows(3),
+
                         Toggle::make('is_resubmittable')
                             ->label('السماح للمواطن بالتعديل وإعادة الإرسال')
                             ->helperText('فعّل إذا كان الرفض بسبب وثائق ناقصة أو بيانات خاطئة')
@@ -319,7 +331,6 @@ class ServiceRequestsTable
 
                         $oldStatus = $record->status;
 
-                        // ✅ حفظ الحالة في history
                         RequestStatusHistory::create([
                             'service_request_id' => $record->id,
                             'from_status' => $oldStatus,
@@ -328,7 +339,6 @@ class ServiceRequestsTable
                             'changed_by' => auth()->id(),
                         ]);
 
-                        // ✅ تحديث الطلب مع is_resubmittable
                         $record->update([
                             'status' => 'rejected',
                             'rejection_reason' => $data['rejection_reason'],
@@ -349,7 +359,7 @@ class ServiceRequestsTable
                             ->send();
                     }),
 
-                // ─── إرسال للطباعة (approved → printing) ───
+                // إرسال للطباعة
                 Action::make('sendToPrint')
                     ->label('إرسال للطباعة')
                     ->icon('heroicon-o-printer')
@@ -383,7 +393,7 @@ class ServiceRequestsTable
                         }
                     }),
 
-                // ─── جاهز للاستلام (printing → ready) ───
+                // جاهز للاستلام
                 Action::make('markReady')
                     ->label('جاهز للاستلام')
                     ->icon('heroicon-o-check-badge')
@@ -417,7 +427,7 @@ class ServiceRequestsTable
                         }
                     }),
 
-                // ─── تم التسليم (ready → delivered) ───
+                // تم التسليم
                 Action::make('markDelivered')
                     ->label('تم التسليم')
                     ->icon('heroicon-o-hand-thumb-up')

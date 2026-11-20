@@ -2,6 +2,8 @@
 
 namespace App\Services\Requests;
 
+use App\Models\Citizen;
+use App\Models\IdentityCard;
 use App\Models\RequestStatusHistory;
 use App\Models\ServiceRequest;
 use App\Models\User;
@@ -170,6 +172,39 @@ class ApproveRequestService
             ];
         }
 
+        // لا تبدأ الطباعة (الاعتماد النهائي) لطلب البطاقة قبل استكمال بيانات المواطن.
+        if ($newStatus === 'printing' && $request->service_key === 'new_id_card') {
+            $citizen = $request->citizen;
+
+            if (!$citizen) {
+                return [
+                    'success' => false,
+                    'error' => 'لا يمكن اعتماد البطاقة نهائياً: سجل المواطن غير مرتبط بالطلب.',
+                ];
+            }
+
+            if (blank($citizen->blood_type)) {
+                return [
+                    'success' => false,
+                    'error' => 'لا يمكن اعتماد البطاقة نهائياً قبل إدخال فصيلة الدم.',
+                ];
+            }
+
+            if (blank($citizen->photo)) {
+                return [
+                    'success' => false,
+                    'error' => 'لا يمكن اعتماد البطاقة نهائياً قبل إضافة صورة المواطن والتحقق منها.',
+                ];
+            }
+
+            if (!$citizen->identityCards()->exists()) {
+                return [
+                    'success' => false,
+                    'error' => 'لا يوجد سجل بطاقة شخصية مرتبط بالمواطن.',
+                ];
+            }
+        }
+
         // 3. نفّذ التحديث داخل معاملة
         try {
             DB::transaction(function () use ($request, $reviewer, $current, $newStatus, $notes) {
@@ -178,6 +213,45 @@ class ApproveRequestService
                 if ($newStatus === 'approved') {
                     $updates['reviewed_by'] = $reviewer->id;
                     $updates['reviewed_at'] = now();
+                }
+
+                // عند نقل طلب البطاقة من مقبول إلى قيد الطباعة نعتبره اعتماداً نهائياً.
+                if ($newStatus === 'printing' && $request->service_key === 'new_id_card') {
+                    $citizen = Citizen::query()
+                        ->lockForUpdate()
+                        ->find($request->citizen_id);
+
+                    if (!$citizen) {
+                        throw new \RuntimeException('سجل المواطن غير موجود.');
+                    }
+
+                    if (blank($citizen->blood_type) || blank($citizen->photo)) {
+                        throw new \RuntimeException('يجب إدخال فصيلة الدم وصورة المواطن قبل الاعتماد النهائي.');
+                    }
+
+                    $card = IdentityCard::query()
+                        ->where('citizen_id', $citizen->id)
+                        ->where('status', 'pending')
+                        ->lockForUpdate()
+                        ->latest('created_at')
+                        ->first();
+
+                    if (!$card) {
+                        throw new \RuntimeException('لا يوجد سجل بطاقة قيد الانتظار لاعتماده.');
+                    }
+
+                    $citizen->update([
+                        'verification_status' => 'approved',
+                        'is_active' => true,
+                        'verified_at' => now(),
+                        'verified_by' => $reviewer->id,
+                    ]);
+
+                    $card->update([
+                        'status' => 'active',
+                        'approved_by' => $reviewer->id,
+                        'approved_at' => now(),
+                    ]);
                 }
 
                 $request->update($updates);

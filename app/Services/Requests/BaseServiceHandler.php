@@ -12,20 +12,106 @@ abstract class BaseServiceHandler implements ServiceRequestHandler
     {
         $data = $request->data ?? [];
 
+        if (is_string($data)) {
+            $data = json_decode($data, true) ?: [];
+        }
+
+        // Prefer the documents column because it is the authoritative upload record.
+        $requestDocuments = $request->documents ?? [];
+        if (is_string($requestDocuments)) {
+            $requestDocuments = json_decode($requestDocuments, true) ?: [];
+        }
+
+        if (is_array($requestDocuments) && !empty($requestDocuments)) {
+            $data['documents'] = $requestDocuments;
+        } elseif (empty($data['documents']) || !is_array($data['documents'])) {
+            $data['documents'] = [];
+        }
+
+        $isIdentityCard = $request->service_key === 'new_id_card';
+
         if (!empty($data['national_id'])) {
             $citizen = Citizen::whereHas('identityCards', function ($q) use ($data) {
                 $q->where('national_id', $data['national_id']);
             })->first();
 
-            if ($citizen) return $citizen;
+            if ($citizen) {
+                return $isIdentityCard
+                    ? $this->prepareCitizenForIdentityCard($citizen, $data)
+                    : $citizen;
+            }
         }
 
         if (!empty($data['phone'])) {
             $citizen = Citizen::where('phone', $data['phone'])->first();
-            if ($citizen) return $citizen;
+
+            if ($citizen) {
+                return $isIdentityCard
+                    ? $this->prepareCitizenForIdentityCard($citizen, $data)
+                    : $citizen;
+            }
         }
 
-        return $this->createCitizen($data);
+        return $this->createCitizen($data, $isIdentityCard);
+    }
+
+    /**
+     * Keep the citizen pending during the initial identity-card review,
+     * and copy the uploaded personal photo path into citizens.photo.
+     */
+    protected function prepareCitizenForIdentityCard(Citizen $citizen, array $data): Citizen
+    {
+        $photoPath = $this->extractPersonalPhotoPath($data);
+
+        $updates = [
+            'verification_status' => 'pending',
+            'is_active' => false,
+            'verified_at' => null,
+            'verified_by' => null,
+        ];
+
+        if ($photoPath) {
+            $updates['photo'] = $photoPath;
+        }
+
+        $bloodType = $data['blood_type'] ?? $data['bloodType'] ?? null;
+        if (!empty($bloodType)) {
+            $updates['blood_type'] = $bloodType;
+        }
+
+        $citizen->update($updates);
+
+        return $citizen->fresh();
+    }
+
+    /**
+     * Return the relative public-storage path of the citizen's uploaded photo.
+     */
+    protected function extractPersonalPhotoPath(array $data): ?string
+    {
+        $documents = $data['documents'] ?? [];
+
+        if (is_string($documents)) {
+            $documents = json_decode($documents, true) ?: [];
+        }
+
+        if (!is_array($documents)) {
+            return null;
+        }
+
+        foreach (['personal_photo_one', 'personal_photo_two'] as $key) {
+            $document = $documents[$key] ?? null;
+
+            $path = is_array($document)
+                ? ($document['path'] ?? null)
+                : (is_string($document) ? $document : null);
+
+            if (is_string($path) && trim($path) !== '') {
+                return ltrim(str_replace('\\', '/', trim($path)), '/');
+            }
+        }
+
+        return null;
     }
 
     protected function findExistingCitizen(ServiceRequest $request): ?Citizen
@@ -47,7 +133,7 @@ abstract class BaseServiceHandler implements ServiceRequestHandler
         return null;
     }
 
-    protected function createCitizen(array $data): ?Citizen
+    protected function createCitizen(array $data, bool $forIdentityCard = false): ?Citizen
     {
         try {
             // ── جمع الأجزاء من المفاتيح المعروفة ──
@@ -124,10 +210,12 @@ abstract class BaseServiceHandler implements ServiceRequestHandler
                 ),
                 'email'      => $data['email'] ?? null,
                 'occupation' => $data['job'] ?? $data['occupation'] ?? null,
-                'is_active'  => true,
-                'verification_status' => 'approved',
-                'verified_at' => now(),
-                'verified_by' => auth()->id(),
+                'blood_type' => $data['blood_type'] ?? $data['bloodType'] ?? null,
+                'photo' => $forIdentityCard ? $this->extractPersonalPhotoPath($data) : null,
+                'is_active' => $forIdentityCard ? false : true,
+                'verification_status' => $forIdentityCard ? 'pending' : 'approved',
+                'verified_at' => $forIdentityCard ? null : now(),
+                'verified_by' => $forIdentityCard ? null : auth()->id(),
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to create citizen', [

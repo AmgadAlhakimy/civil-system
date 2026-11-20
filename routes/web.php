@@ -31,12 +31,12 @@ Route::middleware(['auth'])->group(function () {
         $path = 'users/profile-photos/' . $path;
 
         abort_unless(
-            Storage::disk('local')->exists($path),
+          Storage::disk('public')->exists($path),
             404
         );
 
         return response()->file(
-            Storage::disk('local')->path($path)
+            Storage::disk('public')->path($path)
         );
     })
         ->where('path', '.*')

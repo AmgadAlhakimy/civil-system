@@ -5,6 +5,8 @@ namespace App\Services\Requests;
 use App\Models\IdentityCard;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class IdentityCardIssueHandler extends BaseServiceHandler
 {
@@ -15,34 +17,41 @@ class IdentityCardIssueHandler extends BaseServiceHandler
 
     public function approve(ServiceRequest $request, User $reviewer): array
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
-            // 1. إنشاء/تحديث المواطن
+            // 1. إنشاء/تحديث المواطن مع إبقائه قيد الانتظار
             $citizen = $this->findOrCreateCitizen($request);
 
             if (!$citizen) {
-                \DB::rollBack();
-                return ['success' => false, 'error' => 'فشل إنشاء بيانات المواطن'];
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'error' => 'فشل إنشاء بيانات المواطن',
+                ];
             }
 
-            // 2. إنشاء البطاقة الشخصية
+            // 2. إنشاء سجل البطاقة بحالة قيد الانتظار
+            // الاعتماد النهائي يتم بعد إدخال فصيلة الدم والتحقق من الصورة.
             $card = IdentityCard::create([
                 'citizen_id' => $citizen->id,
                 'national_id' => $this->generateNationalId(),
                 'branch_id' => $request->branch_id,
                 'issue_date' => now(),
                 'expiry_date' => now()->addYears(10),
-                'status' => 'active',
+                'status' => 'pending',
                 'issued_by' => $reviewer->id,
-                'approved_by' => $reviewer->id,
-                'approved_at' => now(),
+                'approved_by' => null,
+                'approved_at' => null,
             ]);
 
             // 3. ربط الطلب بالمواطن
-            $request->update(['citizen_id' => $citizen->id]);
+            $request->update([
+                'citizen_id' => $citizen->id,
+            ]);
 
-            \DB::commit();
+            DB::commit();
 
             return [
                 'success' => true,
@@ -50,13 +59,17 @@ class IdentityCardIssueHandler extends BaseServiceHandler
                 'service_record_id' => $card->id,
             ];
         } catch (\Throwable $e) {
-            \DB::rollBack();
-            \Log::error('IdentityCardIssueHandler failed', [
+            DB::rollBack();
+
+            Log::error('IdentityCardIssueHandler failed', [
                 'error' => $e->getMessage(),
                 'request_id' => $request->id,
             ]);
 
-            return ['success' => false, 'error' => $e->getMessage()];
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
         }
     }
 
@@ -64,8 +77,9 @@ class IdentityCardIssueHandler extends BaseServiceHandler
     {
         do {
             $id = '0';
+
             for ($i = 0; $i < 10; $i++) {
-                $id .= rand(0, 9);
+                $id .= random_int(0, 9);
             }
         } while (IdentityCard::where('national_id', $id)->exists());
 

@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\Api\DocumentVerificationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\FaceRecognitionController;
@@ -62,6 +62,11 @@ Route::get('/districts/{id}', [DistrictApiController::class, 'show']);
 // Protected Routes
 // ═══════════════════════════════════════════════════════════
 Route::middleware('auth:sanctum')->group(function () {
+// Document Verification
+Route::post(
+    '/documents/verify',
+    [DocumentVerificationController::class, 'verify']
+)->middleware('throttle:10,1');
 
     // ─── Face Recognition ───
     Route::middleware('can:use-face-recognition')->group(function () {

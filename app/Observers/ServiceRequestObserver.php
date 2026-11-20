@@ -9,9 +9,9 @@ use App\Notifications\ServiceRequestStatusChanged;
 
 class ServiceRequestObserver
 {
-    // ═══════════════════════════════════════════════════════════
-    // عند إنشاء طلب جديد → إشعار "تم إدخال البيانات"
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * Send a notification when a new service request is created.
+     */
     public function created(ServiceRequest $serviceRequest): void
     {
         $serviceRequest->user?->notify(
@@ -19,16 +19,14 @@ class ServiceRequestObserver
         );
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // عند التحديث → إشعارات حسب التغيير
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * Send notifications when request or payment status changes.
+     */
     public function updated(ServiceRequest $serviceRequest): void
     {
-        // ✅ 1. تغيير الحالة
-        if ($serviceRequest->isDirty('status')) {
+        if ($serviceRequest->wasChanged('status')) {
             $oldStatus = $serviceRequest->getOriginal('status');
 
-            // لا نُرسل إشعاراً إذا كان تغييراً أولياً (pending → pending)
             if ($oldStatus !== null) {
                 $serviceRequest->user?->notify(
                     new ServiceRequestStatusChanged($serviceRequest, $oldStatus)
@@ -36,13 +34,12 @@ class ServiceRequestObserver
             }
         }
 
-        // ✅ 2. تغيير حالة الدفع
-        if ($serviceRequest->isDirty('payment_status')) {
-            $oldPayment = $serviceRequest->getOriginal('payment_status');
+        if ($serviceRequest->wasChanged('payment_status')) {
+            $oldPaymentStatus = $serviceRequest->getOriginal('payment_status');
 
-            if ($oldPayment !== null) {
+            if ($oldPaymentStatus !== null) {
                 $serviceRequest->user?->notify(
-                    new PaymentStatusChanged($serviceRequest, $oldPayment)
+                    new PaymentStatusChanged($serviceRequest, $oldPaymentStatus)
                 );
             }
         }

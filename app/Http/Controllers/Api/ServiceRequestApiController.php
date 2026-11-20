@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers\Api;
+
 use App\Http\Controllers\Controller;
 use App\Models\RequestStatusHistory;
 use App\Models\ServiceRequest;
@@ -8,12 +10,13 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceRequestApiController extends Controller
 {
-    // ═══════════════════════════════════════════════════════════
-    // جلب طلبات المستخدم
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * جلب طلبات المستخدم
+     */
     public function index(Request $request)
     {
-        $query = ServiceRequest::where('user_id', $request->user()->id)
+        $query = ServiceRequest::with('citizen')
+            ->where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('status')) {
@@ -24,7 +27,9 @@ class ServiceRequestApiController extends Controller
             $query->where('category', $request->category);
         }
 
-        $requests = $query->get()->map(fn ($req) => $this->formatRequest($req));
+        $requests = $query->get()->map(
+            fn ($req) => $this->formatRequest($req)
+        );
 
         return response()->json([
             'status' => 'success',
@@ -32,9 +37,9 @@ class ServiceRequestApiController extends Controller
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // إنشاء طلب جديد
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * إنشاء طلب جديد
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -49,6 +54,7 @@ class ServiceRequestApiController extends Controller
             'branch_id' => 'nullable|uuid|exists:branches,id',
             'data' => 'nullable|array',
             'documents' => 'nullable|array',
+            'citizen_id' => 'nullable|uuid|exists:citizens,id',
         ], [
             'service_key.required' => 'نوع الخدمة مطلوب',
             'service_name.required' => 'اسم الخدمة مطلوب',
@@ -70,6 +76,7 @@ class ServiceRequestApiController extends Controller
 
             $serviceRequest = ServiceRequest::create([
                 'user_id' => $request->user()->id,
+                'citizen_id' => $request->citizen_id,
                 'branch_id' => $request->branch_id,
                 'request_number' => $requestNumber,
                 'service_key' => $request->service_key,
@@ -88,8 +95,11 @@ class ServiceRequestApiController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'تم إنشاء الطلب بنجاح',
-                'data' => $this->formatRequest($serviceRequest),
+                'data' => $this->formatRequest(
+                    $serviceRequest->load('citizen')
+                ),
             ], 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -98,12 +108,13 @@ class ServiceRequestApiController extends Controller
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // جلب طلب واحد
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * جلب طلب واحد
+     */
     public function show(Request $request, $id)
     {
-        $serviceRequest = ServiceRequest::where('id', $id)
+        $serviceRequest = ServiceRequest::with('citizen')
+            ->where('id', $id)
             ->where('user_id', $request->user()->id)
             ->first();
 
@@ -120,12 +131,13 @@ class ServiceRequestApiController extends Controller
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // تاريخ حالات الطلب (Timeline)
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * تاريخ حالات الطلب (Timeline)
+     */
     public function history(Request $request, $id)
     {
-        $serviceRequest = ServiceRequest::where('id', $id)
+        $serviceRequest = ServiceRequest::with('citizen')
+            ->where('id', $id)
             ->where('user_id', $request->user()->id)
             ->first();
 
@@ -142,31 +154,29 @@ class ServiceRequestApiController extends Controller
             ->get()
             ->map(fn ($h) => [
                 'from_status' => $h->from_status,
-                'from_label'  => $h->from_status ? $this->statusLabel($h->from_status) : null,
-                'to_status'   => $h->to_status,
-                'to_label'    => $this->statusLabel($h->to_status),
-                'notes'       => $h->notes,
-                'changed_by'  => $h->changedBy?->full_name ?? $h->changedBy?->name,
-                'created_at'  => $h->created_at?->toIso8601String(),
+                'from_label' => $h->from_status
+                    ? $this->statusLabel($h->from_status)
+                    : null,
+                'to_status' => $h->to_status,
+                'to_label' => $this->statusLabel($h->to_status),
+                'notes' => $h->notes,
+                'changed_by' => $h->changedBy?->full_name
+                    ?? $h->changedBy?->name,
+                'created_at' => $h->created_at?->toIso8601String(),
             ]);
 
         return response()->json([
             'status' => 'success',
-            'data'   => [
-                'request' => [
-                    'request_number'       => $serviceRequest->request_number,
-                    'service_name'         => $serviceRequest->service_name,
-                    'current_status'       => $serviceRequest->status,
-                    'current_status_label' => $this->statusLabel($serviceRequest->status),
-                ],
+            'data' => [
+                'request' => $this->formatRequest($serviceRequest),
                 'timeline' => $history,
             ],
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // إعادة إرسال طلب مرفوض بعد التعديل
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * إعادة إرسال طلب مرفوض بعد التعديل
+     */
     public function resubmit(Request $request, $id)
     {
         $serviceRequest = ServiceRequest::where('id', $id)
@@ -235,13 +245,15 @@ class ServiceRequestApiController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'تم إعادة إرسال الطلب — سيراجعه الموظف قريباً',
-            'data' => $this->formatRequest($serviceRequest->fresh()),
+            'data' => $this->formatRequest(
+                $serviceRequest->fresh()->load('citizen')
+            ),
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // رفض الطلب (من قبل الموظف — API)
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * رفض الطلب (من قبل الموظف — API)
+     */
     public function rejectByEmployee(Request $request, $id)
     {
         $request->validate([
@@ -263,19 +275,21 @@ class ServiceRequestApiController extends Controller
         $serviceRequest->update([
             'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
-            'is_resubmittable' => $request->is_resubmittable,
+            'is_resubmittable' => true,
         ]);
 
         return response()->json([
             'status' => 'success',
             'message' => 'تم رفض الطلب',
-            'data' => $this->formatRequest($serviceRequest->fresh()),
+            'data' => $this->formatRequest(
+                $serviceRequest->fresh()->load('citizen')
+            ),
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // إلغاء طلب (من قبل المستخدم)
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * إلغاء طلب (من قبل المستخدم)
+     */
     public function cancel(Request $request, $id)
     {
         $serviceRequest = ServiceRequest::where('id', $id)
@@ -304,83 +318,162 @@ class ServiceRequestApiController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'تم إلغاء الطلب',
-            'data' => $this->formatRequest($serviceRequest->fresh()),
+            'data' => $this->formatRequest(
+                $serviceRequest->fresh()->load('citizen')
+            ),
         ]);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // تنسيق الطلب للإرجاع
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * تنسيق الطلب للإرجاع
+     */
     private function formatRequest(ServiceRequest $req): array
     {
+        $citizen = $req->citizen;
+
+        $citizenData = null;
+
+        if ($citizen) {
+            $nameParts = [
+                $citizen->first_name,
+                $citizen->father_name,
+                $citizen->middle_name,
+                $citizen->last_name,
+            ];
+
+            $citizenData = [
+                'id' => $citizen->id,
+
+                'full_name' => trim(implode(' ', array_filter(
+                    $nameParts,
+                    fn ($part) => filled($part)
+                ))),
+
+                'first_name' => $citizen->first_name,
+                'father_name' => $citizen->father_name,
+                'middle_name' => $citizen->middle_name,
+                'last_name' => $citizen->last_name,
+                'mother_name' => $citizen->mother_name,
+
+                'first_name_en' => $citizen->first_name_en,
+                'father_name_en' => $citizen->father_name_en,
+                'middle_name_en' => $citizen->middle_name_en,
+                'last_name_en' => $citizen->last_name_en,
+
+                'birth_date' => $citizen->birth_date?->format('Y-m-d'),
+                'birth_place' => $citizen->birth_place,
+                'birth_place_en' => $citizen->birth_place_en,
+
+                'gender' => $citizen->gender,
+                'blood_type' => $citizen->blood_type,
+                'marital_status' => $citizen->marital_status,
+
+                'occupation' => $citizen->occupation,
+                'occupation_en' => $citizen->occupation_en,
+
+                'address' => $citizen->address,
+                'phone' => $citizen->phone,
+                'email' => $citizen->email,
+                'photo' => $citizen->photo,
+
+                'is_active' => (bool) $citizen->is_active,
+                'verification_status' => $citizen->verification_status,
+                'verified_at' => $citizen->verified_at?->toIso8601String(),
+            ];
+        }
+
         return [
             'id' => $req->id,
+            'user_id' => $req->user_id,
+            'citizen_id' => $req->citizen_id,
+
             'request_number' => $req->request_number,
             'service_key' => $req->service_key,
             'service_name' => $req->service_name,
             'category' => $req->category,
             'category_label' => $req->category_label,
             'title' => $req->title,
+
             'amount' => (float) $req->amount,
             'currency' => $req->currency,
             'formatted_amount' => $req->formatted_amount,
+
             'payment_method' => $req->payment_method,
             'payment_status' => $req->payment_status,
             'payment_status_label' => $req->payment_status_label,
+
             'status' => $req->status,
             'status_label' => $req->status_label,
             'rejection_reason' => $req->rejection_reason,
+
             'is_resubmittable' => (bool) $req->is_resubmittable,
             'resubmission_count' => (int) $req->resubmission_count,
             'last_resubmitted_at' => $req->last_resubmitted_at?->toIso8601String(),
+
             'can_resubmit' => $req->status === 'rejected'
                 && $req->is_resubmittable
                 && $req->resubmission_count < 3,
+
             'branch_id' => $req->branch_id,
             'branch_name' => $req->branch?->name,
+
+            'citizen' => $citizenData,
+
             'data' => $req->data,
             'documents' => $req->documents,
+
             'reviewed_at' => $req->reviewed_at?->toIso8601String(),
             'created_at' => $req->created_at?->toIso8601String(),
             'updated_at' => $req->updated_at?->toIso8601String(),
         ];
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // التسمية العربية للحالة
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * التسمية العربية للحالة
+     */
     private function statusLabel(?string $status): string
     {
         return match ($status) {
-            'pending'      => 'قيد الانتظار',
-            'processing'   => 'قيد المعالجة',
-            'approved'     => 'موافق عليه',
-            'rejected'     => 'مرفوض',
-            'completed'    => 'مكتمل',
-            'cancelled'    => 'ملغي',
-            'on_hold'      => 'معلّق',
+            'pending' => 'قيد الانتظار',
+            'processing' => 'قيد المعالجة',
+            'approved' => 'موافق عليه',
+            'rejected' => 'مرفوض',
+            'completed' => 'مكتمل',
+            'cancelled' => 'ملغي',
+            'on_hold' => 'معلّق',
             'under_review' => 'قيد المراجعة',
-            default        => $status ?? 'غير محدد',
+            default => $status ?? 'غير محدد',
         };
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // جلب طلبات حسب الفئة
-    // ═══════════════════════════════════════════════════════════
+    /**
+     * جلب طلبات حسب الفئة
+     */
     public function byCategory(Request $request, string $category)
     {
-        $allowed = ['id_card', 'certificate', 'passport', 'family_card', 'appointment'];
+        $allowed = [
+            'id_card',
+            'certificate',
+            'passport',
+            'family_card',
+            'appointment',
+        ];
 
         if (!in_array($category, $allowed)) {
-            return response()->json(['message' => 'فئة غير معروفة'], 404);
+            return response()->json([
+                'message' => 'فئة غير معروفة',
+            ], 404);
         }
 
-        $requests = ServiceRequest::where('user_id', $request->user()->id)
+        $requests = ServiceRequest::with('citizen')
+            ->where('user_id', $request->user()->id)
             ->where('category', $category)
             ->latest()
-            ->get();
+            ->get()
+            ->map(fn ($req) => $this->formatRequest($req));
 
         return response()->json([
+            'status' => 'success',
             'data' => $requests,
         ]);
     }
