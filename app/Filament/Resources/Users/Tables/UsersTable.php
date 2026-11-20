@@ -26,16 +26,7 @@ class UsersTable
             ->columns([
                 ImageColumn::make('profile_photo')
                     ->label('الصورة')
-                    ->getStateUsing(
-                        fn ($record) => $record->profile_photo
-                            ? route(
-                                'users.profile-photo',
-                                [
-                                    'path' => basename($record->profile_photo),
-                                ]
-                            )
-                            : null
-                    )
+                    ->disk('public')
                     ->circular()
                     ->size(40)
                     ->placeholder('لا توجد')

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Listeners\UpdateLastLogin;
+use App\Models\ServiceRequest;
+use App\Observers\ServiceRequestObserver;
 use App\Services\FaceEmbeddingService;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -25,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        ServiceRequest::observe(ServiceRequestObserver::class);
+
         Event::listen(
             Login::class,
             UpdateLastLogin::class
