@@ -103,46 +103,22 @@ class IdentityCardInfolist
                             ->schema([
                                 ImageEntry::make('witness_1_front')
                                     ->label('الشاهد الأول - الوجه الأمامي')
-                                    ->getStateUsing(
-                                        fn ($record) => filled($record->witness_1_front)
-                                            ? route('identity-cards.witness-image', [
-                                                'filename' => basename($record->witness_1_front),
-                                            ])
-                                            : null
-                                    )
+                                    ->disk('public')
                                     ->imageHeight(180),
 
                                 ImageEntry::make('witness_1_back')
                                     ->label('الشاهد الأول - الوجه الخلفي')
-                                    ->getStateUsing(
-                                        fn ($record) => filled($record->witness_1_back)
-                                            ? route('identity-cards.witness-image', [
-                                                'filename' => basename($record->witness_1_back),
-                                            ])
-                                            : null
-                                    )
+                                    ->disk('public')
                                     ->imageHeight(180),
 
                                 ImageEntry::make('witness_2_front')
                                     ->label('الشاهد الثاني - الوجه الأمامي')
-                                    ->getStateUsing(
-                                        fn ($record) => filled($record->witness_2_front)
-                                            ? route('identity-cards.witness-image', [
-                                                'filename' => basename($record->witness_2_front),
-                                            ])
-                                            : null
-                                    )
+                                    ->disk('public')
                                     ->imageHeight(180),
 
                                 ImageEntry::make('witness_2_back')
                                     ->label('الشاهد الثاني - الوجه الخلفي')
-                                    ->getStateUsing(
-                                        fn ($record) => filled($record->witness_2_back)
-                                            ? route('identity-cards.witness-image', [
-                                                'filename' => basename($record->witness_2_back),
-                                            ])
-                                            : null
-                                    )
+                                    ->disk('public')
                                     ->imageHeight(180),
                             ]),
                     ])

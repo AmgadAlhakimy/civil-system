@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeathCertificates\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -132,6 +133,34 @@ class DeathCertificateInfolist
                     ])
                     ->columnSpanFull(),
 
+                Section::make('صور بطاقات الشاهدين')
+                    ->description('صور الوجه الأمامي والخلفي لبطاقتي الشاهدين')
+                    ->icon('heroicon-o-camera')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                ImageEntry::make('witness_1_front')
+                                    ->label('الشاهد الأول - الوجه الأمامي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_1_back')
+                                    ->label('الشاهد الأول - الوجه الخلفي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_front')
+                                    ->label('الشاهد الثاني - الوجه الأمامي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_back')
+                                    ->label('الشاهد الثاني - الوجه الخلفي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
                 Section::make('معلومات إضافية')
                     ->description('الملاحظات والبيانات الإضافية')
                     ->icon('heroicon-o-information-circle')

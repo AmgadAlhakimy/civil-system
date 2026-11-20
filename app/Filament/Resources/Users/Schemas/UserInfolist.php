@@ -23,16 +23,7 @@ class UserInfolist
                             ->schema([
                                 ImageEntry::make('profile_photo')
                                     ->label('الصورة الشخصية')
-                                    ->getStateUsing(
-                                        fn ($record) => $record->profile_photo
-                                            ? route(
-                                                'users.profile-photo',
-                                                [
-                                                    'path' => basename($record->profile_photo),
-                                                ]
-                                            )
-                                            : null
-                                    )
+                                    ->disk('public')
                                     ->circular()
                                     ->imageSize(110)
                                     ->extraImgAttributes([

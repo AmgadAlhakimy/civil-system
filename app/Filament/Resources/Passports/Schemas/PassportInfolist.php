@@ -25,21 +25,11 @@ class PassportInfolist
                             'md' => 4,
                         ])
                             ->schema([
-
                                 Section::make()
                                     ->schema([
                                         ImageEntry::make('citizen.photo')
                                             ->label('الصورة الشخصية')
-                                            ->getStateUsing(
-                                                fn($record) => $record->citizen?->photo
-                                                    ? route(
-                                                        'citizens.photo',
-                                                        [
-                                                            'path' => basename($record->citizen->photo),
-                                                        ]
-                                                    )
-                                                    : null
-                                            )
+                                            ->disk('public')
                                             ->circular()
                                             ->imageSize(170)
                                             ->defaultImageUrl(url('/images/default-avatar.png'))
@@ -143,6 +133,35 @@ class PassportInfolist
                                     ->label('عدد مرات الطباعة')
                                     ->numeric(),
 
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('صور بطاقات الشاهدين')
+                    ->description('صور الوجه الأمامي والخلفي لبطاقتي الشاهدين')
+                    ->icon('heroicon-o-camera')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                ImageEntry::make('witness_1_front')
+                                    ->label('الشاهد الأول - الوجه الأمامي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_1_back')
+                                    ->label('الشاهد الأول - الوجه الخلفي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_front')
+                                    ->label('الشاهد الثاني - الوجه الأمامي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
+
+                                ImageEntry::make('witness_2_back')
+                                    ->label('الشاهد الثاني - الوجه الخلفي')
+                                    ->disk('public')
+                                    ->imageHeight(180),
                             ]),
                     ])
                     ->columnSpanFull(),

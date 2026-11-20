@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FamilyCards\Schemas;
 
 use App\Models\Citizen;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -275,6 +276,71 @@ class FamilyCardForm
                                     ->join(' ');
                             }),
 
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('صور بطاقات الشاهدين')
+                    ->description('صور الوجه الأمامي والخلفي لبطاقتي الشاهدين')
+                    ->icon('heroicon-o-camera')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                FileUpload::make('witness_1_front')
+                                    ->label('الشاهد الأول - الوجه الأمامي')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('family-cards/witnesses')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes([
+                                        'image/jpeg',
+                                        'image/png',
+                                    ])
+                                    ->maxSize(2048)
+                                    ->imagePreviewHeight('150')
+                                    ->required(fn (string $operation): bool => $operation === 'create'),
+
+                                FileUpload::make('witness_1_back')
+                                    ->label('الشاهد الأول - الوجه الخلفي')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('family-cards/witnesses')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes([
+                                        'image/jpeg',
+                                        'image/png',
+                                    ])
+                                    ->maxSize(2048)
+                                    ->imagePreviewHeight('150')
+                                    ->required(fn (string $operation): bool => $operation === 'create'),
+
+                                FileUpload::make('witness_2_front')
+                                    ->label('الشاهد الثاني - الوجه الأمامي')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('family-cards/witnesses')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes([
+                                        'image/jpeg',
+                                        'image/png',
+                                    ])
+                                    ->maxSize(2048)
+                                    ->imagePreviewHeight('150')
+                                    ->required(fn (string $operation): bool => $operation === 'create'),
+
+                                FileUpload::make('witness_2_back')
+                                    ->label('الشاهد الثاني - الوجه الخلفي')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('family-cards/witnesses')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes([
+                                        'image/jpeg',
+                                        'image/png',
+                                    ])
+                                    ->maxSize(2048)
+                                    ->imagePreviewHeight('150')
+                                    ->required(fn (string $operation): bool => $operation === 'create'),
+                            ]),
                     ])
                     ->columnSpanFull(),
 

@@ -146,7 +146,6 @@ class IdentityCardForm
                             ]),
                     ])
                     ->columnSpanFull(),
-
                 Section::make('صور بطاقات الشاهدين')
                     ->description('صور الوجه الأمامي والخلفي لبطاقتي الشاهدين')
                     ->icon('heroicon-o-camera')
@@ -156,9 +155,9 @@ class IdentityCardForm
                                 FileUpload::make('witness_1_front')
                                     ->label('الشاهد الأول - الوجه الأمامي')
                                     ->image()
-                                    ->disk('private')
+                                    ->disk('public')
                                     ->directory('identity-cards/witnesses')
-                                    ->visibility('private')
+                                    ->visibility('public')
                                     ->acceptedFileTypes([
                                         'image/jpeg',
                                         'image/png',
@@ -170,9 +169,9 @@ class IdentityCardForm
                                 FileUpload::make('witness_1_back')
                                     ->label('الشاهد الأول - الوجه الخلفي')
                                     ->image()
-                                    ->disk('private')
+                                    ->disk('public')
                                     ->directory('identity-cards/witnesses')
-                                    ->visibility('private')
+                                    ->visibility('public')
                                     ->acceptedFileTypes([
                                         'image/jpeg',
                                         'image/png',
@@ -184,9 +183,9 @@ class IdentityCardForm
                                 FileUpload::make('witness_2_front')
                                     ->label('الشاهد الثاني - الوجه الأمامي')
                                     ->image()
-                                    ->disk('private')
+                                    ->disk('public')
                                     ->directory('identity-cards/witnesses')
-                                    ->visibility('private')
+                                    ->visibility('public')
                                     ->acceptedFileTypes([
                                         'image/jpeg',
                                         'image/png',
@@ -198,9 +197,9 @@ class IdentityCardForm
                                 FileUpload::make('witness_2_back')
                                     ->label('الشاهد الثاني - الوجه الخلفي')
                                     ->image()
-                                    ->disk('private')
+                                    ->disk('public')
                                     ->directory('identity-cards/witnesses')
-                                    ->visibility('private')
+                                    ->visibility('public')
                                     ->acceptedFileTypes([
                                         'image/jpeg',
                                         'image/png',
